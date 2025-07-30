@@ -1,0 +1,39 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Prometheus 자체 모니터링
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Spring Boot 애플리케이션 모니터링
+  #- job_name: 'spring-app'
+  #  static_configs:
+  #    - targets: ['spring-app:8080']
+  #  metrics_path: '/actuator/prometheus'
+  #  scrape_interval: 10s
+
+  # nginx-rtmp 모니터링
+  - job_name: 'nginx-rtmp'
+    static_configs:
+      - targets: ['nginx-rtmp:80']
+    metrics_path: '/stat'
+    scrape_interval: 10s
+
+  # Redis 모니터링
+  #- job_name: 'redis'
+  #  static_configs:
+  #    - targets: ['redis:6379']
+  #  scrape_interval: 10s
+
+  # MySQL 모니터링 (mysql_exporter 필요)
+  #- job_name: 'mysql'
+  #  static_configs:
+  #    - targets: ['mysql:3306']
+  #  scrape_interval: 30s
