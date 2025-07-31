@@ -63,59 +63,81 @@ jobs:
                 name: backend-jar
                 path: build/libs/*.jar
 
-# 추후 구현                
-# 추후 nginx-rtmp(실시간 스트리밍 서버) 설치 및 구현
-#deploy:
+# ===== 배포 단계 (추후 구현) =====
+
+# Spring Boot + React API 서버 배포
+#deploy-api:
 #    needs: build
 #    runs-on: ubuntu-latest
 #    steps:
-#        - uses: actions/download-artifact@v4
-#          with: { name: backend-jar }
-
-#        - uses: actions/download-artifact@v4
-#          with: { name: frontend-dist }
-    
-#        - name: Deploy to Server
+#        - name: Download Artifacts
+#          uses: actions/download-artifact@v4
+#          with:
+#            name: backend-jar
+#
+#        - name: Download Frontend Artifacts
+#          uses: actions/download-artifact@v4
+#          with:
+#            name: frontend-dist
+#    
+#        - name: Deploy Spring Boot + React to API Server
 #          uses: appleboy/ssh-action@v0.1.7
 #          with:
 #            host: ${{ secrets.EC2_HOST }}
 #            username: ubuntu
 #            key: ${{ secrets.SSH_KEY }}
 #            script: |
-#              pkill -f 'app.jar' || true
-#              mv backend-*.jar ~/app/app.jar
-#              nohup java -jar ~/app/app.jar &
-#              rm -rf /usr/share/app/static/*
-#              cp -r frontend/dist/* /usr/share/app/static/
-#        
-#deploy-rtmp:
+#              # 기존 애플리케이션 중지
+#              sudo systemctl stop live-api || true
+#              
+#              # 새 JAR 파일 배포
+#              sudo cp backend-*.jar /opt/live-api/app.jar
+#              sudo chown live-api:live-api /opt/live-api/app.jar
+#              
+#              # React 빌드 파일 배포
+#              sudo rm -rf /opt/live-api/static/*
+#              sudo cp -r frontend-dist/* /opt/live-api/static/
+#              sudo chown -R live-api:live-api /opt/live-api/static/
+#              
+#              # 애플리케이션 재시작
+#              sudo systemctl start live-api
+#              
+#              # 헬스체크
+#              sleep 10
+#              curl -f http://localhost:8080/actuator/health || exit 1
+#              
+#              echo "Spring Boot + React API 서버 배포 완료"
+
+# 모니터링 서버 배포
+#deploy-monitoring:
 #    needs: build
 #    runs-on: ubuntu-latest
 #    steps:
 #        - name: Checkout code
 #          uses: actions/checkout@v4
-
-#        - name: Deploy nginx-rtmp to Server
+#
+#        - name: Deploy Monitoring Server
 #          uses: appleboy/ssh-action@v0.1.7
 #          with:
-#            host: ${{ secrets.EC2_HOST_STREAMING }}
+#            host: ${{ secrets.EC2_HOST_MONITORING }}
 #            username: ubuntu
-#            key: ${{ secrets.SSH_KEY_STREAMING }}
+#            key: ${{ secrets.SSH_KEY_MONITORING }}
 #            script: |
-#              # Docker Compose 파일 복사
-#              cd ~/live-platform
+#              # 프로젝트 업데이트
+#              cd ~/live-monitoring-platform
 #              git pull origin main
-          
-#              # nginx-rtmp 서비스만 재시작
-#              docker-compose down nginx-rtmp
-#              docker-compose up -d nginx-rtmp
-          
-#              # 스트림 데이터 디렉토리 권한 설정
-#              sudo mkdir -p /tmp/stream/hls
-#              sudo chmod 755 /tmp/stream/hls
-          
-#              # 방화벽 설정 (RTMP 포트)
-#              sudo ufw allow 1935/tcp
-#              sudo ufw allow 8081/tcp
-          
-#              echo "nginx-rtmp 스트리밍 서버 배포 완료"
+#              
+#              # 모니터링 서비스 재시작
+#              docker-compose -f docker-compose.monitoring.yml down
+#              docker-compose -f docker-compose.monitoring.yml up -d
+#              
+#              # 방화벽 설정 (모니터링 포트)
+#              sudo ufw allow 9090/tcp
+#              sudo ufw allow 3001/tcp
+#              
+#              # 헬스체크
+#              sleep 10
+#              curl -f http://localhost:9090/-/healthy || exit 1
+#              curl -f http://localhost:3001/api/health || exit 1
+#              
+#              echo "모니터링 서버 배포 완료"

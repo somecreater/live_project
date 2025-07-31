@@ -49,4 +49,4 @@ volumes:
 
 networks:
   monitoring-network:
-    driver: bridge
+    driver: bridge 

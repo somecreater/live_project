@@ -12,19 +12,14 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
 
-  # Spring Boot 애플리케이션 모니터링
+  # Spring Boot+React 애플리케이션 모니터링
   #- job_name: 'spring-app'
   #  static_configs:
   #    - targets: ['spring-app:8080']
   #  metrics_path: '/actuator/prometheus'
   #  scrape_interval: 10s
 
-  # nginx-rtmp 모니터링
-  - job_name: 'nginx-rtmp'
-    static_configs:
-      - targets: ['nginx-rtmp:80']
-    metrics_path: '/stat'
-    scrape_interval: 10s
+  # 실시간 영상 스트리밍 서비스 모니터링(추후 추가)
 
   # Redis 모니터링
   #- job_name: 'redis'

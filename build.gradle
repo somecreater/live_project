@@ -67,11 +67,29 @@ dependencies {
 
 	// GitHub API 관련 의존성
 	implementation 'org.kohsuke:github-api:1.315'
-	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
-	// 테스트 관련 의존성
+	// ===== 기본 유틸리티 및 모니터링 =====
+	
+	// JSON 처리 강화
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
+	
+	// 모니터링 및 메트릭
+	implementation 'io.micrometer:micrometer-registry-prometheus'
+	implementation 'io.micrometer:micrometer-core'
+	
+	// 유틸리티 라이브러리
+	implementation 'org.apache.commons:commons-lang3:3.12.0'
+	implementation 'commons-io:commons-io:2.11.0'
+	
+	// 로깅 강화
+	implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
+	
+	// ===== 테스트 관련 의존성 =====
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.testcontainers:junit-jupiter'
+	testImplementation 'org.testcontainers:mysql'
 }
 
 tasks.named('test') {
