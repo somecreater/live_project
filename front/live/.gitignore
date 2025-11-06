@@ -1,6 +1,8 @@
 # Logs
 logs
 .env
+.env.backend
+front/live/.env.frontend
 *.log
 npm-debug.log*
 yarn-debug.log*
