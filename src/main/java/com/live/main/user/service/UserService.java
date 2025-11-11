@@ -3,6 +3,7 @@ package com.live.main.user.service;
 import com.live.main.user.database.dto.CustomUserDetails;
 import com.live.main.user.database.dto.UserDto;
 import com.live.main.user.database.entity.UsersEntity;
+import com.live.main.user.database.mapper.UserMapper;
 import com.live.main.user.database.repository.UserRepository;
 import com.live.main.user.service.Interface.UserServiceInterface;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import java.util.Optional;
 public class UserService implements UserServiceInterface, UserDetailsService {
 
   private final UserRepository userRepository;
+  private final UserMapper userMapper;
 
   //사용자 아이디로 사용자 인증 객체 생성
   @Override
@@ -33,7 +35,28 @@ public class UserService implements UserServiceInterface, UserDetailsService {
 
   @Override
   public UserDto RegisterUser(UserDto userDto) {
-    return null;
+    UsersEntity users=new UsersEntity();
+    if(userDto.getUserType() == null
+      || userDto.getLoginId() == null
+      || userDto.getNickname() == null
+      || userDto.getPhone() == null
+      || userDto.getLoginType() == null
+      || userDto.getPassword() == null){
+      log.info("회원 정보중 일부 누락된 정보 존재!");
+      return null;
+    }
+    if(userRepository.existsByLoginIdOrPhoneOrNickname(
+        userDto.getLoginId(),
+        userDto.getPhone(),
+        userDto.getNickname()
+    )){
+      log.info("아이디, 전화번호, 닉네임 중 하나가 이미 존재합니다.");
+      return null;
+    }
+
+    users=userMapper.toEntity(userDto);
+    UsersEntity newUser = userRepository.save(users);
+    return userMapper.toDto(newUser);
   }
 
   @Override

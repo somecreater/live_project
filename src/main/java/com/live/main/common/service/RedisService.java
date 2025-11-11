@@ -1,5 +1,6 @@
 package com.live.main.common.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -14,14 +15,13 @@ import java.util.concurrent.TimeUnit;
  * Redis 서비스 클래스
  * Redis와의 상호작용을 위한 유틸리티 메서드들을 제공
  */
+@RequiredArgsConstructor
 @Service
 public class RedisService {
 
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
 
-    @Autowired
-    private RedisTemplate<String, String> stringRedisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, String> stringRedisTemplate;
 
     /**
      * 문자열 값 저장

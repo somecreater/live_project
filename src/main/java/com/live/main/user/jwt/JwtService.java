@@ -1,20 +1,15 @@
 package com.live.main.user.jwt;
 
-import com.live.main.user.database.dto.RefreshTokenDto;
-import com.live.main.user.database.entity.RefreshTokenEntity;
-import com.live.main.user.database.mapper.RefreshTokenMapper;
 import com.live.main.user.database.repository.RefreshTokenRepository;
 import io.jsonwebtoken.*;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import java.util.Date;
 
 @Log4j2
@@ -29,21 +24,14 @@ public class JwtService {
   @Value("${spring.jwt.refresh_token_expiration}")
   private Long refreshTokenExpiration;
 
-  private final RedisTemplate<String, String> redisTemplate;
-  private static final String PREFIX = "RT:";
-
   private final RefreshTokenRepository refreshTokenRepository;
-  private final RefreshTokenMapper refreshTokenMapper;
+
   //JWT 서비스 생성자(비밀키 생성)
   public JwtService(@Value("${spring.jwt.secret}")String secret,
-      RedisTemplate<String, String> redisTemplate,
-      RefreshTokenRepository refreshTokenRepository,
-      RefreshTokenMapper refreshTokenMapper){
+      RefreshTokenRepository refreshTokenRepository){
     secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8),
         Jwts.SIG.HS256.key().build().getAlgorithm());
     this.refreshTokenRepository=refreshTokenRepository;
-    this.refreshTokenMapper=refreshTokenMapper;
-    this.redisTemplate=redisTemplate;
   }
 
   //JWT 생성(Access)
@@ -56,10 +44,22 @@ public class JwtService {
 
   //JWT 생성(Refresh)
   public String generatedRefreshToken(String UserId, String auth){
-    return Jwts.builder().subject(UserId).claim("Userid", UserId).claim("auth", auth)
-        .claim("tokenType", "REFRESH") .issuedAt(new Date(System.currentTimeMillis()))
-        .expiration(new Date(System.currentTimeMillis()+refreshTokenExpiration))
-        .signWith(secretKey).compact();
+    String RefreshToken = Jwts.builder()
+        .subject(UserId)
+            .claim("Userid", UserId)
+            .claim("auth", auth)
+            .claim("tokenType", "REFRESH")
+            .issuedAt(new Date(System.currentTimeMillis()))
+            .expiration(new Date(System.currentTimeMillis()+refreshTokenExpiration))
+            .signWith(secretKey).compact();
+
+    refreshTokenRepository.save(
+        UserId,
+        RefreshToken,
+        refreshTokenExpiration
+    );
+
+    return RefreshToken;
   }
 
   //JWT 유효성 검증
@@ -114,38 +114,36 @@ public class JwtService {
   @Transactional
   public void deleteRefreshToken(String userId){
     try{
-      long deleteNum = refreshTokenRepository.deleteByLoginId(userId);
-      if(deleteNum == 0 ){
-        log.info("Refresh token not exist for user: {}", userId);
+      boolean deleteResult= refreshTokenRepository.delete(userId);
+      if(deleteResult){
+        log.info("Deleted Refresh Token for user {}", userId);
       }else{
-        log.info("Refresh token deleted for user: {}", userId);
+        log.info("No Refresh Token to delete for user {}", userId);
       }
 
     } catch (Exception e) {
-      log.error("Refresh token delete error", e);
+      log.error("Failed to delete refresh token", e);
     }
   }
 
   //Refresh JWT 검증
   public boolean ValidationRefreshToken(String token){
     try {
-      RefreshTokenEntity RefreshToken = refreshTokenRepository.findByToken(token).orElse(null);
+      if(!ValidationToken(token)) return false;
 
-      if (RefreshToken == null) {
-        return false;
-      }
-      if (!ValidationToken(token)) {
-        deleteRefreshToken(RefreshToken.getLoginId());
+      String userId = getUserId(token);
+      String storedToken = refreshTokenRepository.findByUserId(userId);
+
+      if (storedToken == null) {
+        log.info("No refresh token found in Redis for user {}", userId);
         return false;
       }
 
-      String loginId = getUserId(token);
-      String auth = getAuth(token);
-      if (RefreshToken.getLoginId().compareTo(loginId) != 0 || RefreshToken.getAuth()
-          .compareTo(auth) != 0) {
-        log.info("RefreshToken Validation False - mismatch data");
+      if (!storedToken.equals(token)) {
+        log.info("Refresh token mismatch for user {}", userId);
         return false;
       }
+
 
       return true;
     } catch (Exception e) {
@@ -154,20 +152,4 @@ public class JwtService {
     }
   }
 
-  //Refresh JWT 생성(DB(또는 Memory DB) 저장)
-  @Transactional
-  public RefreshTokenDto generateRefreshToken(String userId, String auth){
-    String refreshToken=generatedRefreshToken(userId,auth);
-    Instant instant= Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(refreshToken)
-        .getPayload().getExpiration().toInstant();
-
-    RefreshTokenEntity tokenEntity = new RefreshTokenEntity();
-    tokenEntity.setToken(refreshToken);
-    tokenEntity.setAuth(auth);
-    tokenEntity.setLoginId(userId);
-    tokenEntity.setExpiryDate(instant);
-
-    RefreshTokenEntity refreshTokenEntity=refreshTokenRepository.save(tokenEntity);
-    return refreshTokenMapper.toDto(refreshTokenEntity);
-  }
 }
