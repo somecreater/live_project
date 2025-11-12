@@ -1,5 +1,7 @@
 package com.live.main.user.service;
 
+import com.live.main.common.database.dto.ErrorCode;
+import com.live.main.common.exception.CustomException;
 import com.live.main.user.database.dto.CustomUserDetails;
 import com.live.main.user.database.dto.UserDto;
 import com.live.main.user.database.entity.UsersEntity;
@@ -35,7 +37,7 @@ public class UserService implements UserServiceInterface, UserDetailsService {
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
     Optional<UsersEntity> optionalUsers= userRepository.findByLoginId(username);
     if(optionalUsers.isEmpty()){
-      throw new UsernameNotFoundException("User not found with LoginID: " + username);
+      throw new CustomException(ErrorCode.FAILURE_LOGIN);
     }
     return new CustomUserDetails(optionalUsers.get());
   }
@@ -44,23 +46,23 @@ public class UserService implements UserServiceInterface, UserDetailsService {
   @Transactional
   @Override
   public UserDto RegisterUser(UserDto userDto) {
-    UsersEntity users=new UsersEntity();
-    if(userDto.getUserType() == null
+    UsersEntity users = null;
+    if( userDto == null
+      || userDto.getUserType() == null
       || userDto.getLoginId() == null
       || userDto.getNickname() == null
       || userDto.getPhone() == null
       || userDto.getLoginType() == null
       || userDto.getPassword() == null){
-      log.info("회원 정보중 일부 누락된 정보 존재!");
-      return null;
+      log.info("회원 등록을 시도하려고 했고 일부 정보가 누락되었습니다");
+      throw new CustomException(ErrorCode.USER_BAD_REQUEST);
     }
     if(userRepository.existsByLoginIdOrPhoneOrNickname(
         userDto.getLoginId(),
         userDto.getPhone(),
         userDto.getNickname()
     )){
-      log.info("아이디, 전화번호, 닉네임 중 하나가 이미 존재합니다.");
-      return null;
+      throw new CustomException(ErrorCode.USER_BAD_REQUEST);
     }
 
     userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
@@ -68,6 +70,7 @@ public class UserService implements UserServiceInterface, UserDetailsService {
     userDto.setUpdatedAt(LocalDateTime.now());
     users=userMapper.toEntity(userDto);
     UsersEntity newUser = userRepository.save(users);
+    newUser.setPassword(null);
     return userMapper.toDto(newUser);
   }
 
@@ -77,10 +80,12 @@ public class UserService implements UserServiceInterface, UserDetailsService {
   public UserDto LoginUser(String id, String pass) {
     UsersEntity loginUser=userRepository.findByLoginId(id).orElse(null);
     if(loginUser == null){
-      throw new IllegalArgumentException("아이디나 비밀번호가 틀렸습니다.");
+      log.info("{} 에 대한 정보가 없습니다.",id);
+      throw new CustomException(ErrorCode.FAILURE_LOGIN);
     }
     if(!passwordEncoder.matches(pass, loginUser.getPassword())){
-      throw new IllegalArgumentException("아이디나 비밀번호가 틀렸습니다.");
+      log.info("{} 이 로그인을 시도하였고 비밀번호가 틀렸습니다", id);
+      throw new CustomException(ErrorCode.FAILURE_LOGIN);
     }
 
     return userMapper.toDto(loginUser);
@@ -99,7 +104,8 @@ public class UserService implements UserServiceInterface, UserDetailsService {
     }
 
     if(usersEntity == null){
-      return null;
+      log.info("{} 아이디에 대한 정보가 없습니다.",userDto.getLoginId());
+      throw new CustomException(ErrorCode.USER_NOT_FOUND);
     }
     return userMapper.toDto(usersEntity);
   }
