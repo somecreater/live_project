@@ -97,6 +97,9 @@ public class UserController {
         .httpOnly(true).secure(true).sameSite("None").path("/").maxAge(0)
         .build();
 
+    response.addHeader(HttpHeaders.SET_COOKIE,clearAccessCookie.toString());
+    response.addHeader(HttpHeaders.SET_COOKIE, clearRefreshCookie.toString());
+
     return ResponseEntity.ok().build();
   }
 
@@ -104,14 +107,24 @@ public class UserController {
   public ResponseEntity<?> UserInfo(@AuthenticationPrincipal CustomUserDetails principal){
     log.info("[GET] /api/user/info/{} - ",principal.getUserid());
     Map<String,Object> result=new HashMap<>();
+    UserDto request=new UserDto();
+    request.setLoginId(principal.getUserid());
+    UserDto userInfo=userService.GetUserInfo(request);
+
+    if(userInfo != null){
+      result.put("result",true);
+      result.put("user_info",userInfo);
+    }else{
+      result.put("result",false);
+    }
 
     return ResponseEntity.ok(result);
   }
 
   @PostMapping("/update")
-  public ResponseEntity<?> UserUpdate(){
+  public ResponseEntity<?> UserUpdate(@AuthenticationPrincipal CustomUserDetails principal,
+      @RequestBody UserDto userDto){
     Map<String,Object> result=new HashMap<>();
-
     return ResponseEntity.ok(result);
   }
 
