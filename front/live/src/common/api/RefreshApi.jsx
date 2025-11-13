@@ -6,6 +6,7 @@ const RefreshApi = axios.create({
   withCredentials: true,
 });
 
+//토큰 재발급은 서버 로직에서 해결
 RefreshApi.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -14,7 +15,9 @@ RefreshApi.interceptors.response.use(
     const payload = error.response?.data || {}
     localStorage.setItem(key, JSON.stringify(payload));
 
-    if (status >= 400) window.location.href='/error/'+status;
+    //if (status >= 400) window.location.href='/error/'+status;
+    alert(JSON.stringify(payload));
+    if(status == 401) window.location.href= '/login';
     return Promise.reject(error);
   }
 

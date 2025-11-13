@@ -55,6 +55,7 @@ public class UserController {
   public ResponseEntity<?> UserLogin(@RequestBody LoginRequest loginRequest,
       HttpServletResponse response){
     log.info("[POST] /api/user/login - {}", loginRequest.getId());
+    Map<String,Object> result=new HashMap<>();
 
     if(loginRequest.getId() == null || loginRequest.getPass() == null){
       throw new CustomException(ErrorCode.FAILURE_LOGIN);
@@ -78,8 +79,9 @@ public class UserController {
 
     response.addHeader(HttpHeaders.SET_COOKIE,newAccessCookie.toString());
     response.addHeader(HttpHeaders.SET_COOKIE, newRefreshCookie.toString());
+    result.put("result", true);
 
-    return ResponseEntity.ok().build();
+    return ResponseEntity.ok(result);
   }
 
   @PostMapping("/logout")
@@ -103,7 +105,7 @@ public class UserController {
     return ResponseEntity.ok().build();
   }
 
-  @GetMapping("/info/{loginId}")
+  @GetMapping("/info")
   public ResponseEntity<?> UserInfo(@AuthenticationPrincipal CustomUserDetails principal){
     log.info("[GET] /api/user/info/{} - ",principal.getUserid());
     Map<String,Object> result=new HashMap<>();

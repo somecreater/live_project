@@ -1,5 +1,5 @@
 import RefreshApi from "./RefreshApi";
-import { API_END_POINT } from "./Api";
+import { API_END_POINT,createHeaders } from "./Api";
 
 const ApiService={
   user:{
@@ -12,6 +12,10 @@ const ApiService={
       withCredentials: true, 
     }),
     register: (dto) => RefreshApi.post(API_END_POINT.user.register, dto, {
+      headers: createHeaders(),
+      withCredentials: true, 
+    }),
+    info: () => RefreshApi.get(API_END_POINT.user.info,{
       headers: createHeaders(),
       withCredentials: true, 
     })
