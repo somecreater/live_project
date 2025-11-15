@@ -2,7 +2,12 @@ package com.live.main.user.database.mapper;
 
 import com.live.main.user.database.dto.UserDto;
 import com.live.main.user.database.entity.UsersEntity;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
+
+@Component
+@RequiredArgsConstructor
 public class UserMapper {
 
   public UserDto toDto(UsersEntity entity){

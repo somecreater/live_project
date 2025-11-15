@@ -25,6 +25,12 @@ public class JwtFilter extends OncePerRequestFilter {
 
   private final JwtService jwtService;
 
+  private static final String[] WITHOUT_TOKEN_URL={
+      "/api/user/login",
+      "/api/user/register",
+      "/public/**",
+      "/oauth2/**"
+  };
   private final static String HEADER_AUTHORIZATION = "Authorization";
   private final static String TOKEN_PREFIX = "Bearer ";
   private final long ACCESS_TOKEN_MAX_AGE_SECONDS= 15 * 60L;
@@ -43,6 +49,14 @@ public class JwtFilter extends OncePerRequestFilter {
       FilterChain filterChain) throws ServletException, IOException {
 
     try {
+
+      for (String url : WITHOUT_TOKEN_URL) {
+        if (request.getRequestURI().contains(url)) {
+          filterChain.doFilter(request, response);
+          return;
+        }
+      }
+
       String authorizationHeader = request.getHeader(HEADER_AUTHORIZATION);
       String accessToken =null;
 

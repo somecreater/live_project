@@ -40,12 +40,6 @@ public class SecurityConfig{
   @Value("${app.security.allowed_origin}")
   private List<String> allowedOrigins;
 
-  @Value("${app.security.permit_all_list}")
-  private List<String> permitAllList;
-
-  @Value("${app.security.permit_all_num}")
-  private Integer PermitAllNum;
-
   @Value("${app.security.is_cors}")
   private boolean IsCors;
 
@@ -60,6 +54,7 @@ public class SecurityConfig{
   }
 
   //CORS 설정 메소드
+  @Bean
   public CorsConfigurationSource  corsConfigurationSource(){
     CorsConfiguration corsConfiguration= new CorsConfiguration();
     corsConfiguration.setAllowedOrigins(allowedOrigins);
@@ -84,7 +79,11 @@ public class SecurityConfig{
         .sessionManagement((security)->
             security.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests((security)
-            ->security.requestMatchers(permitAllList.toArray(new String[PermitAllNum])).permitAll()
+            ->security.requestMatchers(
+                "/oauth2/**",
+                "/public/**",
+                "/api/user/login",
+                "/api/user/register").permitAll()
             .requestMatchers("/api/**").authenticated())
         .formLogin(AbstractHttpConfigurer::disable)
         .httpBasic(AbstractHttpConfigurer::disable);

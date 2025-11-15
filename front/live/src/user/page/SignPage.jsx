@@ -1,12 +1,12 @@
-import LoginForm from "../form/LoginForm";
+import SignForm from "../form/SignForm";
 
-function LoginPage({props}){
+function SignPage(){
 
   return (
     <div className="container d-flex justify-content-center align-items-center mt-5">
-      <LoginForm/>
+      <SignForm/>
     </div>
   );
 }
 
-export default LoginPage;
+export default SignPage;

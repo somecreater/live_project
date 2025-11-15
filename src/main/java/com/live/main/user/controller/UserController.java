@@ -54,14 +54,14 @@ public class UserController {
   @PostMapping("/login")
   public ResponseEntity<?> UserLogin(@RequestBody LoginRequest loginRequest,
       HttpServletResponse response){
-    log.info("[POST] /api/user/login - {}", loginRequest.getId());
+    log.info("[POST] /api/user/login - {}", loginRequest.getLoginId());
     Map<String,Object> result=new HashMap<>();
 
-    if(loginRequest.getId() == null || loginRequest.getPass() == null){
+    if(loginRequest.getLoginId() == null || loginRequest.getPass() == null){
       throw new CustomException(ErrorCode.FAILURE_LOGIN);
     }
 
-    UserDto login=userService.LoginUser(loginRequest.getId(), loginRequest.getPass());
+    UserDto login=userService.LoginUser(loginRequest.getLoginId(), loginRequest.getPass());
     String accessToken = jwtService.generatedAccessToken(
         login.getLoginId(),
         login.getUserType().name());

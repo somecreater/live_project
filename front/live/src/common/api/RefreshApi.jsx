@@ -16,8 +16,8 @@ RefreshApi.interceptors.response.use(
     localStorage.setItem(key, JSON.stringify(payload));
 
     //if (status >= 400) window.location.href='/error/'+status;
-    alert(JSON.stringify(payload));
-    if(status == 401) window.location.href= '/login';
+    console.log(payload);
+    if(status == 401) window.location.href= 'user/login';
     return Promise.reject(error);
   }
 

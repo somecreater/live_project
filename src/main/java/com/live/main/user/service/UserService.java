@@ -26,7 +26,6 @@ import java.util.Optional;
 @Slf4j
 public class UserService implements UserServiceInterface, UserDetailsService {
 
-  private final JwtService jwtService;
   private final PasswordEncoder passwordEncoder;
   private final UserRepository userRepository;
   private final UserMapper userMapper;
@@ -65,13 +64,15 @@ public class UserService implements UserServiceInterface, UserDetailsService {
       throw new CustomException(ErrorCode.USER_BAD_REQUEST);
     }
 
-    userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
     userDto.setCreatedAt(LocalDateTime.now());
     userDto.setUpdatedAt(LocalDateTime.now());
     users=userMapper.toEntity(userDto);
+    users.setPassword(passwordEncoder.encode(userDto.getPassword()));
     UsersEntity newUser = userRepository.save(users);
-    newUser.setPassword(null);
-    return userMapper.toDto(newUser);
+
+    UserDto newUserInfo= userMapper.toDto(newUser);
+    newUserInfo.setPassword(null);
+    return newUserInfo;
   }
 
   //로그인 기능

@@ -18,7 +18,7 @@ public class UsersEntity extends timeEntity {
   @Column(name = "login_id", unique = true, nullable = false, updatable = false)
   private String loginId;
 
-  @Column
+  @Column(nullable = false)
   private String password;
 
   @Column(unique = true)

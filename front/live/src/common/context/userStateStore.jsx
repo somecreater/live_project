@@ -13,9 +13,9 @@ export const userStateStore = create((set)=>({
     const data=response.data;
     
     if(data.result){
-      set({user: data.user_info});
-    }else{
-      set({user: null});
+      set({ user: data.user_info, isAuthenticated: true });
+    } else {
+      set({ user: null, isAuthenticated: false });
     }
   }
 }));

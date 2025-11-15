@@ -1,10 +1,9 @@
 import { Form } from "react-bootstrap";
 import { userStateStore } from "../../common/context/userStateStore";
 
-function User(){
+function User({user, isAuthenticated}){
 
-  const { user, isAuthenticated } = userStateStore();
-
+  
   if (!isAuthenticated) {
     return <p className="text-muted mt-3 text-center">비로그인 상태입니다.</p>;
   }
