@@ -1,15 +1,13 @@
+name: CI-CD RUNNING
 on:
-    push:
-      branches:
-        - main
-        - develop
-    pull_request:
-      branches:
-        - main
-        - develop
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
 env:
-    BACKEND_ENV: ./.env.backend
-    FRONTEND_ENV: frontend/.env.frontend
+  BACKEND_ENV: src/.env.backend
+  FRONTEND_ENV: frontend/.env.frontend
 
 
 jobs:
