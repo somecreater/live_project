@@ -107,7 +107,7 @@ public class UserController {
 
   @GetMapping("/info")
   public ResponseEntity<?> UserInfo(@AuthenticationPrincipal CustomUserDetails principal){
-    log.info("[GET] /api/user/info/{} - ",principal.getUserid());
+    log.info("[GET] /api/user/info - {}",principal.getUserid());
     Map<String,Object> result=new HashMap<>();
     UserDto request=new UserDto();
     request.setLoginId(principal.getUserid());

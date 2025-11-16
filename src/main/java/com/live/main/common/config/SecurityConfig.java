@@ -2,6 +2,9 @@ package com.live.main.common.config;
 
 import com.live.main.user.jwt.JwtFilter;
 import com.live.main.user.jwt.JwtService;
+import com.live.main.user.service.Oauth2FailureHandler;
+import com.live.main.user.service.Oauth2Service;
+import com.live.main.user.service.Oauth2SuccessHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
 import org.springframework.boot.web.server.ErrorPage;
@@ -93,13 +96,11 @@ public class SecurityConfig{
             .authenticationEntryPoint(authenticationEntryPoint())
             .accessDeniedHandler((req, res, exc) -> {throw  exc;}));
 
-    /*
-    ---추후 설정(2025/11/6)---
-
-    http.oauth2Login((oauth2)->oauth2
-        .loginPage("/user/login")
-        .userInfoEndpoint((userInfo)->userInfo));
-    */
+    http.oauth2Login((oauth2) -> oauth2
+        .userInfoEndpoint((userInfo)->userInfo.userService(oauth2Service()))
+        .successHandler(oauth2SuccessHandler())
+        .failureHandler(oauth2FailureHandler())
+    );
 
     http.addFilterBefore(new JwtFilter(jwtService), UsernamePasswordAuthenticationFilter.class);
 
@@ -127,12 +128,21 @@ public class SecurityConfig{
     return new CustomAuthenticationEntryPoint();
   }
 
-  // ---추후 설정(2025/11/6)---
-
   //소셜 로그인 설정
+  @Bean
+  public Oauth2Service oauth2Service(){
+    return new Oauth2Service();
+  }
 
   //소셜 로그인 성공 핸들러
+  @Bean
+  public Oauth2SuccessHandler oauth2SuccessHandler(){
+    return new Oauth2SuccessHandler();
+  }
 
   //소셜 로그인 실패 핸들러
-
+  @Bean
+  public Oauth2FailureHandler oauth2FailureHandler(){
+    return new Oauth2FailureHandler();
+  }
 }

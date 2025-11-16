@@ -9,6 +9,7 @@ function SignForm(){
     loginId:"",
     password:"",
     phone:"",
+    email:"",
     nickname:"",
     loginType:"NORMAL",
     userType:"NORMAL"
@@ -53,15 +54,20 @@ function SignForm(){
       </Form.Floating>
 
       <Form.Floating  className="mb-3">
-        <Form.Label className="form-label">PHONE</Form.Label>
+        <Form.Label className="form-label">휴대폰 번호</Form.Label>
         <Form.Control className="form-control" type="text" name="phone" placeholder="phone" value={user.phone} onChange={handleChange}/>
+      </Form.Floating>
+
+      <Form.Floating  className="mb-3">
+        <Form.Label className="form-label">이메일</Form.Label>
+        <Form.Control className="form-control" type="text" name="email" placeholder="email" value={user.email} onChange={handleChange}/>
       </Form.Floating>
       
       <Form.Floating  className="mb-3">
         <Form.Label className="form-label">NickName</Form.Label>
         <Form.Control className="form-control" type="text" name="nickname" placeholder="nickname" value={user.nickname} onChange={handleChange}/>
       </Form.Floating>
-      
+
       <Form.Group  className="mb-3">
         <Form.Label className="form-label">권한</Form.Label>
         
