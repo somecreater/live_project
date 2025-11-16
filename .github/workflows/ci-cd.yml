@@ -7,7 +7,7 @@ on:
 
 env:
   BACKEND_ENV: src/.env.backend
-  FRONTEND_ENV: frontend/.env.frontend
+  FRONTEND_ENV: front/live/.env.frontend
 
 
 jobs:
