@@ -20,6 +20,11 @@ function User({user, isAuthenticated}){
       </Form.Group>
 
       <Form.Group className="mb-3">
+        <Form.Label>이메일</Form.Label>
+        <Form.Control type="text" value={user?.email || ""} readOnly />
+      </Form.Group>
+      
+      <Form.Group className="mb-3">
         <Form.Label>닉네임</Form.Label>
         <Form.Control type="text" value={user?.nickname || ""} readOnly />
       </Form.Group>

@@ -7,7 +7,6 @@ import com.live.main.user.database.dto.UserDto;
 import com.live.main.user.database.entity.UsersEntity;
 import com.live.main.user.database.mapper.UserMapper;
 import com.live.main.user.database.repository.UserRepository;
-import com.live.main.user.jwt.JwtService;
 import com.live.main.user.service.Interface.UserServiceInterface;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +47,7 @@ public class UserService implements UserServiceInterface, UserDetailsService {
     UsersEntity users = null;
     if( userDto == null
       || userDto.getUserType() == null
+      || userDto.getEmail() == null
       || userDto.getLoginId() == null
       || userDto.getNickname() == null
       || userDto.getPhone() == null
@@ -61,6 +61,9 @@ public class UserService implements UserServiceInterface, UserDetailsService {
         userDto.getPhone(),
         userDto.getNickname()
     )){
+      throw new CustomException(ErrorCode.USER_BAD_REQUEST);
+    }
+    if(userRepository.findByEmail(userDto.getEmail()).orElse(null) == null){
       throw new CustomException(ErrorCode.USER_BAD_REQUEST);
     }
 
@@ -111,6 +114,13 @@ public class UserService implements UserServiceInterface, UserDetailsService {
     return userMapper.toDto(usersEntity);
   }
 
+  public UserDto GetUserInfoByEmail(String email){
+    UsersEntity users=userRepository.findByEmail(email).orElse(null);
+    if(users == null){
+      return null;
+    }
+    return userMapper.toDto(users);
+  }
   //회원 정보 수정 기능
   @Override
   public UserDto UpdateUser(UserDto userDto) {

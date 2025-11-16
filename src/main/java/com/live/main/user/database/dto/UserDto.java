@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 public class UserDto {
   private Long id;
   private String loginId;
+  private String email;
   private String password;
   private String phone;
   private String nickname;
