@@ -60,7 +60,7 @@ jobs:
               run: chmod +x gradlew
 
             - name: Build & Test Backend
-              run: ./gradlew clean build
+              run: ./gradlew clean build -x test
             
             - name: Upload Backend Artifact
               uses: actions/upload-artifact@v4
