@@ -10,7 +10,7 @@ function MyPage(){
   const {getUserInfo, user, isAuthenticated}= userStateStore();
   const [passwordModal,setPasswordModal]= useState(false);
   const [passwordResetRequest,setPasswordResetRequest]=useState({
-    UserId:'',
+    userId:'',
     org_pass:'',
     new_pass:''
   });
@@ -28,9 +28,8 @@ function MyPage(){
   };
   const handlePasswordChange= async (e)=>{
     e.preventDefault();
-    console.log(passwordResetRequest.UserId);
     const response= await ApiService.user.reset_password({
-      UserId: passwordResetRequest.UserId,
+      userId: passwordResetRequest.userId,
       org_pass: passwordResetRequest.org_pass,
       new_pass: passwordResetRequest.new_pass
     });
@@ -63,12 +62,11 @@ function MyPage(){
                 
                 <Form.Floating  className="mb-3">
                   <Form.Label  className="form-label">ID</Form.Label>
-                  <Form.Control  
-                    id="inputUserId"
+                  <Form.Control
                     type="text" 
-                    name="UserId" 
+                    name="userId" 
                     placeholder="ID" 
-                    value={passwordResetRequest.UserId} 
+                    value={passwordResetRequest.userId} 
                     onChange={handleChange}
                   />
                 </Form.Floating>
