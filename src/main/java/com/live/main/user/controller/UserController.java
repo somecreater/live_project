@@ -4,6 +4,7 @@ import com.live.main.common.database.dto.ErrorCode;
 import com.live.main.common.exception.CustomException;
 import com.live.main.user.database.dto.CustomUserDetails;
 import com.live.main.user.database.dto.LoginRequest;
+import com.live.main.user.database.dto.ResetPasswordRequest;
 import com.live.main.user.database.dto.UserDto;
 import com.live.main.user.jwt.JwtService;
 import com.live.main.user.service.Interface.UserServiceInterface;
@@ -109,9 +110,7 @@ public class UserController {
   public ResponseEntity<?> UserInfo(@AuthenticationPrincipal CustomUserDetails principal){
     log.info("[GET] /api/user/info - {}",principal.getUserid());
     Map<String,Object> result=new HashMap<>();
-    UserDto request=new UserDto();
-    request.setLoginId(principal.getUserid());
-    UserDto userInfo=userService.GetUserInfo(request);
+    UserDto userInfo=userService.GetUserInfo(principal.getUserid());
 
     if(userInfo != null){
       result.put("result",true);
@@ -126,21 +125,66 @@ public class UserController {
   @PostMapping("/update")
   public ResponseEntity<?> UserUpdate(@AuthenticationPrincipal CustomUserDetails principal,
       @RequestBody UserDto userDto){
+    log.info("[POST] /api/user/update - {}",principal.getUserid());
     Map<String,Object> result=new HashMap<>();
+    if(principal.getUserid().compareTo(userDto.getLoginId()) != 0){
+      throw new CustomException(ErrorCode.USER_BAD_REQUEST);
+    }
+
+    UserDto updateUser=userService.UpdateUser(userDto);
+    if(updateUser == null){
+      throw new CustomException(ErrorCode.USER_BAD_REQUEST);
+    }else{
+      result.put("result",true);
+      result.put("newUser",updateUser);
+    }
+
     return ResponseEntity.ok(result);
   }
 
   @PostMapping("/reset_password")
-  public ResponseEntity<?> ResetPassword(){
+  public ResponseEntity<?> ResetPassword(@AuthenticationPrincipal CustomUserDetails principal,
+      @RequestBody ResetPasswordRequest resetPasswordRequest){
+    log.info("[POST] /api/user/reset_password - {}",principal.getUserid());
     Map<String,Object> result=new HashMap<>();
 
+    if(principal.getUserid().compareTo(resetPasswordRequest.getUserId()) != 0){
+      throw new CustomException(ErrorCode.USER_BAD_REQUEST);
+    }
+    boolean update=userService.UpdatePassword(
+        resetPasswordRequest.getUserId(),
+        resetPasswordRequest.getOrg_pass(),
+        resetPasswordRequest.getNew_pass());
+
+    if(update){
+      result.put("result", true);
+      result.put("UserId", resetPasswordRequest.getUserId());
+    }else{
+      result.put("result",false);
+      result.put("UserId", resetPasswordRequest.getUserId());
+    }
     return ResponseEntity.ok(result);
   }
 
   @PostMapping("/delete")
-  public ResponseEntity<?> UserDelete(){
+  public ResponseEntity<?> UserDelete(@AuthenticationPrincipal CustomUserDetails principal,
+      @RequestBody LoginRequest loginRequest){
+    log.info("[POST] /api/user/delete - {}",principal.getUserid());
     Map<String,Object> result=new HashMap<>();
 
+    if(principal.getUserid().compareTo(loginRequest.getLoginId()) != 0){
+      throw new CustomException(ErrorCode.USER_BAD_REQUEST);
+    }
+    UserDto user=userService.LoginUser(loginRequest.getLoginId(), loginRequest.getPass());
+    boolean delete=userService.DeleteUser(user);
+
+    if(delete){
+      result.put("result",true);
+      result.put("UserId",user.getLoginId());
+    }else{
+      result.put("result",false);
+      result.put("UserId",user.getLoginId());
+    }
     return ResponseEntity.ok(result);
   }
 
