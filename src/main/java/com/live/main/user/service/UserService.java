@@ -4,6 +4,7 @@ import com.live.main.common.database.dto.ErrorCode;
 import com.live.main.common.exception.CustomException;
 import com.live.main.user.database.dto.CustomUserDetails;
 import com.live.main.user.database.dto.UserDto;
+import com.live.main.user.database.entity.LoginType;
 import com.live.main.user.database.entity.UsersEntity;
 import com.live.main.user.database.mapper.UserMapper;
 import com.live.main.user.database.repository.UserRepository;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+/**추후 여러 기능이 추가됨에 따라 수정될 수도 있음 2025-11-17 */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -29,7 +31,7 @@ public class UserService implements UserServiceInterface, UserDetailsService {
   private final UserRepository userRepository;
   private final UserMapper userMapper;
 
-  //사용자 아이디로 사용자 인증 객체 생성
+  /**사용자 아이디로 사용자 인증 객체 생성 */
   @Transactional(readOnly = true)
   @Override
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -40,7 +42,6 @@ public class UserService implements UserServiceInterface, UserDetailsService {
     return new CustomUserDetails(optionalUsers.get());
   }
 
-  //회원 등록 기능
   @Transactional
   @Override
   public UserDto RegisterUser(UserDto userDto) {
@@ -78,7 +79,6 @@ public class UserService implements UserServiceInterface, UserDetailsService {
     return newUserInfo;
   }
 
-  //로그인 기능
   @Transactional(readOnly = true)
   @Override
   public UserDto LoginUser(String id, String pass) {
@@ -95,20 +95,16 @@ public class UserService implements UserServiceInterface, UserDetailsService {
     return userMapper.toDto(loginUser);
   }
 
-  // 현재는 아이디만 사용하지만 나중에는 채널명 등 여러 정보를 이용해서
-  // 회원정보를 가지고 올 수도 있다.
-  // 회원 정보 가져오기 기능
   @Transactional(readOnly = true)
   @Override
-  public UserDto GetUserInfo(UserDto userDto) {
+  public UserDto GetUserInfo(String LoginId) {
     UsersEntity usersEntity = null;
-    String LoginId = userDto.getLoginId();
     if(LoginId != null){
       usersEntity = userRepository.findByLoginId(LoginId).orElse(null);
     }
 
     if(usersEntity == null){
-      log.info("{} 아이디에 대한 정보가 없습니다.",userDto.getLoginId());
+      log.info("{} 아이디에 대한 정보가 없습니다.",LoginId);
       throw new CustomException(ErrorCode.USER_NOT_FOUND);
     }
     return userMapper.toDto(usersEntity);
@@ -121,22 +117,92 @@ public class UserService implements UserServiceInterface, UserDetailsService {
     }
     return userMapper.toDto(users);
   }
-  //회원 정보 수정 기능
   @Override
   public UserDto UpdateUser(UserDto userDto) {
-    
-    return null;
+    UsersEntity users = null;
+    if( userDto == null
+        || userDto.getUserType() == null
+        || userDto.getEmail() == null
+        || userDto.getLoginId() == null
+        || userDto.getNickname() == null
+        || userDto.getPhone() == null
+        || userDto.getLoginType() == null
+        || userDto.getPassword() == null){
+      log.info("회원 정보 수정을 시도하려고 했고 일부 정보가 누락되었습니다");
+      throw new CustomException(ErrorCode.USER_BAD_REQUEST);
+    }
+    if(userRepository.existsByEmailOrPhoneOrNickname(
+        userDto.getEmail(),
+        userDto.getPhone(),
+        userDto.getNickname()
+    )){
+      log.info("변경 가능한 정보들이 모두 일치하거나 다른 회원과 동일합니다.");
+      throw new CustomException(ErrorCode.USER_BAD_REQUEST);
+    }
+    users= userRepository.findByLoginId(userDto.getLoginId()).orElse(null);
+    if(users == null){
+      log.info("존재하지 않는 회원입니다.");
+      throw new CustomException(ErrorCode.USER_BAD_REQUEST);
+    }
+    if((users.getLoginType() == LoginType.GOOGLE || 
+        users.getLoginType() == LoginType.KAKAO)
+        && users.getEmail().compareTo(userDto.getEmail()) !=0 ){
+      log.info("Google, Kakao 회원은 이메일 변경이 불가능합니다.");
+      throw new CustomException(ErrorCode.USER_BAD_REQUEST);
+
+    }
+    if(userDto.getUserType().name().compareTo(users.getUserType().name()) == 0
+    && userDto.getEmail().compareTo(users.getEmail()) == 0
+    && userDto.getNickname().compareTo(users.getNickname()) == 0
+    && userDto.getPhone().compareTo(users.getPhone()) == 0) {
+      log.info("변경 가능한 정보들이 모두 일치하거나 다른 회원과 동일합니다.");
+      throw new CustomException(ErrorCode.USER_BAD_REQUEST);
+    }
+
+    users.setUserType(userDto.getUserType());
+    if((users.getLoginType() != LoginType.GOOGLE &&
+        users.getLoginType() != LoginType.KAKAO)
+        && users.getEmail().compareTo(userDto.getEmail()) !=0 ) {
+      users.setEmail(userDto.getEmail());
+    }
+    users.setNickname(userDto.getNickname());
+    users.setPhone(userDto.getPhone());
+    users.setUpdatedAt(LocalDateTime.now());
+    UsersEntity updateUser= userRepository.save(users);
+    UserDto update=userMapper.toDto(updateUser);
+    update.setPassword(null);
+    return update;
   }
 
-  //비밀번호 수정 기능
   @Override
-  public boolean UpdatePassword(UserDto userDto, String pass) {
-    return false;
+  public boolean UpdatePassword(String userId, String oldPass, String newPass) {
+    try {
+      if (oldPass.compareTo(newPass) == 0) {
+        log.info("기존 비밀번호와 새로운 비밀번호가 동일합니다.");
+        throw new CustomException(ErrorCode.USER_BAD_REQUEST);
+      }
+      UsersEntity user = userRepository.findByLoginId(userId).orElse(null);
+      if (user == null) {
+        log.info("존재하지 않는 회원입니다.");
+        throw new CustomException(ErrorCode.USER_BAD_REQUEST);
+      }
+
+      String encode = passwordEncoder.encode(newPass);
+      user.setPassword(encode);
+      userRepository.save(user);
+      return true;
+    }catch (Exception e){
+      e.printStackTrace();
+      log.info("비밀번호 변경 중 오류 발생");
+      return false;
+    }
   }
 
-  //회원 탈퇴 기능
   @Override
   public boolean DeleteUser(UserDto userDto) {
+    if(userRepository.deleteByLoginId(userDto.getLoginId())>0){
+      return true;
+    }
     return false;
   }
 }
