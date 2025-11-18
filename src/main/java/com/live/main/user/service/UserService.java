@@ -51,20 +51,18 @@ public class UserService implements UserServiceInterface, UserDetailsService {
       || userDto.getEmail() == null
       || userDto.getLoginId() == null
       || userDto.getNickname() == null
-      || userDto.getPhone() == null
       || userDto.getLoginType() == null
       || userDto.getPassword() == null){
       log.info("회원 등록을 시도하려고 했고 일부 정보가 누락되었습니다");
       throw new CustomException(ErrorCode.USER_BAD_REQUEST);
     }
-    if(userRepository.existsByLoginIdOrPhoneOrNickname(
+    if(userRepository.existsByLoginIdOrNickname(
         userDto.getLoginId(),
-        userDto.getPhone(),
         userDto.getNickname()
     )){
       throw new CustomException(ErrorCode.USER_BAD_REQUEST);
     }
-    if(userRepository.findByEmail(userDto.getEmail()).orElse(null) == null){
+    if(userRepository.findByEmail(userDto.getEmail()).orElse(null) != null){
       throw new CustomException(ErrorCode.USER_BAD_REQUEST);
     }
 
