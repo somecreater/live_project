@@ -168,7 +168,7 @@ public class UserController {
 
   @PostMapping("/delete")
   public ResponseEntity<?> UserDelete(@AuthenticationPrincipal CustomUserDetails principal,
-      @RequestBody LoginRequest loginRequest){
+      @RequestBody LoginRequest loginRequest, HttpServletResponse response){
     log.info("[POST] /api/user/delete - {}",principal.getUserid());
     Map<String,Object> result=new HashMap<>();
 
@@ -177,8 +177,18 @@ public class UserController {
     }
     UserDto user=userService.LoginUser(loginRequest.getLoginId(), loginRequest.getPass());
     boolean delete=userService.DeleteUser(user);
-
     if(delete){
+      jwtService.deleteRefreshToken(user.getLoginId());
+      ResponseCookie clearAccessCookie=ResponseCookie.from("accessToken","")
+          .httpOnly(true).secure(true).sameSite("None").path("/").maxAge(0)
+          .build();
+      ResponseCookie clearRefreshCookie=ResponseCookie.from("refreshToken","")
+          .httpOnly(true).secure(true).sameSite("None").path("/").maxAge(0)
+          .build();
+
+      response.addHeader(HttpHeaders.SET_COOKIE,clearAccessCookie.toString());
+      response.addHeader(HttpHeaders.SET_COOKIE, clearRefreshCookie.toString());
+
       result.put("result",true);
       result.put("UserId",user.getLoginId());
     }else{

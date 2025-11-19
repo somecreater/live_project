@@ -198,9 +198,6 @@ public class UserService implements UserServiceInterface, UserDetailsService {
 
   @Override
   public boolean DeleteUser(UserDto userDto) {
-    if(userRepository.deleteByLoginId(userDto.getLoginId())>0){
-      return true;
-    }
-    return false;
+      return userRepository.deleteByLoginId(userDto.getLoginId()) > 0;
   }
 }

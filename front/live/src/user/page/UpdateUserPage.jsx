@@ -10,7 +10,11 @@ function UpdateUserPage(){
     <div className="container d-flex justify-content-center align-items-center mt-5">
       <UpdateForm/>
       <div>
-        <Button>
+        <Button
+          className='btn_close'
+          variant='secondary'
+          onClick={()=>navigate('/user/mypage')}
+        >
           뒤로 가기
         </Button>
         
