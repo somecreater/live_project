@@ -51,20 +51,18 @@ public class UserService implements UserServiceInterface, UserDetailsService {
       || userDto.getEmail() == null
       || userDto.getLoginId() == null
       || userDto.getNickname() == null
-      || userDto.getPhone() == null
       || userDto.getLoginType() == null
       || userDto.getPassword() == null){
       log.info("회원 등록을 시도하려고 했고 일부 정보가 누락되었습니다");
       throw new CustomException(ErrorCode.USER_BAD_REQUEST);
     }
-    if(userRepository.existsByLoginIdOrPhoneOrNickname(
+    if(userRepository.existsByLoginIdOrNickname(
         userDto.getLoginId(),
-        userDto.getPhone(),
         userDto.getNickname()
     )){
       throw new CustomException(ErrorCode.USER_BAD_REQUEST);
     }
-    if(userRepository.findByEmail(userDto.getEmail()).orElse(null) == null){
+    if(userRepository.findByEmail(userDto.getEmail()).orElse(null) != null){
       throw new CustomException(ErrorCode.USER_BAD_REQUEST);
     }
 
@@ -117,63 +115,64 @@ public class UserService implements UserServiceInterface, UserDetailsService {
     }
     return userMapper.toDto(users);
   }
+
+  @Transactional
   @Override
   public UserDto UpdateUser(UserDto userDto) {
-    UsersEntity users = null;
-    if( userDto == null
-        || userDto.getUserType() == null
-        || userDto.getEmail() == null
-        || userDto.getLoginId() == null
-        || userDto.getNickname() == null
-        || userDto.getPhone() == null
-        || userDto.getLoginType() == null
-        || userDto.getPassword() == null){
-      log.info("회원 정보 수정을 시도하려고 했고 일부 정보가 누락되었습니다");
-      throw new CustomException(ErrorCode.USER_BAD_REQUEST);
-    }
-    if(userRepository.existsByEmailOrPhoneOrNickname(
-        userDto.getEmail(),
-        userDto.getPhone(),
-        userDto.getNickname()
-    )){
-      log.info("변경 가능한 정보들이 모두 일치하거나 다른 회원과 동일합니다.");
-      throw new CustomException(ErrorCode.USER_BAD_REQUEST);
-    }
-    users= userRepository.findByLoginId(userDto.getLoginId()).orElse(null);
-    if(users == null){
-      log.info("존재하지 않는 회원입니다.");
-      throw new CustomException(ErrorCode.USER_BAD_REQUEST);
-    }
-    if((users.getLoginType() == LoginType.GOOGLE || 
-        users.getLoginType() == LoginType.KAKAO)
-        && users.getEmail().compareTo(userDto.getEmail()) !=0 ){
-      log.info("Google, Kakao 회원은 이메일 변경이 불가능합니다.");
-      throw new CustomException(ErrorCode.USER_BAD_REQUEST);
+      try {
+          UsersEntity users = null;
+          if (userDto == null
+                  || userDto.getUserType() == null
+                  || userDto.getEmail() == null
+                  || userDto.getLoginId() == null
+                  || userDto.getNickname() == null
+                  || userDto.getPhone() == null
+                  || userDto.getLoginType() == null
+                  || userDto.getPassword() == null) {
+              log.info("회원 정보 수정을 시도하려고 했고 일부 정보가 누락되었습니다");
+              throw new CustomException(ErrorCode.USER_BAD_REQUEST);
+          }
+          users = userRepository.findByLoginId(userDto.getLoginId()).orElse(null);
+          if (users == null) {
+              log.info("존재하지 않는 회원입니다.");
+              throw new CustomException(ErrorCode.USER_BAD_REQUEST);
+          }
+          if ((users.getLoginType() == LoginType.GOOGLE ||
+                  users.getLoginType() == LoginType.KAKAO)
+                  && users.getEmail().compareTo(userDto.getEmail()) != 0) {
+              log.info("Google, Kakao 회원은 이메일 변경이 불가능합니다.");
+              throw new CustomException(ErrorCode.USER_BAD_REQUEST);
 
-    }
-    if(userDto.getUserType().name().compareTo(users.getUserType().name()) == 0
-    && userDto.getEmail().compareTo(users.getEmail()) == 0
-    && userDto.getNickname().compareTo(users.getNickname()) == 0
-    && userDto.getPhone().compareTo(users.getPhone()) == 0) {
-      log.info("변경 가능한 정보들이 모두 일치하거나 다른 회원과 동일합니다.");
-      throw new CustomException(ErrorCode.USER_BAD_REQUEST);
-    }
+          }
+          if (userDto.getUserType().name().compareTo(users.getUserType().name()) == 0
+                  && userDto.getEmail().compareTo(users.getEmail()) == 0
+                  && userDto.getNickname().compareTo(users.getNickname()) == 0
+                  && userDto.getPhone().compareTo(users.getPhone()) == 0) {
+              log.info("변경 가능한 정보들이 모두 일치하거나 다른 회원과 동일합니다.");
+              throw new CustomException(ErrorCode.USER_BAD_REQUEST);
+          }
 
-    users.setUserType(userDto.getUserType());
-    if((users.getLoginType() != LoginType.GOOGLE &&
-        users.getLoginType() != LoginType.KAKAO)
-        && users.getEmail().compareTo(userDto.getEmail()) !=0 ) {
-      users.setEmail(userDto.getEmail());
-    }
-    users.setNickname(userDto.getNickname());
-    users.setPhone(userDto.getPhone());
-    users.setUpdatedAt(LocalDateTime.now());
-    UsersEntity updateUser= userRepository.save(users);
-    UserDto update=userMapper.toDto(updateUser);
-    update.setPassword(null);
-    return update;
+          users.setUserType(userDto.getUserType());
+          if ((users.getLoginType() != LoginType.GOOGLE &&
+                  users.getLoginType() != LoginType.KAKAO)
+                  && users.getEmail().compareTo(userDto.getEmail()) != 0) {
+              users.setEmail(userDto.getEmail());
+          }
+          users.setNickname(userDto.getNickname());
+          users.setPhone(userDto.getPhone());
+          users.setUpdatedAt(LocalDateTime.now());
+          UsersEntity updateUser = userRepository.save(users);
+          UserDto update = userMapper.toDto(updateUser);
+          update.setPassword(null);
+          return update;
+      } catch (Exception e) {
+          e.printStackTrace();
+          log.info("{}님의 정보를 수정하는 과정에서 오류 발생", userDto.getLoginId());
+          throw new CustomException(ErrorCode.USER_BAD_REQUEST);
+      }
   }
 
+  @Transactional
   @Override
   public boolean UpdatePassword(String userId, String oldPass, String newPass) {
     try {
@@ -198,11 +197,9 @@ public class UserService implements UserServiceInterface, UserDetailsService {
     }
   }
 
+  @Transactional
   @Override
   public boolean DeleteUser(UserDto userDto) {
-    if(userRepository.deleteByLoginId(userDto.getLoginId())>0){
-      return true;
-    }
-    return false;
+      return userRepository.deleteByLoginId(userDto.getLoginId()) > 0;
   }
 }

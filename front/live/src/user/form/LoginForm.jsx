@@ -3,6 +3,7 @@ import { Form, Button } from "react-bootstrap";
 import { userStateStore } from "../../common/context/userStateStore";
 import ApiService from "../../common/api/ApiService";
 import { useNavigate } from "react-router-dom";
+import { API_END_POINT } from "../../common/api/Api";
 
 function LoginForm(){
   const [loginId,setLoginId] = useState("");
@@ -13,7 +14,12 @@ function LoginForm(){
   const handleSign = ()=>{
     navigate("/user/sign");
   };
-
+  const handleGoogleLogin = ()=>{
+    window.location.href= API_END_POINT.user.googleLogin;
+  };
+  const handleKakaoLogin = ()=>{
+    window.location.href= API_END_POINT.user.kakaoLogin;
+  };
   const handleLogin = async (e)=>{
     e.preventDefault();
     try{
@@ -42,7 +48,8 @@ function LoginForm(){
 
       <Button variant="info" onClick={handleSign}>Sign</Button>
       <Button type="submit" variant="primary">Login</Button>
-
+      <Button type="button" variant="secondary" onClick={handleGoogleLogin}>Google Login</Button>
+      <Button type="button" variant="secondary" onClick={handleKakaoLogin}>Kakao Login</Button>
     </Form>
   );
 }

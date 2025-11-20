@@ -4,6 +4,8 @@ import HomePage from './common/page/HomePage';
 import LoginPage from './user/page/LoginPage';
 import SignPage from './user/page/SignPage';
 import MyPage from './user/page/MyPage';
+import ManagerPage from './user/page/ManagerPage';
+import UpdateUserPage from './user/page/UpdateUserPage';
 
 function App() {
 
@@ -13,9 +15,11 @@ function App() {
         <main className='main-content'>
           <Routes>
             <Route path="/" element={<HomePage/>}/>
-            <Route path="/user/login" element={<LoginPage />}/>
+            <Route path="/user/login" element={<LoginPage />} />
             <Route path="/user/sign" element={<SignPage/>} />
             <Route path="/user/mypage" element={<MyPage/>} />
+            <Route path="/user/update" element={<UpdateUserPage/>} />
+            <Route path="/manager" element={<ManagerPage/>} />
           </Routes>
         </main>
       </div>

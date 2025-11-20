@@ -6,12 +6,14 @@ import com.live.main.user.jwt.JwtService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -20,6 +22,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 public class Oauth2SuccessHandler implements AuthenticationSuccessHandler {
 
@@ -36,9 +39,12 @@ public class Oauth2SuccessHandler implements AuthenticationSuccessHandler {
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
       Authentication authentication) throws IOException, ServletException {
-    OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
+
+    OAuth2AuthenticationToken authenticationToken= (OAuth2AuthenticationToken) authentication;
+    OAuth2User oAuth2User =  authenticationToken.getPrincipal();
+
     Map<String,Object> attributes=oAuth2User.getAttributes();
-    String loginServer = (String)attributes.get("registrationId");
+    String loginServer = authenticationToken.getAuthorizedClientRegistrationId();
     String userName = (String)attributes.get("username");
 
     Oauth2User customOauth2User = switch (loginServer) {
