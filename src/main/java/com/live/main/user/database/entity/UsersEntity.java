@@ -18,7 +18,7 @@ public class UsersEntity extends timeEntity {
   @Column(name = "login_id", unique = true, nullable = false, updatable = false)
   private String loginId;
 
-  @Column
+  @Column(unique = true)
   private String email;
 
   @Column(nullable = false)
@@ -27,7 +27,7 @@ public class UsersEntity extends timeEntity {
   @Column(unique = true)
   private String phone;
 
-  @Column
+  @Column(unique = true)
   private String nickname;
 
   @Enumerated(EnumType.STRING)
