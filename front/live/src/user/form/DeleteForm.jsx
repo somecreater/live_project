@@ -27,6 +27,7 @@ function DeleteForm({props}){
       const data= response.data;
       if(data.result){
         alert(data.UserId+" 회원탈퇴가 정상적으로 처리되었습니다.");
+        navigate('/user/login');
       }else{
         alert(data.UserId+" 회원탈퇴에 실패했습니다.");
       }

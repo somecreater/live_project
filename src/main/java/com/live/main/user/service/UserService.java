@@ -115,6 +115,8 @@ public class UserService implements UserServiceInterface, UserDetailsService {
     }
     return userMapper.toDto(users);
   }
+
+  @Transactional
   @Override
   public UserDto UpdateUser(UserDto userDto) {
     UsersEntity users = null;
@@ -172,6 +174,7 @@ public class UserService implements UserServiceInterface, UserDetailsService {
     return update;
   }
 
+  @Transactional
   @Override
   public boolean UpdatePassword(String userId, String oldPass, String newPass) {
     try {
@@ -196,6 +199,7 @@ public class UserService implements UserServiceInterface, UserDetailsService {
     }
   }
 
+  @Transactional
   @Override
   public boolean DeleteUser(UserDto userDto) {
       return userRepository.deleteByLoginId(userDto.getLoginId()) > 0;
