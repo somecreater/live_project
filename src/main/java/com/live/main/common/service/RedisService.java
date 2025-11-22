@@ -45,6 +45,13 @@ public class RedisService {
     }
 
     /**
+     * 값 증가(+1)
+     */
+    public Long increment(String key){
+        return stringRedisTemplate.opsForValue().increment(key);
+    }
+
+    /**
      * 객체 저장
      */
     public void setObject(String key, Object value) {
