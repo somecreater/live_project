@@ -17,6 +17,7 @@ public class EmailVerificationRepository {
 
   private final RedisService redisService;
   private final String PREFIX="VERIFY_EMAIL:";
+  private final String VERIFIED_PREFIX="CACHE_MAIL:";
   private final String LIMIT_PREFIX="LIMIT_VERIFY_EMAIL:";
 
   @Value("${app.verification-limit}")
@@ -32,6 +33,18 @@ public class EmailVerificationRepository {
 
   public void delete(String email){
       redisService.delete(PREFIX+email);
+  }
+
+  public void saveMailCache(String email, String LoginId){
+    redisService.setIfAbsent(VERIFIED_PREFIX+email,LoginId,7,TimeUnit.DAYS);
+  }
+
+  public String getMailCache(String email){
+    return redisService.get(VERIFIED_PREFIX+email);
+  }
+
+  public void deleteMailCache(String email){
+    redisService.delete(VERIFIED_PREFIX+email);
   }
 
   public int limit_save(String email){

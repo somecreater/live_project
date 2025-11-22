@@ -38,6 +38,13 @@ public class RedisService {
     }
 
     /**
+     * 문자열 값 저장 (만약 값이 이미 있으면 그대로 유지)
+     */
+    public void setIfAbsent(String key, String value, long timeout, TimeUnit unit) {
+        stringRedisTemplate.opsForValue().setIfAbsent(key, value, timeout, unit);
+    }
+
+    /**
      * 문자열 값 조회
      */
     public String get(String key) {
@@ -63,6 +70,12 @@ public class RedisService {
      */
     public void setObject(String key, Object value, long timeout, TimeUnit unit) {
         redisTemplate.opsForValue().set(key, value, timeout, unit);
+    }
+    /**
+     * 문자열 값 저장 (만약 값이 이미 있으면 그대로 유지)
+     */
+    public void setObjectIfAbsent(String key, Object value, long timeout, TimeUnit unit){
+        redisTemplate.opsForValue().setIfAbsent(key, value, timeout, unit);
     }
 
     /**
