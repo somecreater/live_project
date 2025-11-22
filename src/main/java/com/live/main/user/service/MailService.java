@@ -1,5 +1,7 @@
 package com.live.main.user.service;
 
+import com.live.main.common.database.dto.ErrorCode;
+import com.live.main.common.exception.CustomException;
 import com.live.main.user.database.repository.EmailVerificationRepository;
 import com.live.main.user.service.Interface.MailServiceInterface;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,8 @@ import java.security.SecureRandom;
 @Service
 public class MailService implements MailServiceInterface {
 
+  @Value("${app.verification-limit}")
+  private int LIMIT_EMAIL_NUM;
   private final String VERIFICATION_TITLE="님 인증코드를 전송하였습니다";
   private final String VERIFICATION_CONTENT="인증코드 입니다. 해당 코드는 유출하면 안됩니다.";
 
@@ -40,11 +44,16 @@ public class MailService implements MailServiceInterface {
   @Override
   public boolean sendMail(String toMail, String title, String content) {
     try{
-      SimpleMailMessage  message= new SimpleMailMessage();
+      int count= emailVerificationRepository.limit_save(toMail);
+      if(count == Integer.MAX_VALUE){
+        throw new CustomException(ErrorCode.ACCESS_LIMIT);
+      }
+      SimpleMailMessage message= new SimpleMailMessage();
       message.setFrom(FromMail);
       message.setTo(toMail);
-      message.setSubject(title);
+      message.setSubject(title+" "+count+" 번째 시도(제한 횟수:"+LIMIT_EMAIL_NUM+")");
       message.setText(content);
+      mailSender.send(message);
       return true;
     } catch (Exception e) {
       e.printStackTrace();
