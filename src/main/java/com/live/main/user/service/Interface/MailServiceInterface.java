@@ -5,7 +5,7 @@ package com.live.main.user.service.Interface;
 public interface MailServiceInterface {
 
   /**인증번호 생성 및 저장*/
-  public String generatorCode(String mail);
+  public String generatorCode();
   /**메일 전송*/
   public boolean sendMail(String toMail, String title, String content);
   /**인증번호 전송*/

@@ -71,7 +71,7 @@ public class MailService implements MailServiceInterface {
   }
 
   @Override
-  public String generatorCode(String mail){
+  public String generatorCode(){
     SecureRandom random = new SecureRandom();
     StringBuilder code = new StringBuilder(VERIFICATION_CODE_LENGTH);
 
@@ -80,7 +80,6 @@ public class MailService implements MailServiceInterface {
       code.append(VERIFICATION_CODE_RANGE.charAt(index));
     }
 
-    emailVerificationRepository.save(mail, code.toString());
     return code.toString();
   }
 
@@ -90,7 +89,8 @@ public class MailService implements MailServiceInterface {
       if(userRepository.findByEmail(mail).isPresent()){
         return false;
       }
-      String code=generatorCode(mail);
+      String code=generatorCode();
+      emailVerificationRepository.save(mail, code);
 
       String title=mail+VERIFICATION_TITLE;
       String content=VERIFICATION_CONTENT+"\n\n\n\n"+code;
@@ -125,7 +125,8 @@ public class MailService implements MailServiceInterface {
         return false;
       }
 
-      String code=generatorCode(mail);
+      String code=generatorCode();
+      emailVerificationRepository.save(mail, code);
       String Title = mail + VERIFICATION_TITLE + "(Login ID Search)";
       String Content = VERIFICATION_CONTENT + "\n\n\n\n" + code;
       if(sendMail(mail, Title, Content)){
@@ -160,7 +161,8 @@ public class MailService implements MailServiceInterface {
       return false;
     }
 
-    String code=generatorCode(mail);
+    String code=generatorCode();
+    emailVerificationRepository.save(mail, code);
     String Title = mail + VERIFICATION_TITLE + "(Login Password Search)";
     String Content = VERIFICATION_CONTENT + "\n\n\n\n" + code;
 
@@ -171,14 +173,7 @@ public class MailService implements MailServiceInterface {
   public boolean searchPass(String mail, String code){
     try {
       if (CheckVerification(mail, code)) {
-        SecureRandom random = new SecureRandom();
-        StringBuilder newPassword = new StringBuilder(VERIFICATION_CODE_LENGTH);
-
-        for (int i = 0; i < VERIFICATION_CODE_LENGTH; i++) {
-          int index = random.nextInt(VERIFICATION_CODE_RANGE.length());
-          newPassword.append(VERIFICATION_CODE_RANGE.charAt(index));
-        }
-
+        String newPassword=generatorCode();
         String encode=passwordEncoder.encode(newPassword);
         userRepository.updatePasswordByEmail(encode,mail);
         String Title = "새로운 비밀번호 입니다. 외부로 유출하지 마세요.";
