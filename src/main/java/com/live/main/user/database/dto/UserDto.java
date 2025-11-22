@@ -11,6 +11,7 @@ public class UserDto {
   private Long id;
   private String loginId;
   private String email;
+  private boolean emailVerification;
   private String password;
   private String phone;
   private String nickname;

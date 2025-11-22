@@ -12,6 +12,10 @@ export const API_END_POINT={
     update: `${API_BASE_URL}/api/user/update`,
     reset_password: `${API_BASE_URL}/api/user/reset_password`,
     delete: `${API_BASE_URL}/api/user/delete`
+  },
+  mail:{
+    sendVerification: `${API_BASE_URL}/public/mail/send_verification`,
+    checkVerification: `${API_BASE_URL}/public/mail/verification`
   }
 }
 

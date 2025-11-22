@@ -45,6 +45,13 @@ public class RedisService {
     }
 
     /**
+     * 값 증가(+1)
+     */
+    public Long increment(String key){
+        return stringRedisTemplate.opsForValue().increment(key);
+    }
+
+    /**
      * 객체 저장
      */
     public void setObject(String key, Object value) {
@@ -69,14 +76,14 @@ public class RedisService {
      * 키 존재 여부 확인
      */
     public boolean hasKey(String key) {
-        return Boolean.TRUE.equals(redisTemplate.hasKey(key));
+        return redisTemplate.hasKey(key);
     }
 
     /**
      * 키 삭제
      */
     public boolean delete(String key) {
-        return Boolean.TRUE.equals(redisTemplate.delete(key));
+        return redisTemplate.delete(key);
     }
 
     /**
@@ -90,7 +97,7 @@ public class RedisService {
      * 키 만료 시간 설정
      */
     public boolean expire(String key, long timeout, TimeUnit unit) {
-        return Boolean.TRUE.equals(redisTemplate.expire(key, timeout, unit));
+        return redisTemplate.expire(key, timeout, unit);
     }
 
     /**

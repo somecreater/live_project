@@ -15,6 +15,7 @@ public class UserMapper {
     userDto.setId(entity.getId());
     userDto.setLoginId(entity.getLoginId());
     userDto.setEmail(entity.getEmail());
+    userDto.setEmailVerification(entity.isEmailVerification());
     userDto.setPhone(entity.getPhone());
     userDto.setNickname(entity.getNickname());
     userDto.setLoginType(entity.getLoginType());
@@ -29,6 +30,7 @@ public class UserMapper {
     users.setId(dto.getId());
     users.setLoginId(dto.getLoginId());
     users.setEmail(dto.getEmail());
+    users.setEmailVerification(dto.isEmailVerification());
     users.setPassword(dto.getPassword());
     users.setPhone(dto.getPhone());
     users.setNickname(dto.getNickname());

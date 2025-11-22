@@ -54,16 +54,18 @@ public class UserService implements UserServiceInterface, UserDetailsService {
       || userDto.getLoginType() == null
       || userDto.getPassword() == null){
       log.info("회원 등록을 시도하려고 했고 일부 정보가 누락되었습니다");
-      throw new CustomException(ErrorCode.USER_BAD_REQUEST);
+      throw new CustomException(ErrorCode.SIGN_BAD_REQUEST);
     }
     if(userRepository.existsByLoginIdOrNickname(
         userDto.getLoginId(),
         userDto.getNickname()
     )){
-      throw new CustomException(ErrorCode.USER_BAD_REQUEST);
+      throw new CustomException(ErrorCode.SIGN_BAD_REQUEST);
     }
-    if(userRepository.findByEmail(userDto.getEmail()).orElse(null) != null){
-      throw new CustomException(ErrorCode.USER_BAD_REQUEST);
+    if(userRepository.findByEmail(userDto.getEmail()).orElse(null) != null
+      || !userDto.isEmailVerification()){
+      log.info("회원 등록에 사용된 이메일이 이미 존재하거나, 미인증 상태입니다.");
+      throw new CustomException(ErrorCode.SIGN_BAD_REQUEST);
     }
 
     userDto.setCreatedAt(LocalDateTime.now());
