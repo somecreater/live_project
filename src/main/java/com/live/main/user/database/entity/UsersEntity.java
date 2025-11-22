@@ -21,6 +21,9 @@ public class UsersEntity extends timeEntity {
   @Column(unique = true)
   private String email;
 
+  @Column(name = "email_verification")
+  private boolean emailVerification;
+
   @Column(nullable = false)
   private String password;
 
