@@ -31,6 +31,16 @@ const ApiService={
       headers: createHeaders(),
       withCredentials: true, 
     })
+  },
+  mail:{
+    send_verification: (dto) => RefreshApi.post(API_END_POINT.mail.sendVerification, dto, {
+      headers: createHeaders(),
+      withCredentials: true, 
+    }),
+    check_verification: (dto) => RefreshApi.post(API_END_POINT.mail.checkVerification, dto, {
+      headers: createHeaders(),
+      withCredentials: true, 
+    })
   }
 
 }
