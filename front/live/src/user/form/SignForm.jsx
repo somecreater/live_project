@@ -119,27 +119,25 @@ function SignForm(){
         ):(
           <div>
             {mailSend?(
-              (
-                <div>
-                  <InputGroup className="mb-3">
-                    <InputGroup.Text>CODE</InputGroup.Text>
-                    <Form.Control className="form-control" 
-                      type="text" 
-                      name="code"
-                      placeholder="EMAIL CODE"
-                      value={code}
-                      onChange={(e)=>setCode(e.target.value)}
-                    />
-                  </InputGroup>
-                  <Button 
-                    type="button"
-                    className="btn btn-primary w-100 mt-2"
-                    onClick={handleEmailCheck}
-                  >
-                    인증코드 확인
-                  </Button>
-                </div>
-              )
+              <div>
+                <InputGroup className="mb-3">
+                  <InputGroup.Text>CODE</InputGroup.Text>
+                  <Form.Control className="form-control" 
+                    type="text" 
+                    name="code"
+                    placeholder="EMAIL CODE"
+                    value={code}
+                    onChange={(e)=>setCode(e.target.value)}
+                  />
+                </InputGroup>
+                <Button 
+                  type="button"
+                  className="btn btn-primary w-100 mt-2"
+                  onClick={handleEmailCheck}
+                >
+                  인증코드 확인
+                </Button>
+              </div>
             ):(
               <div>
                 <Button 
