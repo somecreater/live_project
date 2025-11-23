@@ -6,6 +6,7 @@ import { Button, Modal } from 'react-bootstrap';
 import PasswordForm from '../form/PasswordForm';
 import CustomModal from '../../common/component/CustomModal';
 import DeleteForm from '../form/DeleteForm';
+import LogoutButton from '../component/LogoutButton';
 
 function MyPage(){
   
@@ -41,6 +42,7 @@ function MyPage(){
     <div className="container d-flex justify-content-center align-items-center mt-5">
         <User user={user} isAuthenticated={isAuthenticated}/>
         <div>
+          <LogoutButton/>
           <Button onClick={handleDeleteModal}>회원 탈퇴</Button>
           <Button onClick={()=>navigate('/user/update')}>회원정보 수정</Button>
           <Button onClick={handlePasswordModal}>비밀번호 변경</Button>

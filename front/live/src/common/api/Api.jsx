@@ -6,7 +6,7 @@ export const API_END_POINT={
     login: `${API_BASE_URL}/api/user/login`,
     kakaoLogin: `${API_BASE_URL}/oauth2/authorization/kakao`,
     googleLogin: `${API_BASE_URL}/oauth2/authorization/google`,
-    logout: `${API_BASE_URL}/api/user/login`,
+    logout: `${API_BASE_URL}/api/user/logout`,
     register: `${API_BASE_URL}/api/user/register`,
     info: `${API_BASE_URL}/api/user/info`,
     update: `${API_BASE_URL}/api/user/update`,
