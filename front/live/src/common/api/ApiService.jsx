@@ -40,6 +40,22 @@ const ApiService={
     check_verification: (dto) => RefreshApi.post(API_END_POINT.mail.checkVerification, dto, {
       headers: createHeaders(),
       withCredentials: true, 
+    }),
+    send_mail_login_id: (dto) => RefreshApi.post(API_END_POINT.mail.sendMailLoginId, dto,{
+      headers: createHeaders(),
+      withCredentials: true, 
+    }),
+    search_login_id: (dto) => RefreshApi.post(API_END_POINT.mail.getLoginId, dto, {
+      headers: createHeaders(),
+      withCredentials: true, 
+    }),
+    send_mail_password: (dto) => RefreshApi.post(API_END_POINT.mail.sendMailPass, dto, {
+      headers: createHeaders(),
+      withCredentials: true, 
+    }),
+    search_password: (dto) => RefreshApi.post(API_END_POINT.mail.getPass, dto,{
+      headers: createHeaders(),
+      withCredentials: true, 
     })
   }
 

@@ -15,7 +15,11 @@ export const API_END_POINT={
   },
   mail:{
     sendVerification: `${API_BASE_URL}/public/mail/send_verification`,
-    checkVerification: `${API_BASE_URL}/public/mail/verification`
+    checkVerification: `${API_BASE_URL}/public/mail/verification`,
+    sendMailLoginId: `${API_BASE_URL}/public/mail/SearchId`,
+    getLoginId: `${API_BASE_URL}/public/mail/GetId`,
+    sendMailPass: `${API_BASE_URL}/public/mail/SearchPassword`,
+    getPass:`${API_BASE_URL}/public/mail/GetPassword`
   }
 }
 
