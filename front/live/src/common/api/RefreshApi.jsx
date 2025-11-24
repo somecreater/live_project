@@ -6,21 +6,28 @@ const RefreshApi = axios.create({
   withCredentials: true,
 });
 
+function handleApiError(error){
+  const status = error.response?.status;
+  const data = error.response?.data || {};
+  const message = data.message || "알 수 없는 오류가 발생했습니다.";
+  
+  localStorage.setItem("lastError", JSON.stringify(data));
+
+  console.log(data);
+
+  //if (status >= 400) window.location.href='/error/'+status;
+  if (status === 401) {
+    window.location.href = "/user/login"; 
+  }
+  return Promise.reject(new Error(message));
+}
+
 //토큰 재발급은 서버 로직에서 해결
 RefreshApi.interceptors.response.use(
   (response) => response,
   (error) => {
-    const status=error.response?.status;
-    const key = 'lastError';
-    const payload = error.response?.data || {}
-    localStorage.setItem(key, JSON.stringify(payload));
-
-    //if (status >= 400) window.location.href='/error/'+status;
-    console.log(payload);
-    if(status == 401) window.location.href= 'user/login';
-    return Promise.reject(error);
+    return handleApiError(error);
   }
-
 );
 
 export default RefreshApi;

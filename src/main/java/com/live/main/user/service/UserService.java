@@ -7,6 +7,7 @@ import com.live.main.user.database.dto.UserDto;
 import com.live.main.user.database.entity.LoginType;
 import com.live.main.user.database.entity.UsersEntity;
 import com.live.main.user.database.mapper.UserMapper;
+import com.live.main.user.database.repository.LoginRepository;
 import com.live.main.user.database.repository.UserRepository;
 import com.live.main.user.service.Interface.UserServiceInterface;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ public class UserService implements UserServiceInterface, UserDetailsService {
 
   private final PasswordEncoder passwordEncoder;
   private final UserRepository userRepository;
+  private final LoginRepository loginRepository;
   private final UserMapper userMapper;
 
   /**사용자 아이디로 사용자 인증 객체 생성 */
@@ -83,15 +85,26 @@ public class UserService implements UserServiceInterface, UserDetailsService {
   @Override
   public UserDto LoginUser(String id, String pass) {
     UsersEntity loginUser=userRepository.findByLoginId(id).orElse(null);
+    int login_try= Integer.parseInt(loginRepository.get(id));
     if(loginUser == null){
       log.info("{} 에 대한 정보가 없습니다.",id);
       throw new CustomException(ErrorCode.FAILURE_LOGIN);
     }
     if(!passwordEncoder.matches(pass, loginUser.getPassword())){
       log.info("{} 이 로그인을 시도하였고 비밀번호가 틀렸습니다", id);
+      login_try=loginRepository.save(id);
+
+      if(login_try == Integer.MAX_VALUE){
+        log.info("{}의 로그인 시도 횟수가 너무 많습니다. 메일 인증으로 비밀번호 초기화 필요합니다.", id);
+        throw new CustomException(ErrorCode.LOGIN_LIMIT);
+      }
       throw new CustomException(ErrorCode.FAILURE_LOGIN);
     }
 
+    if(login_try == Integer.MAX_VALUE){
+      log.info("{}의 로그인 시도 횟수가 너무 많습니다. 메일 인증으로 비밀번호 초기화 필요합니다.", id);
+      throw new CustomException(ErrorCode.LOGIN_LIMIT);
+    }
     return userMapper.toDto(loginUser);
   }
 
@@ -157,7 +170,8 @@ public class UserService implements UserServiceInterface, UserDetailsService {
           users.setUserType(userDto.getUserType());
           if ((users.getLoginType() != LoginType.GOOGLE &&
                   users.getLoginType() != LoginType.KAKAO)
-                  && users.getEmail().compareTo(userDto.getEmail()) != 0) {
+                  && (users.getEmail().compareTo(userDto.getEmail()) != 0
+                  && userDto.isEmailVerification())) {
               users.setEmail(userDto.getEmail());
           }
           users.setNickname(userDto.getNickname());
@@ -191,6 +205,8 @@ public class UserService implements UserServiceInterface, UserDetailsService {
       String encode = passwordEncoder.encode(newPass);
       user.setPassword(encode);
       userRepository.save(user);
+      loginRepository.delete(userId);
+
       return true;
     }catch (Exception e){
       e.printStackTrace();

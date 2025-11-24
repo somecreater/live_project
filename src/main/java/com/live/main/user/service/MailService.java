@@ -5,6 +5,7 @@ import com.live.main.common.exception.CustomException;
 import com.live.main.common.service.Interface.CommonServiceInterface;
 import com.live.main.user.database.entity.UsersEntity;
 import com.live.main.user.database.repository.EmailVerificationRepository;
+import com.live.main.user.database.repository.LoginRepository;
 import com.live.main.user.database.repository.UserRepository;
 import com.live.main.user.service.Interface.MailServiceInterface;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ public class MailService implements MailServiceInterface {
   private final JavaMailSender mailSender;
   private final EmailVerificationRepository emailVerificationRepository;
   private final UserRepository userRepository;
+  private final LoginRepository loginRepository;
   private final PasswordEncoder passwordEncoder;
   private final CommonServiceInterface commonService;
 
@@ -169,12 +171,18 @@ public class MailService implements MailServiceInterface {
     return sendMail(mail, Title, Content);
   }
 
+  @Transactional
   @Override
   public boolean searchPass(String mail, String code){
     try {
       if (CheckVerification(mail, code)) {
         String newPassword=generatorCode();
         String encode=passwordEncoder.encode(newPassword);
+        UsersEntity users=userRepository.findByEmail(mail).orElse(null);
+        if (users != null) {
+          String login_id=users.getLoginId();
+          loginRepository.delete(login_id);
+        }
         userRepository.updatePasswordByEmail(encode,mail);
         String Title = "새로운 비밀번호 입니다. 외부로 유출하지 마세요.";
         String Content = "외부 유출 금지!!!! 첫 로그인 이후 바로 비밀번호 수정 권장! \n\n\n\n\n"+newPassword;
