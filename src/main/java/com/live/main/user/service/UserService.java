@@ -85,7 +85,8 @@ public class UserService implements UserServiceInterface, UserDetailsService {
   @Override
   public UserDto LoginUser(String id, String pass) {
     UsersEntity loginUser=userRepository.findByLoginId(id).orElse(null);
-    int login_try= Integer.parseInt(loginRepository.get(id));
+    String login_try_str=loginRepository.get(id);
+    int login_try= login_try_str == null ? 0 : Integer.parseInt(login_try_str);
     if(loginUser == null){
       log.info("{} 에 대한 정보가 없습니다.",id);
       throw new CustomException(ErrorCode.FAILURE_LOGIN);
