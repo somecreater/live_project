@@ -12,7 +12,7 @@ public interface ProfileServiceInterface {
   /**프로필 이미지 삭제 기능*/
   public void profile_delete(String fileName, String UserLoginId);
   /**프로필 이미지 가져오기(객체) 기능*/
-  public ProfileImageDto profile_get(String fileName, String UserLoginId);
+  public ProfileImageDto profile_get(String UserLoginId);
   /**프로필 이미지 가져오기(파일) 기능*/
-  public InputStreamResource profile_download(String fileName, String UserLoginId);
+  public InputStreamResource profile_download(String UserLoginId);
 }

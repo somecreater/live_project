@@ -98,8 +98,8 @@ public class ProfileService implements ProfileServiceInterface {
 
   @Override
   @Transactional(readOnly = true)
-  public ProfileImageDto profile_get(String fileName, String UserLoginId){
-    ProfileImageEntity entity= profileImageRepository.findByImageName(fileName).orElse(null);
+  public ProfileImageDto profile_get(String userLoginId){
+    ProfileImageEntity entity= profileImageRepository.findByUsers_LoginId(userLoginId).orElse(null);
     if(entity != null) {
       return profileImageMapper.toDto(entity);
     }else{
@@ -107,9 +107,18 @@ public class ProfileService implements ProfileServiceInterface {
     }
   }
 
-  public InputStreamResource profile_download(String fileName, String UserLoginId){
+  @Override
+  @Transactional(readOnly = true)
+  public InputStreamResource profile_download(String userLoginId){
     try{
-      String key =profileFolderName+"/"+UserLoginId+"/"+fileName;
+      ProfileImageEntity profileImageEntity=profileImageRepository
+        .findByUsers_LoginId(userLoginId).orElse(null);
+      if(profileImageEntity == null){
+          throw new CustomException(ErrorCode.NOT_FOUND);
+      }
+      String fileName=  profileImageEntity.getImageName();
+
+      String key =profileFolderName+"/"+userLoginId+"/"+fileName;
       S3Resource s3Resource=s3Template.download(bucket_name,key);
       InputStream in=s3Resource.getInputStream();
       return new InputStreamResource(in);
