@@ -12,11 +12,27 @@ public class ProfileImageMapper {
   private final UserRepository userRepository;
 
   public ProfileImageEntity toEntity(ProfileImageDto profileImageDto){
-    return null;
+    ProfileImageEntity entity=new ProfileImageEntity();
+    entity.setId(profileImageDto.getId());
+    entity.setImageName(profileImageDto.getImageName());
+    entity.setImageUrl(profileImageDto.getImageUrl());
+    entity.setSize(profileImageDto.getSize());
+    entity.setFileType(profileImageDto.getFileType());
+    entity.setUser(profileImageDto.isUser());
+    entity.setUsers(userRepository.findById(profileImageDto.getUserId()).orElse(null));
+    return entity;
   }
 
   public ProfileImageDto toDto(ProfileImageEntity profileImageEntity){
-    return null;
+    ProfileImageDto dto=new ProfileImageDto();
+    dto.setId(profileImageEntity.getId());
+    dto.setImageName(profileImageEntity.getImageName());
+    dto.setImageUrl(profileImageEntity.getImageUrl());
+    dto.setSize(profileImageEntity.getSize());
+    dto.setFileType(profileImageEntity.getFileType());
+    dto.setUser(profileImageEntity.isUser());
+    dto.setUserId(profileImageEntity.getUsers().getId());
+    return dto;
   }
 
 }

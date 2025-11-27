@@ -94,6 +94,9 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.testcontainers:junit-jupiter'
 	testImplementation 'org.testcontainers:mysql'
+
+    // 파일 검사
+    implementation("org.apache.tika:tika-core:3.2.3")
 }
 
 tasks.named('test') {

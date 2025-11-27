@@ -1,12 +1,15 @@
 package com.live.main.profile.service.Interface;
 
+import com.live.main.profile.database.dto.ProfileImageDto;
+import org.springframework.web.multipart.MultipartFile;
+
 /**프로필 이미지 기능 2025-11-26*/
 public interface ProfileServiceInterface {
 
   /**프로필 이미지 업로드 기능*/
-  public String profile_upload();
+  public ProfileImageDto profile_upload(MultipartFile file, String fileName, String UserLoginId);
   /**프로필 이미지 삭제 기능*/
-  public void profile_delete();
+  public void profile_delete(String fileName, String UserLoginId);
   /**프로필 이미지 가져오기(링크) 기능*/
-  public String profile_get();
+  public ProfileImageDto profile_get(String fileName, String UserLoginId);
 }

@@ -23,7 +23,7 @@ public class ProfileImageEntity extends timeEntity {
   private String imageUrl;
 
   @Column(nullable = false)
-  private int size;
+  private Long size;
 
   @Column(name = "file_type")
   private String fileType;
