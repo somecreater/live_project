@@ -25,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -44,17 +45,18 @@ public class ProfileService implements ProfileServiceInterface {
 
   @Override
   @Transactional
-  public ProfileImageDto profile_upload(MultipartFile file, String fileName, String UserLoginId){
+  public ProfileImageDto profile_upload(MultipartFile file, String UserLoginId){
     UserDto userDto=userServiceInterface.GetUserInfo(UserLoginId);
     ProfileImageEntity entity= new ProfileImageEntity();
 
-    if(fileName == null || fileName.trim().isEmpty() || userDto == null ){
+    if(userDto == null){
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
     if(commonService.isSafeFile(file)){
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
-
+    String uuid= UUID.randomUUID().toString().replaceAll("-","");
+    String fileName=uuid+"_"+userDto.getLoginId()+"_profile";
     try(InputStream in=file.getInputStream()){
       String key = profileFolderName +"/"+userDto.getLoginId()+"/"+fileName;
       ObjectMetadata metadata= ObjectMetadata.builder()
@@ -62,6 +64,10 @@ public class ProfileService implements ProfileServiceInterface {
         .contentLength(file.getSize()).build();
 
       S3Resource upload= s3Template.upload(bucket_name, key, in, metadata);
+      if(!upload.exists()){
+        log.info("{}님의 프로필 이미지 업로드 실패", userDto.getLoginId());
+        throw new CustomException(ErrorCode.NOT_FOUND);
+      }
 
       String url=upload.getURL().toString();
       entity.setImageName(upload.getFilename());
@@ -80,13 +86,15 @@ public class ProfileService implements ProfileServiceInterface {
 
   @Override
   @Transactional
-  public void profile_delete(String fileName, String UserLoginId){
+  public void profile_delete(String userLoginId){
     try{
-      ProfileImageEntity entity= profileImageRepository.findByImageName(fileName).orElse(null);
+      ProfileImageEntity entity= profileImageRepository.findByUsers_LoginId(userLoginId).orElse(null);
       if(entity == null){
         throw new CustomException(ErrorCode.NOT_FOUND);
       }
-      String key =profileFolderName+"/"+UserLoginId+"/"+fileName;
+
+      String fileName=  entity.getImageName();
+      String key =profileFolderName+"/"+userLoginId+"/"+fileName;
       s3Template.deleteObject(bucket_name, key);
       profileImageRepository.delete(entity);
 

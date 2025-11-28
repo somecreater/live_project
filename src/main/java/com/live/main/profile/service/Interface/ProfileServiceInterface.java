@@ -8,11 +8,11 @@ import org.springframework.web.multipart.MultipartFile;
 public interface ProfileServiceInterface {
 
   /**프로필 이미지 업로드 기능*/
-  public ProfileImageDto profile_upload(MultipartFile file, String fileName, String UserLoginId);
+  public ProfileImageDto profile_upload(MultipartFile file, String userLoginId);
   /**프로필 이미지 삭제 기능*/
-  public void profile_delete(String fileName, String UserLoginId);
+  public void profile_delete(String userLoginId);
   /**프로필 이미지 가져오기(객체) 기능*/
-  public ProfileImageDto profile_get(String UserLoginId);
+  public ProfileImageDto profile_get(String userLoginId);
   /**프로필 이미지 가져오기(파일) 기능*/
-  public InputStreamResource profile_download(String UserLoginId);
+  public InputStreamResource profile_download(String userLoginId);
 }
