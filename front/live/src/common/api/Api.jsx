@@ -20,8 +20,15 @@ export const API_END_POINT={
     getLoginId: `${API_BASE_URL}/public/mail/GetId`,
     sendMailPass: `${API_BASE_URL}/public/mail/SearchPassword`,
     getPass:`${API_BASE_URL}/public/mail/GetPassword`
+  },
+  user_profile_image:{
+    upload: `${API_BASE_URL}/api/profile_image/upload`,
+    delete: `${API_BASE_URL}/api/profile_image/delete`,
+    get_info: `${API_BASE_URL}/api/profile_image/get_info`,
+    download: `${API_BASE_URL}/api/profile_image/download`
   }
 }
+
 
 export const createHeaders = () => ({
   'Content-Type': 'application/json',

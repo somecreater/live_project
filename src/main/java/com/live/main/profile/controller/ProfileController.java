@@ -50,7 +50,7 @@ public class ProfileController {
   }
 
   @GetMapping("/get_info")
-  public ResponseEntity<?> GetProfileInfo(@RequestParam String userLoginId){
+  public ResponseEntity<?> GetProfileInfo(@RequestParam("user_id") String userLoginId){
     log.info("[GET] /api/profile_image/get_info - {}", userLoginId);
     Map<String,Object> result=new HashMap<>();
 
@@ -61,7 +61,7 @@ public class ProfileController {
   }
 
   @GetMapping("/download")
-  public ResponseEntity<?> DownloadProfileImage(@RequestParam String userLoginId){
+  public ResponseEntity<?> DownloadProfileImage(@RequestParam("user_id") String userLoginId){
     log.info("[GET] /api/profile_image/download - {}", userLoginId);
 
     InputStreamResource resource=profileService.profile_download(userLoginId);

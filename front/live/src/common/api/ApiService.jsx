@@ -57,6 +57,22 @@ const ApiService={
       headers: createHeaders(),
       withCredentials: true, 
     })
+  },
+  profile_image:{
+    upload: (dto)=> RefreshApi.post(API_END_POINT.user_profile_image.upload, dto, {
+      withCredentials: true, 
+    }),
+    delete: ()=> RefreshApi.post(API_END_POINT.user_profile_image.delete,{
+      withCredentials: true, 
+    }),
+    get_info:(param)=> RefreshApi.get(`${API_END_POINT.user_profile_image.get_info}?user_id=${param}`,{
+      headers: createHeaders(),
+      withCredentials: true, 
+    }),
+    download:(param)=> RefreshApi.get(`${API_END_POINT.user_profile_image.download}?user_id=${param}`,{
+      withCredentials: true, 
+    })
+
   }
 
 }
