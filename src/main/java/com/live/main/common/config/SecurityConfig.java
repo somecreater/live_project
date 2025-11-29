@@ -87,8 +87,9 @@ public class SecurityConfig{
                 "/public/**",
                 "/api/user/login",
                 "/api/user/register").permitAll()
-            .requestMatchers("/api/**").authenticated())
-        .formLogin(AbstractHttpConfigurer::disable)
+            .requestMatchers("/api/**").authenticated()
+            .requestMatchers("/manager/**").hasRole("MANAGER")
+        ).formLogin(AbstractHttpConfigurer::disable)
         .httpBasic(AbstractHttpConfigurer::disable);
 
     http.exceptionHandling(exception->

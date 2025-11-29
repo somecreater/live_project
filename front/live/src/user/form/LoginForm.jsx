@@ -4,12 +4,26 @@ import { userStateStore } from "../../common/context/userStateStore";
 import ApiService from "../../common/api/ApiService";
 import { useNavigate } from "react-router-dom";
 import { API_END_POINT } from "../../common/api/Api";
+import CustomModal from "../../common/component/CustomModal";
+import SearchForm from "./SearchForm";
 
 function LoginForm(){
   const [loginId,setLoginId] = useState("");
   const [pass,setPass] = useState("");
-  const {getUserInfo} = userStateStore();
+  const [searchModal,setSearchModal] = useState(false);
+  const {getUserInfo, getUserProfile} = userStateStore();
   const navigate=useNavigate();
+
+  const openSearchModal= ()=>setSearchModal(true);
+  const closeSearchModal= ()=>setSearchModal(false);
+  const searchModalFooter=
+  <Button 
+    className='btn_close'
+    variant='secondary'
+    onClick={closeSearchModal}
+  >
+    닫기
+  </Button>;
 
   const handleSign = ()=>{
     navigate("/user/sign");
@@ -28,6 +42,7 @@ function LoginForm(){
 
       if(data.result){
         getUserInfo();
+        getUserProfile(loginId);
         navigate("/user/mypage");
       }
 
@@ -50,6 +65,15 @@ function LoginForm(){
       <Button type="submit" variant="primary">Login</Button>
       <Button type="button" variant="secondary" onClick={handleGoogleLogin}>Google Login</Button>
       <Button type="button" variant="secondary" onClick={handleKakaoLogin}>Kakao Login</Button>
+      <Button type="button" variant="danger" onClick={openSearchModal}>아이디/비밀번호 찾기</Button>
+
+      <CustomModal
+        title={'아이디/비밀번호 찾기'} 
+        modalState={searchModal}
+        close={closeSearchModal}
+        component={<SearchForm/>}
+        footer={searchModalFooter}
+      />
     </Form>
   );
 }
