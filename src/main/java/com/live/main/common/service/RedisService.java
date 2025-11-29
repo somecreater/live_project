@@ -38,10 +38,24 @@ public class RedisService {
     }
 
     /**
+     * 문자열 값 저장 (만약 값이 이미 있으면 그대로 유지)
+     */
+    public void setIfAbsent(String key, String value, long timeout, TimeUnit unit) {
+        stringRedisTemplate.opsForValue().setIfAbsent(key, value, timeout, unit);
+    }
+
+    /**
      * 문자열 값 조회
      */
     public String get(String key) {
         return stringRedisTemplate.opsForValue().get(key);
+    }
+
+    /**
+     * 값 증가(+1)
+     */
+    public Long increment(String key){
+        return stringRedisTemplate.opsForValue().increment(key);
     }
 
     /**
@@ -57,6 +71,12 @@ public class RedisService {
     public void setObject(String key, Object value, long timeout, TimeUnit unit) {
         redisTemplate.opsForValue().set(key, value, timeout, unit);
     }
+    /**
+     * 문자열 값 저장 (만약 값이 이미 있으면 그대로 유지)
+     */
+    public void setObjectIfAbsent(String key, Object value, long timeout, TimeUnit unit){
+        redisTemplate.opsForValue().setIfAbsent(key, value, timeout, unit);
+    }
 
     /**
      * 객체 조회
@@ -69,14 +89,14 @@ public class RedisService {
      * 키 존재 여부 확인
      */
     public boolean hasKey(String key) {
-        return Boolean.TRUE.equals(redisTemplate.hasKey(key));
+        return redisTemplate.hasKey(key);
     }
 
     /**
      * 키 삭제
      */
     public boolean delete(String key) {
-        return Boolean.TRUE.equals(redisTemplate.delete(key));
+        return redisTemplate.delete(key);
     }
 
     /**
@@ -90,7 +110,7 @@ public class RedisService {
      * 키 만료 시간 설정
      */
     public boolean expire(String key, long timeout, TimeUnit unit) {
-        return Boolean.TRUE.equals(redisTemplate.expire(key, timeout, unit));
+        return redisTemplate.expire(key, timeout, unit);
     }
 
     /**

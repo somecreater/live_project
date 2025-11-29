@@ -56,6 +56,7 @@ public class Oauth2Service extends DefaultOAuth2UserService {
     UserDto userDto=new UserDto();
     userDto.setLoginId(oauth2User.getEmail());
     userDto.setEmail(oauth2User.getEmail());
+    userDto.setEmailVerification(true);
     userDto.setPassword(bCryptPasswordEncoder.encode(UUID.randomUUID().toString()));
     userDto.setPhone(null);
     userDto.setNickname(loginServer+"_"+oauth2User.getNickname());

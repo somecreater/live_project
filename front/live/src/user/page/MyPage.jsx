@@ -6,12 +6,16 @@ import { Button, Modal } from 'react-bootstrap';
 import PasswordForm from '../form/PasswordForm';
 import CustomModal from '../../common/component/CustomModal';
 import DeleteForm from '../form/DeleteForm';
+import LogoutButton from '../component/LogoutButton';
+import UserProfileImage from '../component/UserProfileImage';
+import UserProfileImageForm from '../form/UserProfileImageForm';
 
 function MyPage(){
   
   const {getUserInfo, user, isAuthenticated}= userStateStore();
   const [passwordModal,setPasswordModal]= useState(false);
   const [deleteModal,setDeleteModal]= useState(false);
+  const [profileImgModal,setProfileImgModal]= useState(false);
   const navigate = useNavigate();
 
   useEffect(()=>{ getUserInfo(); },[]);
@@ -19,6 +23,8 @@ function MyPage(){
   const closePasswordModal =() => setPasswordModal(false);
   const handleDeleteModal =() => setDeleteModal(true);
   const closeDeleteModal =() => setDeleteModal(false);
+  const handleProfileImgModal =() => setProfileImgModal(true);
+  const closeProfileImgModal =() => setProfileImgModal(false);
 
   const passModalFooter=
   <Button 
@@ -36,13 +42,24 @@ function MyPage(){
   >
     닫기
   </Button>;
+  const profileImgModalFooter=
+  <Button
+    className='btn_close'
+    variant='secondary'
+    onClick={closeProfileImgModal}
+  >
+    닫기
+  </Button>;
 
   return (
     <div className="container d-flex justify-content-center align-items-center mt-5">
+        <UserProfileImage/>
         <User user={user} isAuthenticated={isAuthenticated}/>
         <div>
-          <Button onClick={handleDeleteModal}>회원 탈퇴</Button>
+          <LogoutButton/>
+          <Button variant="danger" onClick={handleDeleteModal}>회원 탈퇴</Button>
           <Button onClick={()=>navigate('/user/update')}>회원정보 수정</Button>
+          <Button onClick={handleProfileImgModal}>프로필 이미지 수정</Button>
           <Button onClick={handlePasswordModal}>비밀번호 변경</Button>
           <CustomModal
             title={'회원 탈퇴'}
@@ -57,6 +74,13 @@ function MyPage(){
             close={closePasswordModal}
             component={<PasswordForm/>}
             footer={passModalFooter}
+          />
+          <CustomModal
+            title={'프로필 이미지 수정'}
+            modalState={profileImgModal}
+            close={closeProfileImgModal}
+            component={<UserProfileImageForm/>}
+            footer={profileImgModalFooter}
           />
         </div>
     </div>
