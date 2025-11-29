@@ -12,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,15 +25,15 @@ public class ProfileController {
 
   private final ProfileServiceInterface profileService;
 
-  @PostMapping("/upload")
+  @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<?> UploadProfileImage(
     @AuthenticationPrincipal CustomUserDetails principal,
-    @RequestBody ProfileUploadRequest profileUploadRequest){
+    @RequestParam("file") MultipartFile file){
     log.info("[POST] /api/profile_image/upload - {}", principal.getUserid());
     Map<String,Object> result=new HashMap<>();
 
     ProfileImageDto profileImageDto= profileService.profile_upload(
-      profileUploadRequest.getFile(), principal.getUserid());
+      file, principal.getUserid());
     result.put("result",true);
     result.put("image",profileImageDto);
     return ResponseEntity.ok(result);
@@ -71,5 +72,18 @@ public class ProfileController {
       .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
       .contentType(MediaType.APPLICATION_OCTET_STREAM)
       .body(resource);
+  }
+
+  @GetMapping("/get_image")
+  public ResponseEntity<?> ReadProfileImage(@RequestParam("user_id") String userLoginId){
+    log.info("[GET] /api/profile_image/get_image - {}", userLoginId);
+    Map<String,Object> result=new HashMap<>();
+
+    String profile_url=profileService.profile_read(userLoginId);
+
+    result.put("result",true);
+    result.put("image_url",profile_url);
+
+    return ResponseEntity.ok(result);
   }
 }
