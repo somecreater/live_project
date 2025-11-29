@@ -11,8 +11,12 @@ public interface ProfileServiceInterface {
   public ProfileImageDto profile_upload(MultipartFile file, String userLoginId);
   /**프로필 이미지 삭제 기능*/
   public void profile_delete(String userLoginId);
+  /**프로필 이미지(파일) 삭제 기능*/
+  public void profile_file_delete(String userLoginId);
   /**프로필 이미지 가져오기(객체) 기능*/
   public ProfileImageDto profile_get(String userLoginId);
   /**프로필 이미지 가져오기(파일) 기능*/
   public InputStreamResource profile_download(String userLoginId);
+  /**프로필 이미지 링크 가져오기 기능*/
+  public String profile_read(String userLoginId);
 }
