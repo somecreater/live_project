@@ -25,7 +25,8 @@ export const API_END_POINT={
     upload: `${API_BASE_URL}/api/profile_image/upload`,
     delete: `${API_BASE_URL}/api/profile_image/delete`,
     get_info: `${API_BASE_URL}/api/profile_image/get_info`,
-    download: `${API_BASE_URL}/api/profile_image/download`
+    download: `${API_BASE_URL}/api/profile_image/download`,
+    read_image: `${API_BASE_URL}/api/profile_image/get_image`
   }
 }
 

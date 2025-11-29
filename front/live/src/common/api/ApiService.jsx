@@ -70,9 +70,13 @@ const ApiService={
       withCredentials: true, 
     }),
     download:(param)=> RefreshApi.get(`${API_END_POINT.user_profile_image.download}?user_id=${param}`,{
+      responseType: 'blob',
+      withCredentials: true, 
+    }),
+    read_image:(param)=> RefreshApi.get(`${API_END_POINT.user_profile_image.read_image}?user_id=${param}`,{
+      headers: createHeaders(),
       withCredentials: true, 
     })
-
   }
 
 }
