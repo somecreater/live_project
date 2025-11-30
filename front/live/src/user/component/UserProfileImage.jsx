@@ -20,7 +20,6 @@ function UserProfileImage({props}){
       height={100}
       src={imgSrc}  
       style={{ objectFit: 'cover', borderRadius: '50%', backgroundColor:'whitesmoke'}}
-      rounded
     />
   );
 }

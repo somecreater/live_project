@@ -16,19 +16,38 @@ export const userStateStore = create((set)=>({
     
     if(data.result){
       set({ user: data.user_info, isAuthenticated: true });
+      localStorage.setItem("loginId",data.user_info.loginId);
     } else {
       set({ user: null, isAuthenticated: false });
     }
   },
   getUserProfile: async (userId)=> {
     try{
-      const response= await ApiService.profile_image.read_image(userId);
-      const data=response.data;
-      const imageUrl=data.image_url;
-      set({profileImageUrl:imageUrl});
+      const orgUrl=localStorage.getItem("profileImageUrl");
+      if(orgUrl){
+        set({profileImageUrl:orgUrl});
+        return;
+      }else{
+        const response= await ApiService.profile_image.read_image(userId);
+        const data=response.data;
+        const imageUrl=data.image_url;
+        set({profileImageUrl:imageUrl});
+        localStorage.setItem("profileImageUrl",imageUrl);
+      }
     }catch(error){
       set({profileImageUrl:null});
       console.error(error);
+      localStorage.removeItem("profileImageUrl");
     }
+  },
+  getUserProfileCache: ()=> {
+    const orgUrl=localStorage.getItem("profileImageUrl");
+    if(orgUrl){
+      set({profileImageUrl:orgUrl});
+      return;
+    }
+  },
+  clearProfileImage: ()=>{
+    set({profileImageUrl:null});
   }
 }));
