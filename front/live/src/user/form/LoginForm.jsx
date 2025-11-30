@@ -11,7 +11,7 @@ function LoginForm(){
   const [loginId,setLoginId] = useState("");
   const [pass,setPass] = useState("");
   const [searchModal,setSearchModal] = useState(false);
-  const {getUserInfo, getUserProfile} = userStateStore();
+  const {getUserInfo} = userStateStore();
   const navigate=useNavigate();
 
   const openSearchModal= ()=>setSearchModal(true);
@@ -42,7 +42,6 @@ function LoginForm(){
 
       if(data.result){
         getUserInfo();
-        getUserProfile(loginId);
         navigate("/user/mypage");
       }
 

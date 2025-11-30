@@ -10,7 +10,7 @@ function UserProfileImage({props}){
     if (!profileImageUrl && user?.loginId) {
       getUserProfile(user.loginId);
     }
-  });
+  }, [profileImageUrl, user?.loginId]);
   
   const imgSrc= profileImageUrl||defaultProfileImageUrl;
 
