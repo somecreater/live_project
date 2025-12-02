@@ -69,11 +69,44 @@ html, body {
   top: 116px;             
   bottom: 0;
   overflow-y: auto;
-  background-color: #f8f9fa;
+  background-color: #ffffff;
   border-right: 1px solid #ddd;
   transition: width 0.3s ease;
   display: flex;
   flex-direction: column;
+  padding-top: 16px;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+}
+
+.nav-link-custom {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  color: #333;
+  font-size: 14px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.nav-link-custom .icon {
+  font-size: 18px;
+  margin-right: 12px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.nav-link-custom .link-text {
+  white-space: nowrap;
+}
+
+.nav-link-custom:hover {
+  background-color: #f0f0f0;
+  color: #000;
+}
+
+.nav-link-custom.active {
+  background-color: #e9ecef;
+  font-weight: 500;
 }
 
 .toggle-btn {

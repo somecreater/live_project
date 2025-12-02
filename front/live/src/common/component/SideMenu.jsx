@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Button, Nav } from "react-bootstrap";
+import { FaHome, FaHistory, FaThumbsUp, FaThumbsDown, FaBookmark } from "react-icons/fa";
 
 const SideItem=[
-  {title:"구독", link:"/"}, 
-  {title:"기록", link:"/"}, 
-  {title:"추천한 동영상", link:"/"},
-  {title:"비추천한 동영상", link:"/"},
-  {title:"저장한 영상", link:"/"}
+  {title:"구독", link:"/", icon:<FaHome/>}, 
+  {title:"기록", link:"/", icon:<FaHistory/>}, 
+  {title:"추천한 동영상", link:"/", icon:<FaThumbsUp/>},
+  {title:"비추천한 동영상", link:"/", icon:<FaThumbsDown/>},
+  {title:"저장한 영상", link:"/", icon:<FaBookmark/>}
 ];
 
 function SideMenu({ collapsed, toggle }){
@@ -24,12 +25,13 @@ function SideMenu({ collapsed, toggle }){
         <Button className="toggle-btn" onClick={toggle}>
           {collapsed ? "▶" : "◀"}
         </Button>
-      <Nav defaultActiveKey="/home" className="flex-column pt-3">
+      <Nav defaultActiveKey="/home" className="flex-column nav-menu">
         {loginId?
         (SideItem.map(item=>(
           <Nav.Item key={item.title}>
-            <Nav.Link href={item.link}>
-              { !collapsed ? item.title :  item.title.charAt(0) }
+            <Nav.Link href={item.link} className="nav-link-custom">
+              <span className="icon">{item.icon}</span>
+              { !collapsed && <span className="link-text">{item.title}</span>}
             </Nav.Link>
           </Nav.Item>
         ))
