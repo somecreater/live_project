@@ -44,6 +44,7 @@
 html, body {
   margin: 0;
   padding: 0;
+  padding-top: 70px;
   height: 100%;
 }
 
@@ -55,7 +56,8 @@ html, body {
 
 .content-wrapper {
   display: flex;
-  margin-top: 116px;      
+  margin-top: 116px;
+  flex: 1;
 }
 
 .sidebar {
@@ -100,4 +102,11 @@ html, body {
 }
 .main-area.collapsed {
   margin-left: calc(60px - 200px);
+}
+
+footer {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  z-index: 999;  
 }

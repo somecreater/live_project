@@ -10,12 +10,15 @@ const SideItem=[
 ];
 
 function SideMenu({ collapsed, toggle }){
-  let loginId=localStorage.getItem("loginId");
-
-  useEffect(()=>{
-    loginId=localStorage.getItem("loginId");
+  const [loginId, setLoginId] = useState(null);
+  
+  useEffect(() => {
+    const id = localStorage.getItem("loginId");
+    if (loginId !== id) {
+      setLoginId(id);
+    }
   });
-
+  
   return (
       <div className="sidebar-inner">
         <Button className="toggle-btn" onClick={toggle}>
