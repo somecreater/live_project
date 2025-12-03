@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { userStateStore } from '../../common/context/userStateStore';
 import User from '../component/User';
 import { useNavigate } from 'react-router-dom';
-import { Button, Modal } from 'react-bootstrap';
+import { Button, Card, Col, Container, Modal, Row } from 'react-bootstrap';
 import PasswordForm from '../form/PasswordForm';
 import CustomModal from '../../common/component/CustomModal';
 import DeleteForm from '../form/DeleteForm';
@@ -26,41 +26,71 @@ function MyPage(){
   const handleProfileImgModal =() => setProfileImgModal(true);
   const closeProfileImgModal =() => setProfileImgModal(false);
 
-  const passModalFooter=
+  const passModalFooter=(
   <Button 
     className="btn_close" 
     variant="secondary" 
     onClick={closePasswordModal}
   >
       닫기
-  </Button>;
-  const deleteModalFooter=
+  </Button>);
+  const deleteModalFooter=(
   <Button 
     className='btn_close'
     variant='secondary'
     onClick={closeDeleteModal}
   >
     닫기
-  </Button>;
-  const profileImgModalFooter=
+  </Button>);
+  const profileImgModalFooter=(
   <Button
     className='btn_close'
     variant='secondary'
     onClick={closeProfileImgModal}
   >
     닫기
-  </Button>;
+  </Button>);
 
   return (
-    <div className="container d-flex justify-content-center align-items-center mt-5">
-        <UserProfileImage/>
-        <User user={user} isAuthenticated={isAuthenticated}/>
-        <div>
-          <LogoutButton/>
-          <Button variant="danger" onClick={handleDeleteModal}>회원 탈퇴</Button>
-          <Button onClick={()=>navigate('/user/update')}>회원정보 수정</Button>
-          <Button onClick={handleProfileImgModal}>프로필 이미지 수정</Button>
-          <Button onClick={handlePasswordModal}>비밀번호 변경</Button>
+    <Container className="my-page-container py-4">
+      <Card className="p-4 shadow-sm">
+        <Row className="align-items-center">
+          <Col xs={12} md={4} className="text-center mb-3 mb-md-0">
+            <UserProfileImage/>
+          </Col>
+          <Col xs={12} md={8}>
+            <User user={user} isAuthenticated={isAuthenticated}/>
+          </Col>
+        </Row>
+
+        <hr />
+        <Row className="mt-3 g-2">
+          <Col xs={12} md="auto">
+            <LogoutButton />
+          </Col>
+          <Col xs={12} md="auto">
+            <Button variant="warning" onClick={() => navigate('/user/update')}>
+              회원정보 수정
+            </Button>
+          </Col>
+          <Col xs={12} md="auto">
+            <Button variant="primary" onClick={handleProfileImgModal}>
+              프로필 이미지 수정
+            </Button>
+          </Col>
+          <Col xs={12} md="auto">
+            <Button variant="secondary" onClick={handlePasswordModal}>
+              비밀번호 변경
+            </Button>
+          </Col>
+          <Col xs={12} md="auto">
+            <Button variant="danger" onClick={handleDeleteModal}>
+              회원 탈퇴
+            </Button>
+          </Col>
+        </Row>
+      </Card>
+
           <CustomModal
             title={'회원 탈퇴'}
             modalState={deleteModal}
@@ -82,8 +112,7 @@ function MyPage(){
             component={<UserProfileImageForm/>}
             footer={profileImgModalFooter}
           />
-        </div>
-    </div>
+    </Container>
   );
 }
 

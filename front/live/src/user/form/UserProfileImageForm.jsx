@@ -44,7 +44,20 @@ function UserProfileImageForm(){
     }catch(error){
         console.error(error);
     }
-  }
+  };
+  const handleDelete= async (e)=>{
+    e.preventDefault();
+    try{
+      const response= await ApiService.profile_image.delete();
+      const data=response.data;
+      if(data.result){
+        alert("회원님의 프로필 이미지가 삭제되었습니다.");
+        getUserProfile(user.loginId);
+      }
+    } catch(error){
+      console.error(error);  
+    }   
+  };
 
   return (
     <Form onSubmit={fileUpload}>
@@ -76,8 +89,15 @@ function UserProfileImageForm(){
 
        {file !=null?
         <Button type="submit" variant="primary">프로필 이미지 등록(수정)하기</Button>:
-        <Button type="button" variant="danger" onClick={handleFileCancle}>프로필 이미지 취소</Button>
+        <Button type="button" variant="outline-danger" onClick={handleFileCancle}>프로필 이미지 취소</Button>
        }
+       <Button
+         type="button" 
+         variant="danger" 
+         onClick={handleDelete}
+       >
+         프로필 이미지 삭제
+       </Button>
      </Form>
   );
 }

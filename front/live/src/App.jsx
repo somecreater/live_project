@@ -6,13 +6,17 @@ import SignPage from './user/page/SignPage';
 import MyPage from './user/page/MyPage';
 import ManagerPage from './user/page/ManagerPage';
 import UpdateUserPage from './user/page/UpdateUserPage';
+import { BrowserRouter } from 'react-router-dom'
+import AppLayout from './AppLayout';
+import "./App.css"
+
 
 function App() {
 
   return (
     <>
-      <div className="app-wrapper">
-        <main className='main-content'>
+      <BrowserRouter>
+        <AppLayout>
           <Routes>
             <Route path="/" element={<HomePage/>}/>
             <Route path="/user/login" element={<LoginPage />} />
@@ -21,8 +25,8 @@ function App() {
             <Route path="/user/update" element={<UpdateUserPage/>} />
             <Route path="/manager" element={<ManagerPage/>} />
           </Routes>
-        </main>
-      </div>
+        </AppLayout>
+      </BrowserRouter>
     </>
   )
 }
