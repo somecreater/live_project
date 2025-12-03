@@ -1,5 +1,6 @@
 package com.live.main.profile.database.entity;
 
+import com.live.main.channel.database.entity.ChannelEntity;
 import com.live.main.common.database.entity.timeEntity;
 import com.live.main.user.database.entity.UsersEntity;
 import jakarta.persistence.*;
@@ -35,4 +36,7 @@ public class ProfileImageEntity extends timeEntity {
   @JoinColumn(nullable = true, name = "user_id")
   private UsersEntity users;
 
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(nullable = true, name = "channel_id")
+  private ChannelEntity channel;
 }

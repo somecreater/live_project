@@ -12,4 +12,5 @@ public class ChannelDto {
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
   private Long user_id;
+  private String user_login_id;
 }

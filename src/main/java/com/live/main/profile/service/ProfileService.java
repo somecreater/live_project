@@ -30,6 +30,7 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequ
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Slf4j
@@ -86,6 +87,7 @@ public class ProfileService implements ProfileServiceInterface {
         old_entity.setFileType(upload.contentType());
         old_entity.setUser(true);
         old_entity.setUsers(userMapper.toEntity(userDto));
+        old_entity.setUpdatedAt(LocalDateTime.now());
         profile_file_delete(userLoginId);
         profileImageRepository.save(old_entity);
 
@@ -97,6 +99,8 @@ public class ProfileService implements ProfileServiceInterface {
         entity.setFileType(upload.contentType());
         entity.setUser(true);
         entity.setUsers(userMapper.toEntity(userDto));
+        entity.setCreatedAt(LocalDateTime.now());
+        entity.setUpdatedAt(LocalDateTime.now());
         profileImageRepository.save(entity);
 
         return profileImageMapper.toDto(entity);
