@@ -7,11 +7,12 @@ import com.live.main.channel.database.repository.ChannelRepository;
 import com.live.main.channel.service.Interface.ChannelServiceInterface;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -33,14 +34,19 @@ public class ChannelService implements ChannelServiceInterface {
 
   @Override
   @Transactional(readOnly = true)
-  public List<ChannelDto> getChannelList(int page, int size, String type, String keyword) {
-    List<ChannelEntity> channelEntityList= new ArrayList<>();
-    if(type.equals("name")){
-
-    }else if(type.equals("description")){
-
-    }
-    return List.of();
+  public Page<ChannelDto> getChannelList(int page, int size, String type, String keyword) {
+      Pageable pageable = PageRequest.of(page, size);
+      Page<ChannelEntity> channelEntityPage = null;
+      if (type.equals("name")) {
+          channelEntityPage = channelRepository.findByNameLike(keyword,pageable);
+      } else if (type.equals("description")) {
+          channelEntityPage = channelRepository.findByDescriptionLike(keyword, pageable);
+      }
+      if (channelEntityPage != null) {
+          return channelEntityPage.map(channelMapper::toDto);
+      }else{
+          return null;
+      }
   }
 
   @Override
