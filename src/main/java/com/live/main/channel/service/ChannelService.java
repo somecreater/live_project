@@ -38,6 +38,16 @@ public class ChannelService implements ChannelServiceInterface {
 
   @Override
   @Transactional(readOnly = true)
+  public ChannelDto getChannelInfoUser(String LoginId){
+    ChannelEntity channelEntity= channelRepository.findByUsers_LoginId(LoginId).orElse(null);
+    if(channelEntity == null){
+      return null;
+    }
+
+    return channelMapper.toDto(channelEntity);
+  }
+  @Override
+  @Transactional(readOnly = true)
   public Page<ChannelDto> getChannelList(int page, int size, String type, String keyword) {
     Pageable pageable = PageRequest.of(page, size);
     Page<ChannelEntity> channelEntityPage = null;
