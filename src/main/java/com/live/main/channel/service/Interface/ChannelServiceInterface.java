@@ -1,6 +1,7 @@
 package com.live.main.channel.service.Interface;
 
 import com.live.main.channel.database.dto.ChannelDto;
+import com.live.main.user.database.dto.UserDeleteEvent;
 import org.springframework.data.domain.Page;
 
 /**채널 기능 (2025-12-04)*/
@@ -17,4 +18,6 @@ public interface ChannelServiceInterface {
   public ChannelDto updateChannel(ChannelDto channelDto);
   /**채널 삭제*/
   public boolean deleteChannel(ChannelDto channelDto);
+  /**채널 삭제(회원 탈퇴 이벤트 감시)*/
+  public void deleteChannel(UserDeleteEvent event);
 }

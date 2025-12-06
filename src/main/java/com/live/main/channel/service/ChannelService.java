@@ -7,11 +7,14 @@ import com.live.main.channel.database.repository.ChannelRepository;
 import com.live.main.channel.service.Interface.ChannelServiceInterface;
 import com.live.main.common.database.dto.ErrorCode;
 import com.live.main.common.exception.CustomException;
+import com.live.main.user.database.dto.UserDeleteEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -123,5 +126,15 @@ public class ChannelService implements ChannelServiceInterface {
         throw new CustomException(ErrorCode.BAD_REQUEST);
     }
     return true;
+  }
+
+  @Async
+  @EventListener
+  @Override
+  @Transactional
+  public void deleteChannel(UserDeleteEvent event){
+    ChannelEntity entity = channelRepository.findByUsers_LoginId(event.getUserLoginId()).orElse(null);
+    if(entity == null) return;
+    channelRepository.delete(entity);
   }
 }

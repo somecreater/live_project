@@ -8,6 +8,7 @@ import com.live.main.profile.database.entity.ProfileImageEntity;
 import com.live.main.profile.database.mapper.ProfileImageMapper;
 import com.live.main.profile.database.repository.ProfileImageRepository;
 import com.live.main.profile.service.Interface.ProfileServiceInterface;
+import com.live.main.user.database.dto.UserDeleteEvent;
 import com.live.main.user.database.dto.UserDto;
 import com.live.main.user.database.mapper.UserMapper;
 import com.live.main.user.service.Interface.UserServiceInterface;
@@ -18,7 +19,9 @@ import io.awspring.cloud.s3.S3Template;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -109,6 +112,26 @@ public class ProfileService implements ProfileServiceInterface {
     } catch (IOException e) {
         throw new CustomException(ErrorCode.NOT_FOUND);
     }
+  }
+
+  @Async
+  @Override
+  @Transactional
+  @EventListener
+  public void profile_delete_onUser(UserDeleteEvent event){
+    try{
+      ProfileImageEntity entity= profileImageRepository.findByUsers_LoginId(event.getUserLoginId()).orElse(null);
+      if(entity == null) return;
+
+      String fileName=  entity.getImageName();
+      s3Template.deleteObject(bucket_name, fileName);
+      profileImageRepository.deleteById(entity.getId());
+
+      }catch (S3Exception s3){
+        s3.printStackTrace();
+        throw new CustomException(ErrorCode.NOT_FOUND);
+      }
+
   }
 
   @Override

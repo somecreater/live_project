@@ -24,7 +24,7 @@ public class ChannelController {
 
   private final ChannelServiceInterface channelService;
 
-  @GetMapping("/info/${channel_id}")
+  @GetMapping("/info/{channel_id}")
   public ResponseEntity<?> getChannelInfo(@PathVariable Long channel_id){
     Map<String,Object> result=new HashMap<>();
     ChannelDto channelDto= channelService.getChannelInfo(channel_id);
