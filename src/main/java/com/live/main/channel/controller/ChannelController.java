@@ -26,6 +26,7 @@ public class ChannelController {
 
   @GetMapping("/info/{channel_id}")
   public ResponseEntity<?> getChannelInfo(@PathVariable Long channel_id){
+    log.info("[GET] /api/channel/info/{} ", channel_id);
     Map<String,Object> result=new HashMap<>();
     ChannelDto channelDto= channelService.getChannelInfo(channel_id);
     if(channelDto != null){
@@ -39,6 +40,8 @@ public class ChannelController {
 
   @GetMapping("/search")
   public ResponseEntity<?> getChannelPage(@RequestBody SearchRequest request){
+    log.info("[GET] /api/channel/search - page:{} size:{} type:{} keyword:{}",
+            request.getPage(), request.getSize(), request.getType(), request.getKeyword());
     Map<String,Object> result=new HashMap<>();
     Page<ChannelDto> channelDtoPage= channelService.getChannelList(
       request.getPage(), request.getSize(), request.getType(), request.getKeyword());
@@ -54,6 +57,7 @@ public class ChannelController {
   @PostMapping("/create")
   public ResponseEntity<?> createChannel(@AuthenticationPrincipal CustomUserDetails principal,
     @RequestBody ChannelDto channelDto){
+    log.info("[POST] /api/channel/create - {}", principal.getUserid());
     Map<String,Object> result=new HashMap<>();
     if(principal.getUserid().compareTo(channelDto.getUser_login_id()) != 0 ){
       throw new CustomException(ErrorCode.BAD_REQUEST);
@@ -68,6 +72,7 @@ public class ChannelController {
   @PostMapping("/update")
   public ResponseEntity<?> updateChannel(@AuthenticationPrincipal CustomUserDetails principal,
     @RequestBody ChannelDto channelDto){
+    log.info("[POST] /api/channel/update - {}", principal.getUserid());
     Map<String,Object> result=new HashMap<>();
     if(principal.getUserid().compareTo(channelDto.getUser_login_id()) != 0 ){
       throw new CustomException(ErrorCode.BAD_REQUEST);
@@ -82,6 +87,7 @@ public class ChannelController {
   @PostMapping("/delete")
   public ResponseEntity<?> deleteChannel(@AuthenticationPrincipal CustomUserDetails principal,
     @RequestBody ChannelDto channelDto){
+    log.info("[POST] /api/channel/delete - {}", principal.getUserid());
     Map<String,Object> result=new HashMap<>();
     if(principal.getUserid().compareTo(channelDto.getUser_login_id()) != 0 ){
       throw new CustomException(ErrorCode.BAD_REQUEST);
