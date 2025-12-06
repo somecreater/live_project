@@ -24,6 +24,21 @@ public class ChannelController {
 
   private final ChannelServiceInterface channelService;
 
+  @GetMapping("/my_channel")
+  public ResponseEntity<?> getMyChannel(@AuthenticationPrincipal CustomUserDetails principal){
+    log.info("[GET] /api/channel/my_channel - {}", principal.getUserid());
+    Map<String,Object> result=new HashMap<>();
+    ChannelDto channelDto=channelService.getChannelInfoUser(principal.getUserid());
+
+    if(channelDto != null){
+      result.put("result", true);
+      result.put("my_channel", channelDto);
+    }else{
+      result.put("result", false);
+    }
+
+    return ResponseEntity.ok(result);
+  }
   @GetMapping("/info/{channel_id}")
   public ResponseEntity<?> getChannelInfo(@PathVariable Long channel_id){
     log.info("[GET] /api/channel/info/{} ", channel_id);

@@ -95,6 +95,10 @@ const ApiService = {
       headers: createHeaders(),
       withCredentials: true,
     }),
+    my_channel: () => RefreshApi.get(API_END_POINT.channel.my_channel, {
+      headers: createHeaders(),
+      withCredentials: true,
+    }),
     search: (dto) => RefreshApi.post(API_END_POINT.channel.search, dto, {
       headers: createHeaders(),
       withCredentials: true,
