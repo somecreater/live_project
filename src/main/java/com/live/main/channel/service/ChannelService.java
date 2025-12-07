@@ -58,6 +58,8 @@ public class ChannelService implements ChannelServiceInterface {
       channelEntityPage = channelRepository.findByNameLike(keyword,pageable);
     } else if (type.equals("description")) {
       channelEntityPage = channelRepository.findByDescriptionLike(keyword, pageable);
+    }else if(type.isEmpty()){
+      channelEntityPage =channelRepository.findAll(pageable);
     }
     if (channelEntityPage != null) {
       return channelEntityPage.map(channelMapper::toDto);

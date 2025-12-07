@@ -53,7 +53,7 @@ public class ChannelController {
     return ResponseEntity.ok(result);
   }
 
-  @GetMapping("/search")
+  @PostMapping("/search")
   public ResponseEntity<?> getChannelPage(@RequestBody SearchRequest request){
     log.info("[GET] /api/channel/search - page:{} size:{} type:{} keyword:{}",
             request.getPage(), request.getSize(), request.getType(), request.getKeyword());

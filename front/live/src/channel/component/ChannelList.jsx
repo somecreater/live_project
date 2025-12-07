@@ -9,9 +9,9 @@ const ChannelList = ({ channels }) => {
   }
 
   return (
-    <Row>
+    <Row className="g-4">
       {channels.map((channel) => (
-        <Col key={channel.id} xs={12} md={6} lg={4} className="mb-4">
+        <Col key={channel.id} xs={12} md={6} lg={4} xl={3}>
           <Channel channel={channel} />
         </Col>
       ))}

@@ -3,23 +3,24 @@ import { userStateStore } from "../context/userStateStore";
 import { useEffect } from "react";
 import UserDropDown from "./UserDropDown";
 
-const TopItem=[
-  {title:"홈", link:"/"}, 
-  {title:"실시간 방송", link:"/"}, 
-  {title:"동영상", link:"/"},
-  {title:"인기 동영상", link:"/"},
-  {title:"인기 실시간 방송", link:"/"}
+const TopItem = [
+  { title: "홈", link: "/" },
+  { title: "실시간 방송", link: "/" },
+  { title: "동영상", link: "/" },
+  { title: "인기 동영상", link: "/" },
+  { title: "인기 실시간 방송", link: "/" },
+  { title: "채널", link: "/channel" }
 ];
-function TopMenu({props}){
-  const logoUrl= "/public/image/Logo.png";  
-  const {user, getUserProfile, getUserProfileCache, profileImageUrl}= userStateStore();
-  useEffect(()=>{
-    if(user?.loginId){
-        getUserProfile(user?.loginId);
-    }else{
-        getUserProfileCache();
+function TopMenu({ props }) {
+  const logoUrl = "/public/image/Logo.png";
+  const { user, getUserProfile, getUserProfileCache, profileImageUrl } = userStateStore();
+  useEffect(() => {
+    if (user?.loginId) {
+      getUserProfile(user?.loginId);
+    } else {
+      getUserProfileCache();
     }
-  },[profileImageUrl, user?.loginId]);
+  }, [profileImageUrl, user?.loginId]);
   return (
     <Navbar bg="danger" variant="dark" fixed="top">
       <Container fluid>
@@ -33,23 +34,23 @@ function TopMenu({props}){
           />
           <span>YourLive</span>
         </Navbar.Brand>
-        <Nav 
+        <Nav
           className="d-flex flex-row"
           style={{ gap: '1rem' }}
         >
-          {TopItem.map(item =>(
+          {TopItem.map(item => (
             <Nav.Item key={item.title}>
               <Nav.Link href={item.link}>{item.title}</Nav.Link>
             </Nav.Item>
           ))}
         </Nav>
-          <Nav className="ms-auto">
-            <UserDropDown/> 
-          </Nav>
-      </Container>  
+        <Nav className="ms-auto">
+          <UserDropDown />
+        </Nav>
+      </Container>
 
     </Navbar>
-  );  
+  );
 }
 
 export default TopMenu;
