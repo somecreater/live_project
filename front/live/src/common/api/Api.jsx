@@ -33,7 +33,7 @@ export const API_END_POINT = {
     update: `${API_BASE_URL}/api/channel/update`,
     delete: `${API_BASE_URL}/api/channel/delete`,
     info: `${API_BASE_URL}/api/channel/info`,
-    my_channel: `${API_BASE_URL}/api/channel/my_chanel`,
+    my_channel: `${API_BASE_URL}/api/channel/my_channel`,
     search: `${API_BASE_URL}/api/channel/search`
   }
 }

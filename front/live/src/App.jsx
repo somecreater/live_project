@@ -7,6 +7,7 @@ import MyPage from './user/page/MyPage';
 import ManagerPage from './user/page/ManagerPage';
 import UpdateUserPage from './user/page/UpdateUserPage';
 import ChannelPage from './channel/page/ChannelPage';
+import MyChannelPage from './channel/page/MyChannelPage';
 
 import { BrowserRouter } from 'react-router-dom'
 import AppLayout from './AppLayout';
@@ -28,6 +29,7 @@ function App() {
             <Route path="/manager" element={<ManagerPage />} />
 
             <Route path="/channel" element={<ChannelPage />} />
+            <Route path="/channel/my_channel" element={<MyChannelPage />} />
           </Routes>
         </AppLayout>
       </BrowserRouter>

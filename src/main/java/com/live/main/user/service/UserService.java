@@ -1,6 +1,5 @@
 package com.live.main.user.service;
 
-import com.live.main.channel.service.Interface.ChannelServiceInterface;
 import com.live.main.common.database.dto.ErrorCode;
 import com.live.main.common.exception.CustomException;
 import com.live.main.user.database.dto.CustomUserDetails;
@@ -32,7 +31,6 @@ import java.util.Optional;
 public class UserService implements UserServiceInterface, UserDetailsService {
 
   private final ApplicationEventPublisher eventPublisher;
-  private final ChannelServiceInterface channelService;
   private final PasswordEncoder passwordEncoder;
   private final UserRepository userRepository;
   private final LoginRepository loginRepository;

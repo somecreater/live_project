@@ -5,7 +5,7 @@ import com.live.main.user.database.dto.UserDeleteEvent;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.web.multipart.MultipartFile;
 
-/**프로필 이미지 기능 2025-11-26*/
+/**프로필 이미지 기능(2025-11-26)*/
 public interface ProfileServiceInterface {
 
   /**프로필 이미지 업로드 기능*/

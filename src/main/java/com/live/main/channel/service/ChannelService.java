@@ -1,5 +1,6 @@
 package com.live.main.channel.service;
 
+import com.live.main.channel.database.dto.ChannelDeleteEvent;
 import com.live.main.channel.database.dto.ChannelDto;
 import com.live.main.channel.database.entity.ChannelEntity;
 import com.live.main.channel.database.mapper.ChannelMapper;
@@ -10,6 +11,7 @@ import com.live.main.common.exception.CustomException;
 import com.live.main.user.database.dto.UserDeleteEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,6 +28,7 @@ import java.time.LocalDateTime;
 @Slf4j
 public class ChannelService implements ChannelServiceInterface {
 
+  private final ApplicationEventPublisher eventPublisher;
   private final ChannelRepository channelRepository;
   private final ChannelMapper channelMapper;
 
@@ -122,6 +125,7 @@ public class ChannelService implements ChannelServiceInterface {
         } else if (entity.getUsers().getLoginId().compareTo(channelDto.getUser_login_id()) != 0) {
             throw new CustomException(ErrorCode.BAD_REQUEST);
         }
+        eventPublisher.publishEvent(new ChannelDeleteEvent(entity.getName()));
         channelRepository.deleteByName(channelDto.getName());
     } catch (Exception e) {
         e.printStackTrace();

@@ -4,6 +4,7 @@ import com.live.main.common.database.dto.ErrorCode;
 import com.live.main.common.exception.CustomException;
 import com.live.main.common.service.Interface.CommonServiceInterface;
 import com.live.main.profile.database.dto.ProfileImageDto;
+import com.live.main.profile.database.entity.ProfileCacheRepository;
 import com.live.main.profile.database.entity.ProfileImageEntity;
 import com.live.main.profile.database.mapper.ProfileImageMapper;
 import com.live.main.profile.database.repository.ProfileImageRepository;
@@ -51,6 +52,7 @@ public class ProfileService implements ProfileServiceInterface {
   private final UserServiceInterface userServiceInterface;
   private final UserMapper userMapper;
   private final ProfileImageRepository profileImageRepository;
+  private final ProfileCacheRepository profileCacheRepository;
   private final ProfileImageMapper profileImageMapper;
 
   @Override
@@ -92,6 +94,7 @@ public class ProfileService implements ProfileServiceInterface {
         old_entity.setUsers(userMapper.toEntity(userDto));
         old_entity.setUpdatedAt(LocalDateTime.now());
         profile_file_delete(userLoginId);
+        profileCacheRepository.delete(userLoginId);
         profileImageRepository.save(old_entity);
 
         return profileImageMapper.toDto(old_entity);
@@ -126,6 +129,7 @@ public class ProfileService implements ProfileServiceInterface {
       String fileName=  entity.getImageName();
       s3Template.deleteObject(bucket_name, fileName);
       profileImageRepository.deleteById(entity.getId());
+      profileCacheRepository.delete(event.getUserLoginId());
 
       }catch (S3Exception s3){
         s3.printStackTrace();
@@ -146,6 +150,7 @@ public class ProfileService implements ProfileServiceInterface {
       String fileName=  entity.getImageName();
       s3Template.deleteObject(bucket_name, fileName);
       profileImageRepository.deleteById(entity.getId());
+      profileCacheRepository.delete(userLoginId);
     }catch (S3Exception s3){
       s3.printStackTrace();
       throw new CustomException(ErrorCode.NOT_FOUND);
@@ -163,6 +168,7 @@ public class ProfileService implements ProfileServiceInterface {
 
       String fileName=  entity.getImageName();
       s3Template.deleteObject(bucket_name, fileName);
+      profileCacheRepository.delete(userLoginId);
     }catch (S3Exception s3){
       s3.printStackTrace();
       throw new CustomException(ErrorCode.NOT_FOUND);
@@ -200,23 +206,34 @@ public class ProfileService implements ProfileServiceInterface {
     }
   }
 
-  public String profile_read(String userLoginId){
-    ProfileImageEntity profileImageEntity=profileImageRepository
-      .findByUsers_LoginId(userLoginId).orElse(null);
-    if(profileImageEntity == null){
-      throw new CustomException(ErrorCode.NOT_FOUND);
+  @Override
+  @Transactional
+  public String profile_read(String userLoginId) {
+    String cache_url = profileCacheRepository.get(userLoginId);
+    if (cache_url != null) {
+      return cache_url;
+    } else {
+      String fileName;
+      ProfileImageEntity profileImageEntity = profileImageRepository
+                  .findByUsers_LoginId(userLoginId).orElse(null);
+      if (profileImageEntity == null) {
+        throw new CustomException(ErrorCode.NOT_FOUND);
+      }
+
+      fileName = profileImageEntity.getImageName();
+
+      GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                  .bucket(bucket_name)
+                  .key(fileName).build();
+
+      GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder().signatureDuration(Duration.ofDays(1))
+                  .getObjectRequest(getObjectRequest).build();
+
+      PresignedGetObjectRequest presignedGetObjectRequest = s3Presigner.presignGetObject(presignRequest);
+      String preSignedUrl=presignedGetObjectRequest.url().toString();
+
+      profileCacheRepository.save(userLoginId,preSignedUrl);
+      return preSignedUrl;
     }
-
-    String fileName=  profileImageEntity.getImageName();
-
-    GetObjectRequest getObjectRequest=GetObjectRequest.builder()
-      .bucket(bucket_name)
-      .key(fileName).build();
-
-    GetObjectPresignRequest presignRequest= GetObjectPresignRequest.builder().signatureDuration(Duration.ofDays(1))
-      .getObjectRequest(getObjectRequest).build();
-
-    PresignedGetObjectRequest presignedGetObjectRequest=s3Presigner.presignGetObject(presignRequest);
-    return presignedGetObjectRequest.url().toString();
   }
 }

@@ -61,7 +61,7 @@ function MyPage() {
               프로필 이미지 수정
             </Button>
           </Col>
-          {channel ?
+          {channel != null ?
             <Col xs={12} md="auto">
               <Button variant="primary" onClick={handleChannelUpdateModal}>
                 채널 수정
