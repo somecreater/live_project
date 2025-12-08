@@ -89,6 +89,7 @@ public class CoverService implements CoverServiceInterface {
         old_cover.setSize(file.getSize());
         old_cover.setFile_type(upload.contentType());
         old_cover.setUpdatedAt(LocalDateTime.now());
+        cover_file_delete(channel_name);
         coverRepository.save(old_cover);
 
         return coverMapper.toDto(old_cover);
