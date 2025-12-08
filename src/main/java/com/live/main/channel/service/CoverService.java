@@ -84,12 +84,15 @@ public class CoverService implements CoverServiceInterface {
       String url=upload.getURL().toString();
       if(old_cover != null){
         log.info("{} 채널의 커버 파일이 존재(데이터 수정)", channel_name);
+
+        String oldFileName= old_cover.getImage_name();
+        s3Template.deleteObject(bucket_name,oldFileName);
+
         old_cover.setImage_name(upload.getFilename());
         old_cover.setImage_url(url);
         old_cover.setSize(file.getSize());
         old_cover.setFile_type(upload.contentType());
         old_cover.setUpdatedAt(LocalDateTime.now());
-        cover_file_delete(channel_name);
         coverRepository.save(old_cover);
 
         return coverMapper.toDto(old_cover);
@@ -125,24 +128,6 @@ public class CoverService implements CoverServiceInterface {
       coverRepository.deleteById(coverEntity.getId());
 
     } catch (S3Exception s3) {
-      s3.printStackTrace();
-      throw new CustomException(ErrorCode.NOT_FOUND);
-    }
-  }
-
-  @Transactional(readOnly = true)
-  @Override
-  public void cover_file_delete(String channel_name) {
-    try {
-      CoverEntity entity=coverRepository.findByChannel_Name(channel_name).orElse(null);
-      if(entity == null){
-        throw new CustomException(ErrorCode.NOT_FOUND);
-      }
-
-      String fileName= entity.getImage_name();
-      s3Template.deleteObject(bucket_name,fileName);
-
-    }catch (S3Exception s3){
       s3.printStackTrace();
       throw new CustomException(ErrorCode.NOT_FOUND);
     }

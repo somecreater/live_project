@@ -14,8 +14,6 @@ public interface ProfileServiceInterface {
   public void profile_delete(String userLoginId);
   /**프로필 이미지 삭제 기능(회원 탈퇴 이벤트 감시)*/
   public void profile_delete_onUser(UserDeleteEvent event);
-  /**프로필 이미지(파일) 삭제 기능*/
-  public void profile_file_delete(String userLoginId);
   /**프로필 이미지 가져오기(객체) 기능*/
   public ProfileImageDto profile_get(String userLoginId);
   /**프로필 이미지 가져오기(파일) 기능*/

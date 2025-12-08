@@ -86,12 +86,16 @@ public class ProfileService implements ProfileServiceInterface {
       String url=upload.getURL().toString();
       if(old_entity != null){
         log.info("{} 님의 프로필 파일이 존재(데이터 수정)", userLoginId);
+
+        String oldFileName=  old_entity.getImageName();
+        s3Template.deleteObject(bucket_name, oldFileName);
+        profileCacheRepository.delete(userLoginId);
+
         old_entity.setImageName(upload.getFilename());
         old_entity.setImageUrl(url);
         old_entity.setSize(file.getSize());
         old_entity.setFileType(upload.contentType());
         old_entity.setUpdatedAt(LocalDateTime.now());
-        profile_file_delete(userLoginId);
         profileCacheRepository.delete(userLoginId);
         profileImageRepository.save(old_entity);
 
@@ -155,24 +159,6 @@ public class ProfileService implements ProfileServiceInterface {
     }
   }
 
-  @Override
-  @Transactional(readOnly = true)
-  public void profile_file_delete(String userLoginId){
-    try{
-      ProfileImageEntity entity= profileImageRepository.findByUsers_LoginId(userLoginId).orElse(null);
-      if(entity == null){
-        throw new CustomException(ErrorCode.NOT_FOUND);
-      }
-
-      String fileName=  entity.getImageName();
-      s3Template.deleteObject(bucket_name, fileName);
-      profileCacheRepository.delete(userLoginId);
-    }catch (S3Exception s3){
-      s3.printStackTrace();
-      throw new CustomException(ErrorCode.NOT_FOUND);
-    }
-
-  }
   @Override
   @Transactional(readOnly = true)
   public ProfileImageDto profile_get(String userLoginId){

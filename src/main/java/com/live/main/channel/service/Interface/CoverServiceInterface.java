@@ -11,8 +11,6 @@ public interface CoverServiceInterface {
   public CoverDto cover_upload(MultipartFile file, String channel_name);
   /**채널 커버 이미지 삭제  기능*/
   public void cover_delete(String channel_name);
-  /**채널 커버 이미지 삭제(파일) 기능*/
-  public void cover_file_delete(String channel_name);
   /**채널 커버 이미지 삭제(채널 삭제 이벤트 감지) 기능*/
   public void cover_delete_on_event(ChannelDeleteEvent deleteEvent);
   /**채널 커버 이미지 메타정보 읽기 기능*/
