@@ -35,6 +35,13 @@ export const API_END_POINT = {
     info: `${API_BASE_URL}/api/channel/info`,
     my_channel: `${API_BASE_URL}/api/channel/my_channel`,
     search: `${API_BASE_URL}/api/channel/search`
+  },
+  cover: {
+    upload: `${API_BASE_URL}/api/cover_image/upload`,
+    delete: `${API_BASE_URL}/api/cover_image/delete`,
+    get_info: `${API_BASE_URL}/api/cover_image/get_info`,
+    download: `${API_BASE_URL}/api/cover_image/download`,
+    read_image: `${API_BASE_URL}/api/cover_image/get_image`
   }
 }
 

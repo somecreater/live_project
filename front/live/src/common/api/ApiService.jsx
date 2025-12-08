@@ -103,6 +103,26 @@ const ApiService = {
       headers: createHeaders(),
       withCredentials: true,
     })
+  },
+  cover: {
+    upload: (dto) => RefreshApi.post(API_END_POINT.cover.upload, dto, {
+      withCredentials: true,
+    }),
+    delete: () => RefreshApi.post(API_END_POINT.cover.delete, {
+      withCredentials: true,
+    }),
+    get_info: (param) => RefreshApi.get(`${API_END_POINT.cover.get_info}?channel_name=${param}`, {
+      headers: createHeaders(),
+      withCredentials: true,
+    }),
+    download: (param) => RefreshApi.get(`${API_END_POINT.cover.download}?channel_name=${param}`, {
+      responseType: 'blob',
+      withCredentials: true,
+    }),
+    read_image: (param) => RefreshApi.get(`${API_END_POINT.cover.read_image}?channel_name=${param}`, {
+      headers: createHeaders(),
+      withCredentials: true,
+    })
   }
 }
 
