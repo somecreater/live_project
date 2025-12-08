@@ -25,10 +25,14 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -115,6 +119,9 @@ public class CoverService implements CoverServiceInterface {
       if(coverEntity == null){
         throw new CustomException(ErrorCode.NOT_FOUND);
       }
+      String fileName= coverEntity.getImage_name();
+      s3Template.deleteObject(bucket_name,fileName);
+      coverRepository.deleteById(coverEntity.getId());
 
     } catch (S3Exception s3) {
       s3.printStackTrace();
@@ -122,10 +129,22 @@ public class CoverService implements CoverServiceInterface {
     }
   }
 
-  @Transactional
+  @Transactional(readOnly = true)
   @Override
   public void cover_file_delete(String channel_name) {
+    try {
+      CoverEntity entity=coverRepository.findByChannel_Name(channel_name).orElse(null);
+      if(entity == null){
+        throw new CustomException(ErrorCode.NOT_FOUND);
+      }
 
+      String fileName= entity.getImage_name();
+      s3Template.deleteObject(bucket_name,fileName);
+
+    }catch (S3Exception s3){
+      s3.printStackTrace();
+      throw new CustomException(ErrorCode.NOT_FOUND);
+    }
   }
 
   @Async
@@ -133,24 +152,67 @@ public class CoverService implements CoverServiceInterface {
   @Transactional
   @Override
   public void cover_delete_on_event(ChannelDeleteEvent deleteEvent) {
+    try {
+      CoverEntity entity = coverRepository.findByChannel_Name(deleteEvent.getName()).orElse(null);
+      if (entity == null) return;
 
+      String fileName = entity.getImage_name();
+      s3Template.deleteObject(bucket_name, fileName);
+      coverRepository.deleteById(entity.getId());
+
+    } catch (S3Exception s3) {
+      s3.printStackTrace();
+      throw new CustomException(ErrorCode.NOT_FOUND);
+    }
   }
 
-  @Transactional
+  @Transactional(readOnly = true)
   @Override
   public CoverDto cover_read_info(String channel_name) {
-    return null;
+    CoverEntity entity= coverRepository.findByChannel_Name(channel_name).orElse(null);
+    if(entity !=null){
+      return coverMapper.toDto(entity);
+    } else{
+      return null;
+    }
   }
 
-  @Transactional
+  @Transactional(readOnly = true)
   @Override
   public String cover_read(String channel_name) {
-    return "";
+    CoverEntity entity= coverRepository.findByChannel_Name(channel_name).orElse(null);
+    if (entity == null) {
+      throw new CustomException(ErrorCode.NOT_FOUND);
+    }
+    String fileName= entity.getImage_name();
+    GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+              .bucket(bucket_name)
+              .key(fileName).build();
+
+    GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder().signatureDuration(Duration.ofDays(1))
+              .getObjectRequest(getObjectRequest).build();
+
+    PresignedGetObjectRequest presignedGetObjectRequest = s3Presigner.presignGetObject(presignRequest);
+
+    return presignedGetObjectRequest.url().toString();
   }
 
-  @Transactional
+  @Transactional(readOnly = true)
   @Override
   public InputStreamResource cover_download(String channel_name) {
-    return null;
+    try{
+      CoverEntity entity= coverRepository.findByChannel_Name(channel_name).orElse(null);
+      if(entity == null){
+        throw new CustomException(ErrorCode.NOT_FOUND);
+      }
+      String fileName= entity.getImage_name();
+      S3Resource s3Resource=s3Template.download(bucket_name,fileName);
+      InputStream in=s3Resource.getInputStream();
+      return new InputStreamResource(in);
+
+    } catch (S3Exception | IOException s3) {
+      s3.printStackTrace();
+      throw new CustomException(ErrorCode.NOT_FOUND);
+    }
   }
 }
