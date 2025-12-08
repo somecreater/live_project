@@ -44,6 +44,16 @@ public class ChannelService implements ChannelServiceInterface {
 
   @Override
   @Transactional(readOnly = true)
+  public ChannelDto getChannelInfoByName(String name){
+    ChannelEntity channelEntity= channelRepository.findByName(name).orElse(null);
+    if(channelEntity == null){
+      return null;
+    }
+    return channelMapper.toDto(channelEntity);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
   public ChannelDto getChannelInfoUser(String LoginId){
     ChannelEntity channelEntity= channelRepository.findByUsers_LoginId(LoginId).orElse(null);
     if(channelEntity == null){

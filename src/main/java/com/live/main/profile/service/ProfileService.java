@@ -90,8 +90,6 @@ public class ProfileService implements ProfileServiceInterface {
         old_entity.setImageUrl(url);
         old_entity.setSize(file.getSize());
         old_entity.setFileType(upload.contentType());
-        old_entity.setUser(true);
-        old_entity.setUsers(userMapper.toEntity(userDto));
         old_entity.setUpdatedAt(LocalDateTime.now());
         profile_file_delete(userLoginId);
         profileCacheRepository.delete(userLoginId);

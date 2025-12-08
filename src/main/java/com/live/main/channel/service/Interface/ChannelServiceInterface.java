@@ -8,6 +8,8 @@ import org.springframework.data.domain.Page;
 public interface ChannelServiceInterface {
   /**채널 정보 확인 기능*/
   public ChannelDto getChannelInfo(Long id);
+  /**채널 정보 확인 기능(이름)*/
+  public ChannelDto getChannelInfoByName(String name);
   /**채널 정보 확인(회원 아이디) 기능*/
   public ChannelDto getChannelInfoUser(String LoginId);
   /**채널 목록(검색 포함) 확인 기능*/
