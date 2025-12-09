@@ -2,6 +2,8 @@ package com.live.main.profile.database.dto;
 
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Data
 public class ProfileImageDto {
   private Long id;
@@ -11,4 +13,6 @@ public class ProfileImageDto {
   private String fileType;
   private boolean isUser;
   private Long userId;
+  private LocalDateTime createdAt;
+  private LocalDateTime updatedAt;
 }
