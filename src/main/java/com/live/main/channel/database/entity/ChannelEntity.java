@@ -1,0 +1,28 @@
+package com.live.main.channel.database.entity;
+
+import com.live.main.common.database.entity.timeEntity;
+import com.live.main.user.database.entity.UsersEntity;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
+@Entity
+@Table(name = "channel")
+@Getter
+@Setter
+public class ChannelEntity extends timeEntity {
+
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
+
+  @Column
+  private String name;
+
+  @Column
+  private String description;
+
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(nullable = true, name = "user_id")
+  private UsersEntity users;
+}
