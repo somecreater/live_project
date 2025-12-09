@@ -6,7 +6,7 @@ on:
     branches: [ "main", "develop" ]
 
 env:
-  BACKEND_ENV: src/.env.backend
+  BACKEND_ENV: src/.env_aws.backend
   FRONTEND_ENV: front/live/.env.frontend
 
 

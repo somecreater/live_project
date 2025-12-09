@@ -1,5 +1,6 @@
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
-
+export const API_BASE_URL_2 = import.meta.env.VITE_API_BASE_URL_2 || 'http://localhost:8081';
+export const API_BASE_URL_3 = import.meta.env.VITE_API_BASE_URL_3 || 'http://localhost:8082';
 
 export const API_END_POINT = {
   user: {
@@ -43,6 +44,7 @@ export const API_END_POINT = {
     download: `${API_BASE_URL}/api/cover_image/download`,
     read_image: `${API_BASE_URL}/api/cover_image/get_image`
   }
+
 }
 
 
