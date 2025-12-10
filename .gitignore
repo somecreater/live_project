@@ -2,6 +2,10 @@ HELP.md
 .gradle
 build/
 .env
+src/.env_aws.backend
+src/.env.backend
+../demo/front/live/.env.frontend
+
 .env_local
 
 !gradle/wrapper/gradle-wrapper.jar
