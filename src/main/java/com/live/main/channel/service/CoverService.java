@@ -48,6 +48,8 @@ public class CoverService implements CoverServiceInterface {
   private String bucket_name;
   @Value("${app.aws.bucket-name-cover}")
   private String coverFolderName;
+  @Value("${app.file.profile_limit-size}")
+  private Long profileLimitSize;
 
   private final ChannelMapper channelMapper;
   private final CoverMapper coverMapper;
@@ -63,7 +65,7 @@ public class CoverService implements CoverServiceInterface {
     if(channelDto == null){
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
-    if(!commonService.isSafeFile(file)){
+    if(!commonService.isSafeFile(file)||file.getSize()>profileLimitSize){
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
 

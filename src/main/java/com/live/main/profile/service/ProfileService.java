@@ -48,6 +48,8 @@ public class ProfileService implements ProfileServiceInterface {
   private String bucket_name;
   @Value("${app.aws.bucket-name-profile}")
   private String profileFolderName;
+  @Value("${app.file.profile_limit-size}")
+  private Long profileLimitSize;
   private final CommonServiceInterface commonService;
   private final UserServiceInterface userServiceInterface;
   private final UserMapper userMapper;
@@ -65,7 +67,7 @@ public class ProfileService implements ProfileServiceInterface {
     if(userDto == null){
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
-    if(!commonService.isSafeFile(file)){
+    if(!commonService.isSafeFile(file)||file.getSize()>profileLimitSize){
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
 

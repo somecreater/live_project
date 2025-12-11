@@ -35,10 +35,10 @@ public class VideoEntity extends timeEntity {
   @Column
   private int duration_seconds;
 
-  @Column
+  @Column(name = "like_count")
   private int like;
 
-  @Column
+  @Column(name = "unlike_count")
   private int unlike;
 
   @Column
