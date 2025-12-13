@@ -45,7 +45,7 @@ public class VideoEntity extends timeEntity {
   private int view_count;
 
   @ManyToOne
-  @JoinColumn(nullable = false, name = "channel_id")
+  @JoinColumn(nullable = true, name = "channel_id")
   private ChannelEntity channelEntity;
 
 }
