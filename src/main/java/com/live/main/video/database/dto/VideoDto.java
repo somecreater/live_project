@@ -8,6 +8,8 @@ public class VideoDto {
   private Long id;
   private String title;
   private String description;
+  private String file_type;
+  private Long size;
   private boolean visibility;
   private boolean allow_comments;
   private Status status;

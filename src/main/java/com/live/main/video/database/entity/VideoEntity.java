@@ -23,6 +23,12 @@ public class VideoEntity extends timeEntity {
   private String description;
 
   @Column
+  private String file_type;
+
+  @Column
+  private Long size;
+
+  @Column
   private boolean visibility;
 
   @Column

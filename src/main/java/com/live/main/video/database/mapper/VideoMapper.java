@@ -16,6 +16,8 @@ public class VideoMapper {
     entity.setId(videoDto.getId());
     entity.setTitle(videoDto.getTitle());
     entity.setDescription(videoDto.getDescription());
+    entity.setFile_type(videoDto.getFile_type());
+    entity.setSize(videoDto.getSize());
     entity.setVisibility(videoDto.isVisibility());
     entity.setAllow_comments(videoDto.isAllow_comments());
     entity.setStatus(videoDto.getStatus());
@@ -40,6 +42,8 @@ public class VideoMapper {
     dto.setId(entity.getId());
     dto.setTitle(entity.getTitle());
     dto.setDescription(entity.getDescription());
+    dto.setFile_type(entity.getFile_type());
+    dto.setSize(entity.getSize());
     dto.setVisibility(entity.isVisibility());
     dto.setAllow_comments(entity.isAllow_comments());
     dto.setStatus(entity.getStatus());
