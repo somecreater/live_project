@@ -34,6 +34,8 @@ public class VideoMapper {
               videoDto.getChannel_name()
       ).orElse(null));
     }
+    entity.setCreatedAt(videoDto.getCreatedAt());
+    entity.setUpdatedAt(videoDto.getUpdatedAt());
     return entity;
   }
 
@@ -55,6 +57,8 @@ public class VideoMapper {
       dto.setChannel_id(entity.getChannelEntity().getId());
       dto.setChannel_name(entity.getChannelEntity().getName());
     }
+    dto.setCreatedAt(entity.getCreatedAt());
+    dto.setUpdatedAt(entity.getUpdatedAt());
     return dto;
   }
 

@@ -52,19 +52,8 @@ public class VideoService implements VideoServiceInterface {
     }
 
     String key= original_video_folder+channel_name+"/"+user_login_id+"_"+videoDto.getTitle();
-    PutObjectRequest putObjectRequest= PutObjectRequest.builder()
-            .bucket(bucket_name)
-            .key(key)
-            .build();
 
-    PutObjectPresignRequest presignRequest= PutObjectPresignRequest.builder()
-            .signatureDuration(Duration.ofMinutes(15))
-            .putObjectRequest(putObjectRequest)
-            .build();
-
-    PresignedPutObjectRequest presignedPutObjectRequest= s3Presigner.presignPutObject(presignRequest);
-
-    return presignedPutObjectRequest.url().toString();
+    return "";
   }
 
   @Override
