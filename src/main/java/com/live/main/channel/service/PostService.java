@@ -4,6 +4,8 @@ import com.live.main.channel.database.dto.PostDto;
 import com.live.main.channel.database.mapper.PostMapper;
 import com.live.main.channel.database.repository.PostRepository;
 import com.live.main.channel.service.Interface.PostServiceInterface;
+import com.live.main.common.database.dto.ErrorCode;
+import com.live.main.common.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -19,6 +21,9 @@ public class PostService implements PostServiceInterface {
 
   @Override
   public PostDto writePost(PostDto postDto, String user_login_id) {
+    if(postDto == null){
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
     return null;
   }
 
