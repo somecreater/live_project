@@ -10,6 +10,8 @@ import com.live.main.common.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -64,8 +66,67 @@ public class PostService implements PostServiceInterface {
   }
 
   @Override
-  public Page<PostDto> readPostPage(int page, int size, String type, String keyword, String channel_name) {
-    return null;
+  public PostDto readPostByOwner(Long post_id){
+    PostEntity entity= postRepository.findById(post_id).orElse(null);
+    if(entity == null){
+      return null;
+    }
+    return postMapper.toDto(entity);
+  }
+
+  @Override
+  public Page<PostDto> readPostPage(
+    int page, int size, String type, String keyword, String channel_name
+  ) {
+    Pageable pageable = PageRequest.of(page, size);
+    Page<PostEntity> postEntities = null;
+    if(type.isBlank()){
+      postEntities= postRepository.findByVisibilityTrueAndChannelEntity_Name(channel_name,pageable);
+    }else if(type.equals("title")){
+      postEntities= postRepository.findByVisibilityTrueAndChannelEntity_NameAndTitleLike(
+        channel_name, keyword, pageable
+      );
+    }else if(type.equals("content")){
+      postEntities= postRepository.findByVisibilityTrueAndChannelEntity_NameAndContentLike(
+        channel_name, keyword, pageable
+      );
+    }else if(type.equals("category")){
+      postEntities= postRepository.findByVisibilityTrueAndChannelEntity_NameAndCategoryLike(
+        channel_name, keyword, pageable
+      );
+    }
+    if(postEntities == null){
+      return null;
+    }
+    return postEntities.map(postMapper::toDto);
+  }
+
+  @Override
+  public Page<PostDto> readPostPageByOwner(
+    int page, int size, String type, String keyword, String channel_name
+  ){
+    Pageable pageable = PageRequest.of(page, size);
+    Page<PostEntity> postEntities = null;
+    if(type.isBlank()){
+      postEntities= postRepository.findByChannelEntity_Name(channel_name,pageable);
+    }else if(type.equals("title")){
+      postEntities= postRepository.findByChannelEntity_NameAndTitleLike(
+              channel_name, keyword, pageable
+      );
+    }else if(type.equals("content")){
+      postEntities= postRepository.findByChannelEntity_NameAndContentLike(
+              channel_name, keyword, pageable
+      );
+    }else if(type.equals("category")){
+      postEntities= postRepository.findByChannelEntity_NameAndCategoryLike(
+              channel_name, keyword, pageable
+      );
+    }
+
+    if(postEntities == null){
+      return null;
+    }
+    return postEntities.map(postMapper::toDto);
   }
 
   @Override
