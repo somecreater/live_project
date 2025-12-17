@@ -111,15 +111,15 @@ public class PostService implements PostServiceInterface {
       postEntities= postRepository.findByChannelEntity_Name(channel_name,pageable);
     }else if(type.equals("title")){
       postEntities= postRepository.findByChannelEntity_NameAndTitleLike(
-              channel_name, keyword, pageable
+        channel_name, keyword, pageable
       );
     }else if(type.equals("content")){
       postEntities= postRepository.findByChannelEntity_NameAndContentLike(
-              channel_name, keyword, pageable
+        channel_name, keyword, pageable
       );
     }else if(type.equals("category")){
       postEntities= postRepository.findByChannelEntity_NameAndCategoryLike(
-              channel_name, keyword, pageable
+        channel_name, keyword, pageable
       );
     }
 
@@ -131,16 +131,53 @@ public class PostService implements PostServiceInterface {
 
   @Override
   public PostDto updatePost(PostDto postDto) {
-    return null;
+    if(postDto == null){
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    PostEntity postEntity= postRepository.findById(postDto.getId()).orElse(null);
+    if(postEntity == null){
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    if(postDto.getTitle().isBlank()
+      || postDto.getContent().isBlank()
+      || postDto.getCategory().isBlank()
+      || postDto.getChannel_name().isBlank()){
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    postEntity.setTitle(postDto.getTitle());
+    postEntity.setContent(postDto.getContent());
+    postEntity.setCategory(postDto.getCategory());
+    PostEntity update= postRepository.save(postEntity);
+
+    return postMapper.toDto(update);
   }
 
   @Override
   public boolean deletePost(Long post_id) {
-    return false;
+    try{
+      PostEntity postEntity= postRepository.findById(post_id).orElse(null);
+      if(postEntity == null){
+        throw new CustomException(ErrorCode.NOT_FOUND);
+      }
+      postRepository.deleteById(post_id);
+      return true;
+    }catch(Exception e){
+      e.printStackTrace();
+      return false;
+    }
   }
 
   @Override
   public boolean deletePostOnChannel(Long channel_id) {
-    return false;
+    try {
+      postRepository.deleteByChannelEntity_Id(channel_id);
+      return true;
+    }catch (Exception e){
+      e.printStackTrace();
+      return false;
+    }
   }
 }
