@@ -43,6 +43,13 @@ export const API_END_POINT = {
     get_info: `${API_BASE_URL}/api/cover_image/get_info`,
     download: `${API_BASE_URL}/api/cover_image/download`,
     read_image: `${API_BASE_URL}/api/cover_image/get_image`
+  },
+  post: {
+    read: `${API_BASE_URL}/api/post/read`,
+    list: `${API_BASE_URL}/api/post/list`,
+    write: `${API_BASE_URL}/api/post/write`,
+    update: `${API_BASE_URL}/api/post/update`,
+    delete: `${API_BASE_URL}/api/post/delete`
   }
 
 }
