@@ -6,6 +6,8 @@ import com.live.main.channel.database.dto.PostDto;
 import com.live.main.channel.database.dto.PostSearchRequest;
 import com.live.main.channel.service.Interface.ChannelServiceInterface;
 import com.live.main.channel.service.Interface.PostServiceInterface;
+import com.live.main.common.database.dto.ErrorCode;
+import com.live.main.common.exception.CustomException;
 import com.live.main.user.database.dto.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -58,6 +60,10 @@ public class PostController {
   ){
     Map<String, Object> result= new HashMap<>();
     Page<PostDto> postDtoPage=null;
+    if(postSearchRequest == null){
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
     ChannelDto channelDto= channelService.getChannelInfoUser(principal.getUserid());
     if(channelDto!=null && Objects.equals(channelDto.getName(), postSearchRequest.getChannel_name())){
       postDtoPage=postService.readPostPageByOwner(
@@ -90,9 +96,12 @@ public class PostController {
   public ResponseEntity<?> writePost(
     @AuthenticationPrincipal CustomUserDetails principal,
     @RequestBody PostDto postDto
-  )
-  {
+  ){
     Map<String, Object> result= new HashMap<>();
+    if(postDto == null){
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
     ChannelDto channelDto= channelService.getChannelInfoUser(principal.getUserid());
     if(channelDto!=null && Objects.equals(postDto.getChannel_name(), channelDto.getName())){
       PostDto newPost= postService.writePost(postDto);
@@ -110,7 +119,18 @@ public class PostController {
     @RequestBody PostDto postDto
   ){
     Map<String, Object> result= new HashMap<>();
+    if(postDto == null){
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
 
+    ChannelDto channelDto= channelService.getChannelInfoUser(principal.getUserid());
+    if(channelDto!=null && Objects.equals(postDto.getChannel_name(), channelDto.getName())){
+      PostDto updateDto= postService.updatePost(postDto);
+      result.put("result", true);
+      result.put("update_post", updateDto);
+    }else{
+      result.put("result", false);
+    }
     return ResponseEntity.ok(result);
   }
 
@@ -120,7 +140,21 @@ public class PostController {
     @RequestBody PostDeleteRequest postDeleteRequest
   ){
     Map<String, Object> result= new HashMap<>();
+    if(postDeleteRequest == null){
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
 
+    ChannelDto channelDto= channelService.getChannelInfoUser(principal.getUserid());
+    if(channelDto != null && Objects.equals(postDeleteRequest.getChannel_name(), channelDto.getName())){
+      boolean delete= postService.deletePost(postDeleteRequest.getPost_id());
+      if(delete){
+        result.put("result", true);
+      }else{
+        result.put("result",false);
+      }
+    }else{
+      result.put("result",false);
+    }
     return ResponseEntity.ok(result);
   }
 
