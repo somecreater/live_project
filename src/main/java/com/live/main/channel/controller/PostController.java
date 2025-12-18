@@ -33,6 +33,7 @@ public class PostController {
     @AuthenticationPrincipal CustomUserDetails principal,
     @PathVariable Long post_id
   ){
+    log.info("[GET] /api/post/read/{}", post_id);
     Map<String, Object> result= new HashMap<>();
     ChannelDto channelDto= channelService.getChannelInfoUser(principal.getUserid());
     PostDto postDto=postService.readPostByOwner(post_id);
@@ -58,6 +59,10 @@ public class PostController {
     @AuthenticationPrincipal CustomUserDetails principal,
     @RequestBody PostSearchRequest postSearchRequest
   ){
+    log.info("[POST] /api/post/list - page:{} size:{} type:{} keyword:{}",
+      postSearchRequest.getPage(), postSearchRequest.getSize(),
+      postSearchRequest.getType(), postSearchRequest.getKeyword());
+
     Map<String, Object> result= new HashMap<>();
     Page<PostDto> postDtoPage=null;
     if(postSearchRequest == null){
@@ -97,6 +102,7 @@ public class PostController {
     @AuthenticationPrincipal CustomUserDetails principal,
     @RequestBody PostDto postDto
   ){
+    log.info("[POST] /api/post/write - {}", principal.getUserid());
     Map<String, Object> result= new HashMap<>();
     if(postDto == null){
       throw new CustomException(ErrorCode.BAD_REQUEST);
@@ -118,6 +124,7 @@ public class PostController {
     @AuthenticationPrincipal CustomUserDetails principal,
     @RequestBody PostDto postDto
   ){
+    log.info("[POST] /api/post/update - {}", principal.getUserid());
     Map<String, Object> result= new HashMap<>();
     if(postDto == null){
       throw new CustomException(ErrorCode.BAD_REQUEST);
@@ -139,6 +146,7 @@ public class PostController {
     @AuthenticationPrincipal CustomUserDetails principal,
     @RequestBody PostDeleteRequest postDeleteRequest
   ){
+    log.info("[POST] /api/post/delete - {}", principal.getUserid());
     Map<String, Object> result= new HashMap<>();
     if(postDeleteRequest == null){
       throw new CustomException(ErrorCode.BAD_REQUEST);
