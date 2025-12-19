@@ -18,7 +18,7 @@ jobs:
 
             - name: Create frontend .env file
               run: |
-                cat << 'EOF' | base64 --decode > .env
+                cat << 'EOF' | base64 --decode > front/live/.env
                 ${{ secrets.FRONTEND_ENV }}
                 EOF
 
@@ -67,6 +67,9 @@ jobs:
               with:
                 name: backend-jar
                 path: build/libs/*.jar
+
+            - name: Cleanup
+              run: rm -f .env front/live/.env
 
 # ===== 배포 단계 (추후 구현) =====
 
