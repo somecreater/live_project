@@ -50,9 +50,12 @@ function PostDetail({
             const response = await ApiService.post.read(post.id);
             if (response.data && response.data.result) {
                 setFullPost(response.data.post);
+                /*
+                댓글, 좋아요는 추후 생각    
                 setComments(response.data.comments || []);
                 setCommentCount(response.data.comment_count || 0);
                 setLikeCount(response.data.post?.likeCount || 0);
+                */
             }
         } catch (err) {
             console.error('게시글 상세 로딩 실패:', err);

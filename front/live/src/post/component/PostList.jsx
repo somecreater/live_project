@@ -109,7 +109,10 @@ function PostList({ channelName, isOwner = false }) {
         if (!window.confirm('정말 이 게시글을 삭제하시겠습니까?')) return;
 
         try {
-            await ApiService.post.delete({ id: post.id });
+            await ApiService.post.delete({
+              channel_name: channelName,
+              post_id: post.id 
+            });
             setShowDetail(false);
             setSelectedPost(null);
             fetchPosts();
