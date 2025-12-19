@@ -35,7 +35,6 @@ function PostForm({ post, onSubmit, onCancel }) {
     // 수정 모드일 경우 데이터 초기화
     useEffect(() => {
         if (post) {
-            console.log('PostForm editing post:', post);
             setTitle(post.title || '');
             setContent(post.content || '');
             setCategory(post.category || '');
@@ -164,7 +163,6 @@ function PostForm({ post, onSubmit, onCancel }) {
                                     id="visibilityCheck"
                                     checked={visibility}
                                     onChange={(e) => {
-                                        console.log('Visibility changed to:', e.target.checked);
                                         setVisibility(e.target.checked);
                                     }}
                                     disabled={submitting}
@@ -182,7 +180,6 @@ function PostForm({ post, onSubmit, onCancel }) {
                                     id="commentableCheck"
                                     checked={commentable}
                                     onChange={(e) => {
-                                        console.log('Commentable changed to:', e.target.checked);
                                         setCommentable(e.target.checked);
                                     }}
                                     disabled={submitting}
