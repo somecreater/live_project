@@ -76,7 +76,6 @@ function SignForm() {
   }
   const handleSign = async (e) => {
     try {
-      console.log(user);
       const response = await ApiService.user.register(user);
       const data = response.data;
 

@@ -14,7 +14,6 @@ const Channel = ({ channel }) => {
   const initial = name ? name.charAt(0).toUpperCase() : (user_login_id ? user_login_id.charAt(0).toUpperCase() : 'C');
 
   const handleEnterChannel = () => {
-    console.log(`Enter channel: ${name}`);
     navigate(`/channel/${id}`);
   };
 
