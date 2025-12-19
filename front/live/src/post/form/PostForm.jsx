@@ -25,6 +25,8 @@ function PostForm({ post, onSubmit, onCancel }) {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [category, setCategory] = useState('');
+    const [visibility, setVisibility] = useState(true);
+    const [commentable, setCommentable] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [errors, setErrors] = useState({});
 
@@ -33,13 +35,22 @@ function PostForm({ post, onSubmit, onCancel }) {
     // 수정 모드일 경우 데이터 초기화
     useEffect(() => {
         if (post) {
+            console.log('PostForm editing post:', post);
             setTitle(post.title || '');
             setContent(post.content || '');
             setCategory(post.category || '');
+
+            // 0이나 false도 false로 처리, null/undefined만 true
+            const initBool = (val) => (val === undefined || val === null) ? true : !!val;
+
+            setVisibility(initBool(post.visibility));
+            setCommentable(initBool(post.commentable));
         } else {
             setTitle('');
             setContent('');
             setCategory('');
+            setVisibility(true);
+            setCommentable(true);
         }
         setErrors({});
     }, [post]);
@@ -80,7 +91,9 @@ function PostForm({ post, onSubmit, onCancel }) {
             await onSubmit({
                 title: title.trim(),
                 content: content.trim(),
-                category: category.trim()
+                category: category.trim(),
+                visibility,
+                commentable
             });
         } catch (err) {
             console.error('게시글 저장 실패:', err);
@@ -142,6 +155,44 @@ function PostForm({ post, onSubmit, onCancel }) {
                                 {errors.category}
                             </div>
                         )}
+
+                        <div className="d-flex gap-4 mt-3">
+                            <div className="form-check form-switch">
+                                <input
+                                    className="form-check-input"
+                                    type="checkbox"
+                                    id="visibilityCheck"
+                                    checked={visibility}
+                                    onChange={(e) => {
+                                        console.log('Visibility changed to:', e.target.checked);
+                                        setVisibility(e.target.checked);
+                                    }}
+                                    disabled={submitting}
+                                    style={{ cursor: 'pointer' }}
+                                />
+                                <label className="form-check-label" htmlFor="visibilityCheck" style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    {visibility ? '공개' : '비공개'}
+                                </label>
+                            </div>
+
+                            <div className="form-check form-switch">
+                                <input
+                                    className="form-check-input"
+                                    type="checkbox"
+                                    id="commentableCheck"
+                                    checked={commentable}
+                                    onChange={(e) => {
+                                        console.log('Commentable changed to:', e.target.checked);
+                                        setCommentable(e.target.checked);
+                                    }}
+                                    disabled={submitting}
+                                    style={{ cursor: 'pointer' }}
+                                />
+                                <label className="form-check-label" htmlFor="commentableCheck" style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    {commentable ? '댓글 허용' : '댓글 비허용'}
+                                </label>
+                            </div>
+                        </div>
                     </div>
 
                     {/* 제목 */}
@@ -227,7 +278,9 @@ PostForm.propTypes = {
         id: PropTypes.number,
         title: PropTypes.string,
         content: PropTypes.string,
-        category: PropTypes.string
+        category: PropTypes.string,
+        visibility: PropTypes.bool,
+        commentable: PropTypes.bool
     }),
     onSubmit: PropTypes.func.isRequired,
     onCancel: PropTypes.func.isRequired

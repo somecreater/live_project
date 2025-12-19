@@ -38,14 +38,18 @@ function PostList({ channelName, isOwner = false }) {
                 setLoading(true);
             }
 
+            console.log(`Fetching posts for ${channelName}, owner: ${isOwner}`);
+
             // PostSearchRequest 스펙에 맞게 파라미터 구성
-            const response = await ApiService.post.list({
+            const searchParams = {
                 channel_name: channelName,
                 keyword: searchKeyword || '',
                 type: searchType,
                 page: pageNum,
                 size: 10
-            });
+            };
+
+            const response = await ApiService.post.list(searchParams);
 
             if (response.data && response.data.result) {
                 const postPage = response.data.post_page;
@@ -54,6 +58,7 @@ function PostList({ channelName, isOwner = false }) {
                 if (isLoadMore) {
                     setPosts(prev => [...prev, ...newPosts]);
                 } else {
+                    console.log('Fetched posts:', newPosts);
                     setPosts(newPosts);
                 }
 
@@ -88,11 +93,25 @@ function PostList({ channelName, isOwner = false }) {
     const handlePostSubmit = async (postData) => {
         try {
             if (editingPost) {
-                // 수정
-                await ApiService.post.update(editingPost);
+                const updateDto = {
+                    id: editingPost.id,
+                    channel_name: editingPost.channel_name,
+                    title: postData.title,
+                    content: postData.content,
+                    category: postData.category,
+                    visibility: postData.visibility,
+                    commentable: postData.commentable
+                };
+                console.log('Sending update request:', updateDto);
+                await ApiService.post.update(updateDto);
             } else {
-                // 신규 작성
-                await ApiService.post.write(postData);
+                // 신규 작성: 채널명만 추가 (나머지는 postData에 포함됨)
+                const createDto = {
+                    ...postData,
+                    channel_name: channelName
+                };
+                console.log('Sending write request with:', createDto);
+                await ApiService.post.write(createDto);
             }
 
             setShowWriteForm(false);
@@ -110,8 +129,8 @@ function PostList({ channelName, isOwner = false }) {
 
         try {
             await ApiService.post.delete({
-              channel_name: channelName,
-              post_id: post.id 
+                channel_name: channelName,
+                post_id: post.id
             });
             setShowDetail(false);
             setSelectedPost(null);
@@ -249,11 +268,10 @@ function PostList({ channelName, isOwner = false }) {
 
                     {/* 더보기 버튼 */}
                     {hasMore && (
-                        <div className="text-center mt-4">
+                        <div className="text-center mt-4 pb-4">
                             <button
-                                className="post-stat"
+                                className="load-more-btn"
                                 onClick={handleLoadMore}
-                                style={{ margin: '0 auto' }}
                             >
                                 <FaChevronDown />
                                 더보기
@@ -264,14 +282,16 @@ function PostList({ channelName, isOwner = false }) {
             )}
 
             {/* 상세보기 모달 */}
-            <PostDetail
-                show={showDetail}
-                post={selectedPost}
-                isOwner={isOwner}
-                onHide={handleDetailClose}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-            />
+            {showDetail && (
+                <PostDetail
+                    show={showDetail}
+                    post={selectedPost}
+                    isOwner={isOwner}
+                    onHide={handleDetailClose}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                />
+            )}
         </div>
     );
 }

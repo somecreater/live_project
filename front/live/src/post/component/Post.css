@@ -180,12 +180,32 @@
 }
 
 /* Post Footer */
-.post-footer {
+.post-card .post-footer,
+.post-detail-card .post-footer {
   display: flex;
   align-items: center;
   padding: 12px 20px 16px;
   border-top: 1px solid rgba(0, 0, 0, 0.04);
   gap: 16px;
+  transition: opacity 0.2s ease-in-out;
+}
+
+/* Hide footer in Post Card by default */
+.post-card .post-footer {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Show footer on hover */
+.post-card:hover .post-footer {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Always show in Detail */
+.post-detail-card .post-footer {
+  opacity: 1;
+  visibility: visible;
 }
 
 .post-stat {
@@ -977,4 +997,38 @@ select.post-form-input option:first-child {
     margin-left: 0;
     padding-left: 12px;
   }
+}
+
+/* Load More Button */
+.load-more-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 auto;
+  padding: 10px 24px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 24px;
+  color: #666;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.load-more-btn:hover {
+  background: #f8f9fa;
+  border-color: #d0d0d0;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+  color: #333;
+}
+
+.load-more-btn svg {
+  color: #888;
+}
+
+.load-more-btn:hover svg {
+  color: #555;
 }

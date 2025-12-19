@@ -122,7 +122,7 @@ function PostDetail({
 
     // 이니셜
     const getInitial = () => {
-        const name = fullPost?.authorName || fullPost?.authorId;
+        const name = fullPost?.channel_name || post?.channel_name;
         return name ? name.charAt(0).toUpperCase() : 'U';
     };
 
@@ -185,7 +185,7 @@ function PostDetail({
                                 </div>
                                 <div className="post-author-info">
                                     <p className="post-author-name mb-0">
-                                        {displayPost?.authorName || displayPost?.authorId || '익명'}
+                                        {displayPost?.channel_name || '익명'}
                                     </p>
                                     <span className="text-muted" style={{ fontSize: '13px' }}>
                                         {formatDate(displayPost?.createdAt)}
@@ -199,18 +199,7 @@ function PostDetail({
                             {displayPost?.content || '내용이 없습니다.'}
                         </div>
 
-                        {/* 이미지 */}
-                        {displayPost?.imageUrl && (
-                            <div className="px-4 pb-4">
-                                <div className="post-image-container">
-                                    <img
-                                        src={displayPost.imageUrl}
-                                        alt="게시글 이미지"
-                                        className="post-image"
-                                    />
-                                </div>
-                            </div>
-                        )}
+
 
                         {/* 상호작용 버튼 */}
                         <div className="post-footer" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
@@ -241,6 +230,7 @@ function PostDetail({
                             onCommentAdd={handleCommentAdd}
                             onReplyAdd={handleReplyAdd}
                             onLoadReplies={handleLoadReplies}
+                            commentable={displayPost?.commentable}
                         />
                     </div>
                 )}

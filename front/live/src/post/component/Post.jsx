@@ -9,7 +9,8 @@ import {
     FaEllipsisH,
     FaEdit,
     FaTrash,
-    FaArrowRight
+    FaArrowRight,
+    FaLock
 } from 'react-icons/fa';
 import './Post.css';
 
@@ -27,7 +28,7 @@ function Post({ post, onDetail, onEdit, onDelete, isOwner = false }) {
 
     if (!post) return null;
 
-    const { id, title, content, category, channel_name, createdAt, commentable } = post;
+    const { id, title, content, category, channel_name, createdAt, commentable, visibility } = post;
 
     // 날짜 포맷팅
     const formatDate = (dateString) => {
@@ -79,6 +80,14 @@ function Post({ post, onDetail, onEdit, onDelete, isOwner = false }) {
                             </>
                         )}
                         <span>{formatDate(createdAt)}</span>
+                        {visibility === false && (
+                            <>
+                                <span className="post-meta-separator"></span>
+                                <span className="text-secondary d-flex align-items-center gap-1" style={{ fontSize: '13px' }}>
+                                    <FaLock size={12} /> 비공개
+                                </span>
+                            </>
+                        )}
                     </div>
                 </div>
 
