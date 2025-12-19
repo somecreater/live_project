@@ -1,14 +1,28 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Spinner, Alert, Button, Modal } from 'react-bootstrap';
+import { Container, Spinner, Alert, Button, Modal, Nav, Tab } from 'react-bootstrap';
+import { useSearchParams } from 'react-router-dom';
+import { FaHome, FaNewspaper, FaVideo, FaInfoCircle, FaList } from 'react-icons/fa';
 import Cover from '../component/Cover';
+import ChannelHome from '../component/ChannelHome';
+import PostList from '../../post/component/PostList';
 import ApiService from '../../common/api/ApiService';
+import './ChannelDetailPage.css';
 
 function MyChannelPage() {
+    const [searchParams, setSearchParams] = useSearchParams();
     const [channel, setChannel] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showCoverModal, setShowCoverModal] = useState(false);
     const [coverKey, setCoverKey] = useState(0); // 커버 리프레시용
+
+    // 현재 활성 탭 (URL 파라미터에서 가져오거나 기본값 'home')
+    const activeTab = searchParams.get('tab') || 'home';
+
+    // 탭 변경 핸들러
+    const handleTabChange = (tabKey) => {
+        setSearchParams({ tab: tabKey });
+    };
 
     useEffect(() => {
         const fetchMyChannel = async () => {
@@ -88,7 +102,7 @@ function MyChannelPage() {
     }
 
     return (
-        <div className="my-channel-page">
+        <div className="channel-detail-page my-channel-page">
             {/* 커버 이미지 */}
             <Cover
                 key={coverKey}
@@ -99,17 +113,115 @@ function MyChannelPage() {
 
             {/* 채널 정보 영역 */}
             <Container className="mt-4">
-                <div className="channel-info">
-                    <h2>{channel?.name || '내 채널'}</h2>
+                <div className="channel-header-info mb-4">
+                    <h2 className="channel-name">{channel?.name || '내 채널'}</h2>
                     {channel?.description && (
-                        <p className="text-muted">{channel.description}</p>
+                        <p className="text-muted channel-description">{channel.description}</p>
                     )}
                 </div>
 
-                {/* 채널 콘텐츠 영역 (추후 확장) */}
-                <div className="channel-content mt-4">
-                    {/* 여기에 채널 콘텐츠 추가 */}
-                </div>
+                {/* 탭 네비게이션 */}
+                <Tab.Container activeKey={activeTab} onSelect={handleTabChange}>
+                    <Nav variant="tabs" className="channel-tabs mb-4">
+                        <Nav.Item>
+                            <Nav.Link eventKey="home" className="channel-tab-link">
+                                <FaHome className="me-2" />
+                                홈
+                            </Nav.Link>
+                        </Nav.Item>
+                        <Nav.Item>
+                            <Nav.Link eventKey="posts" className="channel-tab-link">
+                                <FaNewspaper className="me-2" />
+                                게시글
+                            </Nav.Link>
+                        </Nav.Item>
+                        <Nav.Item>
+                            <Nav.Link eventKey="videos" className="channel-tab-link">
+                                <FaVideo className="me-2" />
+                                동영상
+                            </Nav.Link>
+                        </Nav.Item>
+                        <Nav.Item>
+                            <Nav.Link eventKey="playlists" className="channel-tab-link">
+                                <FaList className="me-2" />
+                                재생목록
+                            </Nav.Link>
+                        </Nav.Item>
+                        <Nav.Item>
+                            <Nav.Link eventKey="about" className="channel-tab-link">
+                                <FaInfoCircle className="me-2" />
+                                정보
+                            </Nav.Link>
+                        </Nav.Item>
+                    </Nav>
+
+                    <Tab.Content>
+                        {/* 홈 탭 */}
+                        <Tab.Pane eventKey="home">
+                            <ChannelHome
+                                channelName={channel?.name}
+                                onTabChange={handleTabChange}
+                            />
+                        </Tab.Pane>
+
+                        {/* 게시글 탭 */}
+                        <Tab.Pane eventKey="posts">
+                            <PostList
+                                channelName={channel?.name}
+                                isOwner={true}
+                            />
+                        </Tab.Pane>
+
+                        {/* 동영상 탭 */}
+                        <Tab.Pane eventKey="videos">
+                            <div className="tab-placeholder">
+                                <FaVideo size={48} className="text-muted mb-3" />
+                                <h4>동영상</h4>
+                                <p className="text-muted">아직 업로드된 동영상이 없습니다.</p>
+                            </div>
+                        </Tab.Pane>
+
+                        {/* 재생목록 탭 */}
+                        <Tab.Pane eventKey="playlists">
+                            <div className="tab-placeholder">
+                                <FaList size={48} className="text-muted mb-3" />
+                                <h4>재생목록</h4>
+                                <p className="text-muted">아직 생성된 재생목록이 없습니다.</p>
+                            </div>
+                        </Tab.Pane>
+
+                        {/* 정보 탭 */}
+                        <Tab.Pane eventKey="about">
+                            <div className="channel-about-section">
+                                <div className="about-card">
+                                    <h5>채널 설명</h5>
+                                    <p>{channel?.description || '채널 설명이 없습니다.'}</p>
+                                </div>
+                                <div className="about-card">
+                                    <h5>채널 정보</h5>
+                                    <div className="about-info-list">
+                                        <div className="about-info-item">
+                                            <span className="info-label">채널 이름</span>
+                                            <span className="info-value">{channel?.name}</span>
+                                        </div>
+                                        {channel?.createdAt && (
+                                            <div className="about-info-item">
+                                                <span className="info-label">개설일</span>
+                                                <span className="info-value">
+                                                    {new Date(channel.createdAt).toLocaleDateString('ko-KR', {
+                                                        year: 'numeric',
+                                                        month: 'long',
+                                                        day: 'numeric'
+                                                    })}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </Tab.Pane>
+                    </Tab.Content>
+                </Tab.Container>
             </Container>
 
             {/* 커버 편집 모달 */}
@@ -155,3 +267,4 @@ function MyChannelPage() {
 }
 
 export default MyChannelPage;
+

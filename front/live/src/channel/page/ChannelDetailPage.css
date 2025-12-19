@@ -1,0 +1,194 @@
+/* =====================================================
+   Channel Detail Page Styles
+   ===================================================== */
+
+/* 채널 헤더 정보 */
+.channel-header-info {
+    padding: 0 20px;
+}
+
+.channel-name {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 8px;
+}
+
+.channel-description {
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 8px;
+}
+
+.channel-owner {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* =====================================================
+   Channel Tabs
+   ===================================================== */
+
+.channel-tabs {
+    border: none;
+    background: rgba(0, 0, 0, 0.02);
+    padding: 6px;
+    border-radius: 12px;
+    gap: 4px;
+}
+
+.channel-tabs .nav-item {
+    margin: 0;
+}
+
+.channel-tab-link {
+    border: none !important;
+    background: transparent !important;
+    color: #8b8b9a !important;
+    font-weight: 500;
+    font-size: 15px;
+    padding: 12px 20px !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+}
+
+.channel-tab-link:hover {
+    color: #1a1a2e !important;
+    background: rgba(0, 0, 0, 0.04) !important;
+}
+
+.channel-tab-link.active {
+    background: #ffffff !important;
+    color: #667eea !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.channel-tab-link svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* =====================================================
+   Tab Content
+   ===================================================== */
+
+.tab-content {
+    min-height: 300px;
+}
+
+/* Tab Placeholder */
+.tab-placeholder {
+    text-align: center;
+    padding: 80px 20px;
+    background: #ffffff;
+    border-radius: 16px;
+    border: 2px dashed rgba(0, 0, 0, 0.08);
+}
+
+.tab-placeholder h4 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin-bottom: 8px;
+}
+
+.tab-placeholder p {
+    font-size: 15px;
+    margin: 0;
+}
+
+/* =====================================================
+   About Section
+   ===================================================== */
+
+.channel-about-section {
+    display: grid;
+    gap: 20px;
+    max-width: 800px;
+}
+
+.about-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.about-card h5 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.about-card p {
+    font-size: 15px;
+    color: #4a4a5a;
+    line-height: 1.7;
+    margin: 0;
+    white-space: pre-wrap;
+}
+
+.about-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.about-info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+}
+
+.info-label {
+    font-size: 14px;
+    color: #8b8b9a;
+}
+
+.info-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1a1a2e;
+}
+
+/* =====================================================
+   Responsive
+   ===================================================== */
+
+@media (max-width: 768px) {
+    .channel-name {
+        font-size: 22px;
+    }
+
+    .channel-tabs {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .channel-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .channel-tab-link {
+        padding: 10px 16px !important;
+        font-size: 14px;
+        white-space: nowrap;
+    }
+
+    .tab-placeholder {
+        padding: 60px 16px;
+    }
+
+    .about-card {
+        padding: 20px;
+    }
+}

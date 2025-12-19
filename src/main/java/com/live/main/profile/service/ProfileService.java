@@ -9,7 +9,6 @@ import com.live.main.profile.database.entity.ProfileImageEntity;
 import com.live.main.profile.database.mapper.ProfileImageMapper;
 import com.live.main.profile.database.repository.ProfileImageRepository;
 import com.live.main.profile.service.Interface.ProfileServiceInterface;
-import com.live.main.user.database.dto.UserDeleteEvent;
 import com.live.main.user.database.dto.UserDto;
 import com.live.main.user.database.mapper.UserMapper;
 import com.live.main.user.service.Interface.UserServiceInterface;
@@ -20,9 +19,7 @@ import io.awspring.cloud.s3.S3Template;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.event.EventListener;
 import org.springframework.core.io.InputStreamResource;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -48,6 +45,8 @@ public class ProfileService implements ProfileServiceInterface {
   private String bucket_name;
   @Value("${app.aws.bucket-name-profile}")
   private String profileFolderName;
+  @Value("${app.file.profile_limit-size}")
+  private Long profileLimitSize;
   private final CommonServiceInterface commonService;
   private final UserServiceInterface userServiceInterface;
   private final UserMapper userMapper;
@@ -65,7 +64,7 @@ public class ProfileService implements ProfileServiceInterface {
     if(userDto == null){
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
-    if(!commonService.isSafeFile(file)){
+    if(!commonService.isSafeFile(file)||file.getSize()>profileLimitSize){
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
 
@@ -119,23 +118,22 @@ public class ProfileService implements ProfileServiceInterface {
     }
   }
 
-  @Async
   @Override
   @Transactional
-  @EventListener
-  public void profile_delete_onUser(UserDeleteEvent event){
+  public boolean profile_delete_onUser(String user_login_id){
     try{
-      ProfileImageEntity entity= profileImageRepository.findByUsers_LoginId(event.getUserLoginId()).orElse(null);
-      if(entity == null) return;
+      ProfileImageEntity entity= profileImageRepository.findByUsers_LoginId(user_login_id).orElse(null);
+      if(entity == null) return true;
 
       String fileName=  entity.getImageName();
       s3Template.deleteObject(bucket_name, fileName);
       profileImageRepository.deleteById(entity.getId());
-      profileCacheRepository.delete(event.getUserLoginId());
+      profileCacheRepository.delete(user_login_id);
+      return true;
 
       }catch (S3Exception s3){
         s3.printStackTrace();
-        throw new CustomException(ErrorCode.NOT_FOUND);
+      return false;
       }
 
   }

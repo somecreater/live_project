@@ -3,7 +3,6 @@ package com.live.main.user.service;
 import com.live.main.common.database.dto.ErrorCode;
 import com.live.main.common.exception.CustomException;
 import com.live.main.user.database.dto.CustomUserDetails;
-import com.live.main.user.database.dto.UserDeleteEvent;
 import com.live.main.user.database.dto.UserDto;
 import com.live.main.user.database.entity.LoginType;
 import com.live.main.user.database.entity.UsersEntity;
@@ -13,7 +12,6 @@ import com.live.main.user.database.repository.UserRepository;
 import com.live.main.user.service.Interface.UserServiceInterface;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -30,7 +28,6 @@ import java.util.Optional;
 @Slf4j
 public class UserService implements UserServiceInterface, UserDetailsService {
 
-  private final ApplicationEventPublisher eventPublisher;
   private final PasswordEncoder passwordEncoder;
   private final UserRepository userRepository;
   private final LoginRepository loginRepository;
@@ -223,9 +220,7 @@ public class UserService implements UserServiceInterface, UserDetailsService {
   @Override
   public boolean DeleteUser(UserDto userDto) {
     try {
-      eventPublisher.publishEvent(new UserDeleteEvent(userDto.getLoginId()));
       userRepository.deleteByLoginId(userDto.getLoginId());
-
       return true;
     } catch (Exception e) {
       e.printStackTrace();
