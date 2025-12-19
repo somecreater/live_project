@@ -16,7 +16,8 @@ function CommentItem({
     onDelete,
     onLoadReplies,
     repliesVisible = false,
-    repliesLoading = false
+    repliesLoading = false,
+    commentable = true
 }) {
     const { id, content, authorName, authorId, createdAt, replyCount = 0, replies = [] } = comment;
     const [showReplyInput, setShowReplyInput] = useState(false);
@@ -80,7 +81,7 @@ function CommentItem({
                         <FaEllipsisV size={12} />
                     </Dropdown.Toggle>
                     <Dropdown.Menu>
-                        {!isReply && (
+                        {!isReply && commentable && (
                             <Dropdown.Item onClick={() => setShowReplyInput(true)}>
                                 <FaReply className="me-2" /> 답글 달기
                             </Dropdown.Item>
@@ -144,9 +145,9 @@ function CommentItem({
                                 key={reply.id}
                                 comment={reply}
                                 isReply={true}
-                                currentUserId={currentUserId}
                                 onEdit={onEdit}
                                 onDelete={onDelete}
+                                commentable={commentable}
                             />
                         ))
                     )}
@@ -173,7 +174,8 @@ CommentItem.propTypes = {
     onDelete: PropTypes.func,
     onLoadReplies: PropTypes.func,
     repliesVisible: PropTypes.bool,
-    repliesLoading: PropTypes.bool
+    repliesLoading: PropTypes.bool,
+    commentable: PropTypes.bool
 };
 
 /**
@@ -194,7 +196,8 @@ function CommentSection({
     onCommentEdit,
     onCommentDelete,
     onReplyAdd,
-    onLoadReplies
+    onLoadReplies,
+    commentable = true
 }) {
     const [newComment, setNewComment] = useState('');
     const [submitting, setSubmitting] = useState(false);
@@ -239,28 +242,34 @@ function CommentSection({
             </div>
 
             {/* 댓글 입력 */}
-            <div className="comment-input-container">
-                <textarea
-                    className="comment-input"
-                    placeholder="댓글을 입력하세요..."
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    rows={1}
-                    disabled={submitting}
-                />
-                <button
-                    className="comment-submit-btn"
-                    onClick={handleCommentSubmit}
-                    disabled={!newComment.trim() || submitting}
-                >
-                    {submitting ? (
-                        <div className="spinner-border spinner-border-sm" />
-                    ) : (
-                        <FaPaperPlane size={16} />
-                    )}
-                </button>
-            </div>
+            {commentable ? (
+                <div className="comment-input-container">
+                    <textarea
+                        className="comment-input"
+                        placeholder="댓글을 입력하세요..."
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        rows={1}
+                        disabled={submitting}
+                    />
+                    <button
+                        className="comment-submit-btn"
+                        onClick={handleCommentSubmit}
+                        disabled={!newComment.trim() || submitting}
+                    >
+                        {submitting ? (
+                            <div className="spinner-border spinner-border-sm" />
+                        ) : (
+                            <FaPaperPlane size={16} />
+                        )}
+                    </button>
+                </div>
+            ) : (
+                <div className="text-center py-3 text-muted border rounded bg-light">
+                    댓글 사용이 중지된 게시글입니다.
+                </div>
+            )}
 
             {/* 댓글 목록 */}
             {loading ? (
@@ -278,6 +287,7 @@ function CommentSection({
                             onEdit={onCommentEdit}
                             onDelete={onCommentDelete}
                             onLoadReplies={onLoadReplies}
+                            commentable={commentable}
                         />
                     ))}
                 </div>
@@ -300,7 +310,8 @@ CommentSection.propTypes = {
     onCommentEdit: PropTypes.func,
     onCommentDelete: PropTypes.func,
     onReplyAdd: PropTypes.func,
-    onLoadReplies: PropTypes.func
+    onLoadReplies: PropTypes.func,
+    commentable: PropTypes.bool
 };
 
 export { CommentSection, CommentItem };

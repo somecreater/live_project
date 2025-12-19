@@ -150,6 +150,8 @@ public class PostService implements PostServiceInterface {
     postEntity.setTitle(postDto.getTitle());
     postEntity.setContent(postDto.getContent());
     postEntity.setCategory(postDto.getCategory());
+    postEntity.setVisibility(postDto.isVisibility());
+    postEntity.setCommentable(postDto.isCommentable());
     PostEntity update= postRepository.save(postEntity);
 
     return postMapper.toDto(update);
