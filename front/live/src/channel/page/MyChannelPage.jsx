@@ -115,6 +115,9 @@ function MyChannelPage() {
             <Container className="mt-4">
                 <div className="channel-header-info mb-4">
                     <h2 className="channel-name">{channel?.name || '내 채널'}</h2>
+                    <div className="text-secondary mb-2">
+                        구독자 {channel?.subscription_count || 0}명
+                    </div>
                     {channel?.description && (
                         <p className="text-muted channel-description">{channel.description}</p>
                     )}
@@ -203,6 +206,10 @@ function MyChannelPage() {
                                         <div className="about-info-item">
                                             <span className="info-label">채널 이름</span>
                                             <span className="info-value">{channel?.name}</span>
+                                        </div>
+                                        <div className="about-info-item">
+                                            <span className="info-label">구독자 수</span>
+                                            <span className="info-value">{channel?.subscription_count || 0}명</span>
                                         </div>
                                         {channel?.createdAt && (
                                             <div className="about-info-item">

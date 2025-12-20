@@ -22,6 +22,9 @@ public class ChannelEntity extends timeEntity {
   @Column
   private String description;
 
+  @Column
+  private Long subscription_count;
+
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(nullable = true, name = "user_id")
   private UsersEntity users;
