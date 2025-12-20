@@ -22,4 +22,6 @@ public interface SubscriptionRepository extends JpaRepository<SubscriptionEntity
     long deleteByUser_login_id(String user_login_id);
 
     long deleteByChannel_name(String channel_name);
+
+    boolean existsByUser_login_idAndChannel_name(String user_login_id, String channel_name);
 }

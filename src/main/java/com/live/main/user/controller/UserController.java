@@ -3,6 +3,7 @@ package com.live.main.user.controller;
 import com.live.main.channel.database.dto.ChannelDto;
 import com.live.main.channel.service.Interface.ChannelServiceInterface;
 import com.live.main.channel.service.Interface.CoverServiceInterface;
+import com.live.main.channel.service.Interface.PostServiceInterface;
 import com.live.main.common.database.dto.ErrorCode;
 import com.live.main.common.exception.CustomException;
 import com.live.main.profile.service.Interface.ProfileServiceInterface;
@@ -43,6 +44,7 @@ public class UserController {
   private final VideoServiceInterface videoService;
   private final ProfileServiceInterface profileService;
   private final CoverServiceInterface coverService;
+  private final PostServiceInterface postService;
   private final JwtService jwtService;
 
   @PostMapping("/register")
@@ -190,9 +192,14 @@ public class UserController {
     boolean cover_delete= coverService.cover_delete_on_channel(channelDto.getName());
     boolean channel_delete = channelService.deleteChannelOnUser(user.getLoginId());
     boolean profile_delete= profileService.profile_delete_onUser(user.getLoginId());
+    boolean post_delete= postService.deletePostOnChannel(channelDto.getName());
+    boolean subscription_delete_1= channelService.deleteSubscriptionOnChannel(channelDto.getName());
+    boolean subscription_delete_2= channelService.deleteSubscriptionOnUser(user.getLoginId());
     boolean delete=userService.DeleteUser(user);
 
-    if(video_delete && cover_delete && channel_delete && profile_delete && delete){
+    if(video_delete && cover_delete && channel_delete
+       && profile_delete && post_delete &&subscription_delete_1
+       && subscription_delete_2 && delete){
       jwtService.deleteRefreshToken(user.getLoginId());
       ResponseCookie clearAccessCookie=ResponseCookie.from("accessToken","")
           .httpOnly(true).secure(true).sameSite("None").path("/").maxAge(0)

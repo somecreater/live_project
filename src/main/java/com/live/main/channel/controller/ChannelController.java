@@ -4,6 +4,7 @@ import com.live.main.channel.database.dto.ChannelDto;
 import com.live.main.channel.database.dto.SearchRequest;
 import com.live.main.channel.service.Interface.ChannelServiceInterface;
 import com.live.main.channel.service.Interface.CoverServiceInterface;
+import com.live.main.channel.service.Interface.PostServiceInterface;
 import com.live.main.common.database.dto.ErrorCode;
 import com.live.main.common.exception.CustomException;
 import com.live.main.user.database.dto.CustomUserDetails;
@@ -27,6 +28,7 @@ public class ChannelController {
   private final ChannelServiceInterface channelService;
   private final VideoServiceInterface videoService;
   private final CoverServiceInterface coverService;
+  private final PostServiceInterface postService;
 
   @GetMapping("/my_channel")
   public ResponseEntity<?> getMyChannel(@AuthenticationPrincipal CustomUserDetails principal){
@@ -114,9 +116,11 @@ public class ChannelController {
 
     boolean video_delete= videoService.VideoDeleteOnChannel(channelDto.getName());
     boolean cover_delete= coverService.cover_delete_on_channel(channelDto.getName());
+    boolean post_delete= postService.deletePostOnChannel(channelDto.getName());
+    boolean subscription_delete= channelService.deleteSubscriptionOnChannel(channelDto.getName());
     boolean channel_delete= channelService.deleteChannel(channelDto);
 
-    if(video_delete && cover_delete && channel_delete){
+    if(video_delete && cover_delete && post_delete && subscription_delete && channel_delete){
       result.put("result",true);
     }else{
       result.put("result",false);

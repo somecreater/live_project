@@ -1,9 +1,13 @@
 package com.live.main.channel.service;
 
 import com.live.main.channel.database.dto.ChannelDto;
+import com.live.main.channel.database.dto.SubscriptionDto;
 import com.live.main.channel.database.entity.ChannelEntity;
+import com.live.main.channel.database.entity.SubscriptionEntity;
 import com.live.main.channel.database.mapper.ChannelMapper;
+import com.live.main.channel.database.mapper.SubscriptionMapper;
 import com.live.main.channel.database.repository.ChannelRepository;
+import com.live.main.channel.database.repository.SubscriptionRepository;
 import com.live.main.channel.service.Interface.ChannelServiceInterface;
 import com.live.main.common.database.dto.ErrorCode;
 import com.live.main.common.exception.CustomException;
@@ -23,6 +27,8 @@ import java.time.LocalDateTime;
 @Slf4j
 public class ChannelService implements ChannelServiceInterface {
 
+  private final SubscriptionRepository subscriptionRepository;
+  private final SubscriptionMapper subscriptionMapper;
   private final ChannelRepository channelRepository;
   private final ChannelMapper channelMapper;
 
@@ -68,7 +74,7 @@ public class ChannelService implements ChannelServiceInterface {
     }else if(type.isEmpty()){
       channelEntityPage =channelRepository.findAll(pageable);
     }
-    if (channelEntityPage != null) {
+    if (channelEntityPage.hasContent()) {
       return channelEntityPage.map(channelMapper::toDto);
     }else{
       return null;
@@ -89,10 +95,15 @@ public class ChannelService implements ChannelServiceInterface {
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
     ChannelEntity entity=channelMapper.toEntity(channelDto);
+    entity.setSubscription_count(0L);
     entity.setCreatedAt(LocalDateTime.now());
     entity.setUpdatedAt(LocalDateTime.now());
     ChannelEntity newChannel = channelRepository.save(entity);
-    return channelMapper.toDto(newChannel);
+    if(newChannel.getId() == null){
+      return null;
+    }else{
+      return channelMapper.toDto(newChannel);
+    }
   }
 
   @Override
@@ -148,6 +159,133 @@ public class ChannelService implements ChannelServiceInterface {
       channelRepository.delete(entity);
       return true;
     }catch (Exception e){
+      e.printStackTrace();
+      return false;
+    }
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Page<SubscriptionDto> getSubscriptionPageByUser(
+    int page, int size, String keyword, String userLoginId
+  ){
+    Pageable pageable = PageRequest.of(page, size);
+    Page<SubscriptionEntity> subscriptionEntityPage= null;
+    if(userLoginId.isBlank()){
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    if(keyword.isBlank()){
+      subscriptionEntityPage= subscriptionRepository.findByUser_login_id(userLoginId,pageable);
+    }else{
+      subscriptionEntityPage=subscriptionRepository.findByUser_login_idAndChannel_nameLike(userLoginId, keyword, pageable);
+    }
+
+    if(subscriptionEntityPage.hasContent()){
+      return subscriptionEntityPage.map(subscriptionMapper::toDto);
+    }else{
+      return null;
+    }
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Page<SubscriptionDto> getSubscriptionPageByChannel(
+    int page, int size, String keyword, String channel_name
+  ){
+    Pageable pageable = PageRequest.of(page, size);
+    Page<SubscriptionEntity> subscriptionEntityPage= null;
+    if(channel_name.isBlank()){
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    if(keyword.isBlank()){
+      subscriptionEntityPage= subscriptionRepository.findByChannel_name(channel_name,pageable);
+    }else{
+      subscriptionEntityPage= subscriptionRepository.findByChannel_nameAndUser_login_idLike(channel_name, keyword, pageable);
+    }
+
+    if(subscriptionEntityPage.hasContent()){
+      return subscriptionEntityPage.map(subscriptionMapper::toDto);
+    }else{
+      return null;
+    }
+  }
+
+  @Override
+  @Transactional
+  public SubscriptionDto insertSubscription(SubscriptionDto subscriptionDto){
+    ChannelEntity channelEntity= channelRepository.findByName(subscriptionDto.getChannel_name()).orElse(null);
+    boolean is_subscription= subscriptionRepository.existsByUser_login_idAndChannel_name(
+      subscriptionDto.getUser_login_id(), subscriptionDto.getChannel_name()
+    );
+    if(channelEntity == null || is_subscription){
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    SubscriptionEntity subscriptionEntity= subscriptionMapper.toEntity(subscriptionDto);
+    subscriptionEntity.setCreatedAt(LocalDateTime.now());
+
+    SubscriptionEntity newSubscription= subscriptionRepository.save(subscriptionEntity);
+    if(newSubscription.getId() == null){
+      return null;
+    }else{
+      return subscriptionMapper.toDto(newSubscription);
+    }
+  }
+
+  @Override
+  @Transactional
+  public SubscriptionDto updateSubscription(SubscriptionDto subscriptionDto){
+    SubscriptionEntity subscriptionEntity= subscriptionRepository.findById(subscriptionDto.getId()).orElse(null);
+    if(subscriptionEntity == null){
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+    subscriptionEntity.setNotification(subscriptionDto.isNotification());
+    SubscriptionEntity update= subscriptionRepository.save(subscriptionEntity);
+    return subscriptionMapper.toDto(update);
+  }
+
+  @Override
+  @Transactional
+  public boolean deleteSubscription(SubscriptionDto subscriptionDto){
+    try {
+      if (subscriptionDto.getUser_login_id().isBlank()
+           || subscriptionDto.getChannel_name().isBlank()) {
+        throw new CustomException(ErrorCode.BAD_REQUEST);
+      }
+
+      subscriptionRepository.deleteByUser_login_idAndChannel_name(
+        subscriptionDto.getUser_login_id(), subscriptionDto.getChannel_name()
+      );
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+    return true;
+  }
+
+
+  @Override
+  @Transactional
+  public boolean deleteSubscriptionOnUser(String user_login_id){
+    try{
+      subscriptionRepository.deleteByUser_login_id(user_login_id);
+      return true;
+    } catch (Exception e) {
+      e.printStackTrace();
+      return false;
+    }
+  }
+
+  @Override
+  @Transactional
+  public boolean deleteSubscriptionOnChannel(String channel_name){
+    try{
+      subscriptionRepository.deleteByChannel_name(channel_name);
+      return true;
+    } catch (Exception e) {
       e.printStackTrace();
       return false;
     }
