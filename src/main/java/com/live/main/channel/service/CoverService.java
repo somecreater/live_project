@@ -1,6 +1,5 @@
 package com.live.main.channel.service;
 
-import com.live.main.channel.database.dto.ChannelDeleteEvent;
 import com.live.main.channel.database.dto.ChannelDto;
 import com.live.main.channel.database.dto.CoverDto;
 import com.live.main.channel.database.entity.CoverEntity;
@@ -19,9 +18,7 @@ import io.awspring.cloud.s3.S3Template;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.event.EventListener;
 import org.springframework.core.io.InputStreamResource;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -48,6 +45,8 @@ public class CoverService implements CoverServiceInterface {
   private String bucket_name;
   @Value("${app.aws.bucket-name-cover}")
   private String coverFolderName;
+  @Value("${app.file.profile_limit-size}")
+  private Long profileLimitSize;
 
   private final ChannelMapper channelMapper;
   private final CoverMapper coverMapper;
@@ -63,7 +62,7 @@ public class CoverService implements CoverServiceInterface {
     if(channelDto == null){
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
-    if(!commonService.isSafeFile(file)){
+    if(!commonService.isSafeFile(file)||file.getSize()>profileLimitSize){
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
 
@@ -133,22 +132,20 @@ public class CoverService implements CoverServiceInterface {
     }
   }
 
-  @Async
-  @EventListener
   @Transactional
   @Override
-  public void cover_delete_on_event(ChannelDeleteEvent deleteEvent) {
+  public boolean cover_delete_on_channel(String channel_name) {
     try {
-      CoverEntity entity = coverRepository.findByChannel_Name(deleteEvent.getName()).orElse(null);
-      if (entity == null) return;
+      CoverEntity entity = coverRepository.findByChannel_Name(channel_name).orElse(null);
+      if (entity == null) return true;
 
       String fileName = entity.getImage_name();
       s3Template.deleteObject(bucket_name, fileName);
       coverRepository.deleteById(entity.getId());
-
+      return true;
     } catch (S3Exception s3) {
       s3.printStackTrace();
-      throw new CustomException(ErrorCode.NOT_FOUND);
+      return false;
     }
   }
 

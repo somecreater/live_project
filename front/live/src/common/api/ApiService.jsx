@@ -123,6 +123,28 @@ const ApiService = {
       headers: createHeaders(),
       withCredentials: true,
     })
+  },
+  post: {
+    read: (id) => RefreshApi.get(`${API_END_POINT.post.read}/${id}`, {
+      headers: createHeaders(),
+      withCredentials: true,
+    }),
+    list: (dto) => RefreshApi.post(`${API_END_POINT.post.list}`,dto,{
+      headers: createHeaders(),
+      withCredentials: true,
+    }),
+    write: (dto) => RefreshApi.post(`${API_END_POINT.post.write}`,dto,{
+      headers: createHeaders(),
+      withCredentials: true,
+    }),
+    update: (dto) => RefreshApi.post(`${API_END_POINT.post.update}`, dto,{
+      headers: createHeaders(),
+      withCredentials: true,
+    }),
+    delete: (dto) => RefreshApi.post(`${API_END_POINT.post.delete}`, dto,{
+      headers: createHeaders(),
+      withCredentials: true,
+    })
   }
 }
 

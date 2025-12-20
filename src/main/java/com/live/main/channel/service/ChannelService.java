@@ -1,6 +1,5 @@
 package com.live.main.channel.service;
 
-import com.live.main.channel.database.dto.ChannelDeleteEvent;
 import com.live.main.channel.database.dto.ChannelDto;
 import com.live.main.channel.database.entity.ChannelEntity;
 import com.live.main.channel.database.mapper.ChannelMapper;
@@ -8,15 +7,11 @@ import com.live.main.channel.database.repository.ChannelRepository;
 import com.live.main.channel.service.Interface.ChannelServiceInterface;
 import com.live.main.common.database.dto.ErrorCode;
 import com.live.main.common.exception.CustomException;
-import com.live.main.user.database.dto.UserDeleteEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +23,6 @@ import java.time.LocalDateTime;
 @Slf4j
 public class ChannelService implements ChannelServiceInterface {
 
-  private final ApplicationEventPublisher eventPublisher;
   private final ChannelRepository channelRepository;
   private final ChannelMapper channelMapper;
 
@@ -135,7 +129,6 @@ public class ChannelService implements ChannelServiceInterface {
         } else if (entity.getUsers().getLoginId().compareTo(channelDto.getUser_login_id()) != 0) {
             throw new CustomException(ErrorCode.BAD_REQUEST);
         }
-        eventPublisher.publishEvent(new ChannelDeleteEvent(entity.getName()));
         channelRepository.deleteByName(channelDto.getName());
     } catch (Exception e) {
         e.printStackTrace();
@@ -144,13 +137,19 @@ public class ChannelService implements ChannelServiceInterface {
     return true;
   }
 
-  @Async
-  @EventListener
+
   @Override
   @Transactional
-  public void deleteChannel(UserDeleteEvent event){
-    ChannelEntity entity = channelRepository.findByUsers_LoginId(event.getUserLoginId()).orElse(null);
-    if(entity == null) return;
-    channelRepository.delete(entity);
+  public boolean deleteChannelOnUser(String userLoginId){
+    try {
+      ChannelEntity entity = channelRepository.findByUsers_LoginId(userLoginId).orElse(null);
+
+      if (entity == null) return true;
+      channelRepository.delete(entity);
+      return true;
+    }catch (Exception e){
+      e.printStackTrace();
+      return false;
+    }
   }
 }
