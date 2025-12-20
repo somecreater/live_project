@@ -173,9 +173,9 @@ public class PostService implements PostServiceInterface {
   }
 
   @Override
-  public boolean deletePostOnChannel(Long channel_id) {
+  public boolean deletePostOnChannel(String channel_name) {
     try {
-      postRepository.deleteByChannelEntity_Id(channel_id);
+      postRepository.deleteByChannelEntity_Name(channel_name);
       return true;
     }catch (Exception e){
       e.printStackTrace();
