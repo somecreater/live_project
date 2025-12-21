@@ -12,8 +12,8 @@ public class SubscriptionMapper {
   public SubscriptionEntity toEntity(SubscriptionDto dto){
     SubscriptionEntity entity= new SubscriptionEntity();
     entity.setId(dto.getId());
-    entity.setUser_login_id(dto.getUser_login_id());
-    entity.setChannel_name(dto.getChannel_name());
+    entity.setUserLoginId(dto.getUserLoginId());
+    entity.setChannelName(dto.getChannelName());
     entity.setCreatedAt(dto.getCreatedAt());
     entity.setNotification(dto.isNotification());
     return entity;
@@ -22,8 +22,8 @@ public class SubscriptionMapper {
   public SubscriptionDto toDto(SubscriptionEntity entity){
     SubscriptionDto dto= new SubscriptionDto();
     dto.setId(entity.getId());
-    dto.setUser_login_id(entity.getUser_login_id());
-    dto.setChannel_name(entity.getChannel_name());
+    dto.setUserLoginId(entity.getUserLoginId());
+    dto.setChannelName(entity.getChannelName());
     dto.setCreatedAt(entity.getCreatedAt());
     dto.setNotification(entity.isNotification());
     return dto;

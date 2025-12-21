@@ -176,9 +176,9 @@ public class ChannelService implements ChannelServiceInterface {
     }
 
     if(keyword.isBlank()){
-      subscriptionEntityPage= subscriptionRepository.findByUser_login_id(userLoginId,pageable);
+      subscriptionEntityPage= subscriptionRepository.findByUserLoginId(userLoginId,pageable);
     }else{
-      subscriptionEntityPage=subscriptionRepository.findByUser_login_idAndChannel_nameLike(userLoginId, keyword, pageable);
+      subscriptionEntityPage=subscriptionRepository.findByUserLoginIdAndChannelNameContaining(userLoginId, keyword, pageable);
     }
 
     if(subscriptionEntityPage.hasContent()){
@@ -200,9 +200,9 @@ public class ChannelService implements ChannelServiceInterface {
     }
 
     if(keyword.isBlank()){
-      subscriptionEntityPage= subscriptionRepository.findByChannel_name(channel_name,pageable);
+      subscriptionEntityPage= subscriptionRepository.findByChannelName(channel_name,pageable);
     }else{
-      subscriptionEntityPage= subscriptionRepository.findByChannel_nameAndUser_login_idLike(channel_name, keyword, pageable);
+      subscriptionEntityPage= subscriptionRepository.findByChannelNameAndUserLoginIdLike(channel_name, keyword, pageable);
     }
 
     if(subscriptionEntityPage.hasContent()){
@@ -215,9 +215,9 @@ public class ChannelService implements ChannelServiceInterface {
   @Override
   @Transactional
   public SubscriptionDto insertSubscription(SubscriptionDto subscriptionDto){
-    ChannelEntity channelEntity= channelRepository.findByName(subscriptionDto.getChannel_name()).orElse(null);
-    boolean is_subscription= subscriptionRepository.existsByUser_login_idAndChannel_name(
-      subscriptionDto.getUser_login_id(), subscriptionDto.getChannel_name()
+    ChannelEntity channelEntity= channelRepository.findByName(subscriptionDto.getChannelName()).orElse(null);
+    boolean is_subscription= subscriptionRepository.existsByUserLoginIdAndChannelName(
+      subscriptionDto.getUserLoginId(), subscriptionDto.getChannelName()
     );
     if(channelEntity == null || is_subscription){
       throw new CustomException(ErrorCode.BAD_REQUEST);
@@ -250,13 +250,13 @@ public class ChannelService implements ChannelServiceInterface {
   @Transactional
   public boolean deleteSubscription(SubscriptionDto subscriptionDto){
     try {
-      if (subscriptionDto.getUser_login_id().isBlank()
-           || subscriptionDto.getChannel_name().isBlank()) {
+      if (subscriptionDto.getUserLoginId().isBlank()
+           || subscriptionDto.getChannelName().isBlank()) {
         throw new CustomException(ErrorCode.BAD_REQUEST);
       }
 
-      subscriptionRepository.deleteByUser_login_idAndChannel_name(
-        subscriptionDto.getUser_login_id(), subscriptionDto.getChannel_name()
+      subscriptionRepository.deleteByUserLoginIdAndChannelName(
+        subscriptionDto.getUserLoginId(), subscriptionDto.getChannelName()
       );
 
     } catch (Exception e) {
@@ -271,7 +271,7 @@ public class ChannelService implements ChannelServiceInterface {
   @Transactional
   public boolean deleteSubscriptionOnUser(String user_login_id){
     try{
-      subscriptionRepository.deleteByUser_login_id(user_login_id);
+      subscriptionRepository.deleteByUserLoginId(user_login_id);
       return true;
     } catch (Exception e) {
       e.printStackTrace();
@@ -283,7 +283,7 @@ public class ChannelService implements ChannelServiceInterface {
   @Transactional
   public boolean deleteSubscriptionOnChannel(String channel_name){
     try{
-      subscriptionRepository.deleteByChannel_name(channel_name);
+      subscriptionRepository.deleteByChannelName(channel_name);
       return true;
     } catch (Exception e) {
       e.printStackTrace();

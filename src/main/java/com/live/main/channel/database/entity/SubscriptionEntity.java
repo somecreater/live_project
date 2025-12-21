@@ -25,11 +25,11 @@ public class SubscriptionEntity{
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column
-  private String user_login_id;
+  @Column(name = "user_login_id")
+  private String userLoginId;
 
-  @Column
-  private String channel_name;
+  @Column(name = "channel_name")
+  private String channelName;
 
   @Column(name = "created_at")
   private LocalDateTime createdAt;
