@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Table(
   name = "subscription",
   uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"user_id", "channel_id"})
+    @UniqueConstraint(columnNames = {"user_login_id", "channel_name"})
   },
   indexes = {
     @Index(name = "idx_user_channel", columnList = "user_login_id, channel_name"),
