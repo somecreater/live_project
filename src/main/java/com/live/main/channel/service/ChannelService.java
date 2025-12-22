@@ -261,7 +261,7 @@ public class ChannelService implements ChannelServiceInterface {
 
     } catch (Exception e) {
       e.printStackTrace();
-      throw new CustomException(ErrorCode.BAD_REQUEST);
+      return false;
     }
     return true;
   }
