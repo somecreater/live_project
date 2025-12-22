@@ -29,7 +29,7 @@ public interface ChannelServiceInterface {
   );
   /**채널 구독 회원 목록 가져오기 기능*/
   public Page<SubscriptionDto> getSubscriptionPageByChannel(
-    int page, int size, String keyword,String channel_name
+    int page, int size, String keyword, String channel_name
   );
   /**채널 구독 기능*/
   public SubscriptionDto insertSubscription(SubscriptionDto subscriptionDto);

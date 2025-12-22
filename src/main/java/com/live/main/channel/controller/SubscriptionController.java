@@ -2,6 +2,7 @@ package com.live.main.channel.controller;
 
 
 import com.live.main.channel.database.dto.SubscriptionDto;
+import com.live.main.channel.database.dto.SubscriptionRequest;
 import com.live.main.channel.service.Interface.ChannelServiceInterface;
 import com.live.main.user.database.dto.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -20,25 +21,38 @@ import java.util.Map;
 public class SubscriptionController {
   private final ChannelServiceInterface channelService;
 
-  @GetMapping("/user")
-  public ResponseEntity<?> userSubscriptionList(@AuthenticationPrincipal CustomUserDetails principal,
-    @RequestParam("user_login_id") String login_id){
+  @PostMapping("/user")
+  public ResponseEntity<?> userSubscriptionList(
+    @AuthenticationPrincipal CustomUserDetails principal,
+    @RequestBody SubscriptionRequest request){
+    log.info("[POST] /api/subscription/user - {}", request.getName());
     Map<String,Object> result=new HashMap<>();
 
     return ResponseEntity.ok(result);
   }
 
-  @GetMapping("/my_subscription")
+  @PostMapping("/my_subscription")
   public ResponseEntity<?> mySubscriptionList(@AuthenticationPrincipal CustomUserDetails principal){
+    log.info("[POST] /api/subscription/my_subscription - {}", principal.getUserid());
     Map<String,Object> result=new HashMap<>();
 
     return ResponseEntity.ok(result);
   }
 
-  @GetMapping("/channel")
+  @PostMapping("/channel")
   public ResponseEntity<?> channelSubscriptionList(
     @AuthenticationPrincipal CustomUserDetails principal,
-    @RequestParam("channel_name") String channel_name){
+    @RequestBody SubscriptionRequest request){
+    log.info("[POST] /api/subscription/channel - {}", request.getName());
+    Map<String,Object> result=new HashMap<>();
+
+    return ResponseEntity.ok(result);
+  }
+
+  @PostMapping("/my_channel")
+  public ResponseEntity<?> myChannelSubscriptionList(
+    @AuthenticationPrincipal CustomUserDetails principal){
+    log.info("[POST] /api/subscription/my_channel - {}", principal.getUserid());
     Map<String,Object> result=new HashMap<>();
 
     return ResponseEntity.ok(result);
@@ -48,6 +62,7 @@ public class SubscriptionController {
   public ResponseEntity<?> subscriptionInsert(
     @AuthenticationPrincipal CustomUserDetails principal,
     @RequestBody SubscriptionDto subscriptionDto){
+    log.info("[POST] /api/subscription/insert - {}", principal.getUserid());
     Map<String,Object> result=new HashMap<>();
 
     return ResponseEntity.ok(result);
@@ -57,6 +72,7 @@ public class SubscriptionController {
   public ResponseEntity<?> subscriptionUpdate(
     @AuthenticationPrincipal CustomUserDetails principal,
     @RequestBody SubscriptionDto subscriptionDto){
+    log.info("[POST] /api/subscription/update - {}", principal.getUserid());
     Map<String,Object> result=new HashMap<>();
 
     return ResponseEntity.ok(result);
@@ -66,6 +82,7 @@ public class SubscriptionController {
   public ResponseEntity<?> subscriptionDelete(
     @AuthenticationPrincipal CustomUserDetails principal,
     @RequestBody SubscriptionDto subscriptionDto){
+    log.info("[POST] /api/subscription/delete - {}", principal.getUserid());
     Map<String,Object> result=new HashMap<>();
 
     return ResponseEntity.ok(result);
