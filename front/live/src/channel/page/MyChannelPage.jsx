@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Spinner, Alert, Button, Modal, Nav, Tab } from 'react-bootstrap';
 import { useSearchParams } from 'react-router-dom';
-import { FaHome, FaNewspaper, FaVideo, FaInfoCircle, FaList } from 'react-icons/fa';
+import { FaHome, FaNewspaper, FaVideo, FaInfoCircle, FaList, FaUsers } from 'react-icons/fa';
 import Cover from '../component/Cover';
 import ChannelHome from '../component/ChannelHome';
 import PostList from '../../post/component/PostList';
 import ApiService from '../../common/api/ApiService';
+import SubscribeButton from '../component/SubscribeButton';
+import SubscriptionList from '../component/SubscriptionList';
 import './ChannelDetailPage.css';
 
 function MyChannelPage() {
@@ -151,6 +153,12 @@ function MyChannelPage() {
                             </Nav.Link>
                         </Nav.Item>
                         <Nav.Item>
+                            <Nav.Link eventKey="subscribers" className="channel-tab-link">
+                                <FaUsers className="me-2" />
+                                구독자
+                            </Nav.Link>
+                        </Nav.Item>
+                        <Nav.Item>
                             <Nav.Link eventKey="about" className="channel-tab-link">
                                 <FaInfoCircle className="me-2" />
                                 정보
@@ -190,6 +198,14 @@ function MyChannelPage() {
                                 <FaList size={48} className="text-muted mb-3" />
                                 <h4>재생목록</h4>
                                 <p className="text-muted">아직 생성된 재생목록이 없습니다.</p>
+                            </div>
+                        </Tab.Pane>
+
+                        {/* 구독자 탭 */}
+                        <Tab.Pane eventKey="subscribers">
+                            <div className="py-4">
+                                <h4 className="mb-4">나를 구독 중인 사용자</h4>
+                                <SubscriptionList type="to_me" />
                             </div>
                         </Tab.Pane>
 
