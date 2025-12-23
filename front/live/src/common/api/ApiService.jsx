@@ -104,6 +104,36 @@ const ApiService = {
       withCredentials: true,
     })
   },
+  subscription: {
+    user_list: (dto)=> RefreshApi.post(API_END_POINT.subscription.user_list, dto,{
+      headers: createHeaders(),
+      withCredentials: true,
+    }),
+    my_subscription: (dto)=> RefreshApi.post(API_END_POINT.subscription.my_subscription, dto, {
+      headers: createHeaders(),
+      withCredentials: true,
+    }),
+    channel_list: (dto) => RefreshApi.post(API_END_POINT.subscription.channel_list, dto,{
+      headers: createHeaders(),
+      withCredentials: true,
+    }),
+    my_channel: (dto) => RefreshApi.post(API_END_POINT.subscription.my_channel, dto, {
+      headers: createHeaders(),
+      withCredentials: true,
+    }),
+    insert: (dto) => RefreshApi.post(API_END_POINT.subscription.insert, dto, {
+      headers: createHeaders(),
+      withCredentials: true,
+    }),
+    update: (dto) => RefreshApi.post(API_END_POINT.subscription.update, dto, {
+      headers: createHeaders(),
+      withCredentials: true,
+    }),
+    delete: (dto) => RefreshApi.post(API_END_POINT.subscription.delete, dto, {
+      headers: createHeaders(),
+      withCredentials: true,
+    })
+  },
   cover: {
     upload: (dto) => RefreshApi.post(API_END_POINT.cover.upload, dto, {
       withCredentials: true,

@@ -37,6 +37,15 @@ export const API_END_POINT = {
     my_channel: `${API_BASE_URL}/api/channel/my_channel`,
     search: `${API_BASE_URL}/api/channel/search`
   },
+  subscription: {
+    user_list: `${API_BASE_URL}/api/subscription/user`,
+    my_subscription: `${API_BASE_URL}/api/subscription/my_subscription`,
+    channel_list: `${API_BASE_URL}/api/subscription/channel`,
+    my_channel: `${API_BASE_URL}/api/subscription/my_channel`,
+    insert: `${API_BASE_URL}/api/subscription/insert`,
+    update: `${API_BASE_URL}/api/subscription/update`,
+    delete: `${API_BASE_URL}/api/subscription/delete`
+  },
   cover: {
     upload: `${API_BASE_URL}/api/cover_image/upload`,
     delete: `${API_BASE_URL}/api/cover_image/delete`,
