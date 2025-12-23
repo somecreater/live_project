@@ -25,6 +25,23 @@ import java.util.Objects;
 public class SubscriptionController {
   private final ChannelServiceInterface channelService;
 
+  @GetMapping("/is_subscription")
+  public ResponseEntity<?> subscriptionCheck(
+    @AuthenticationPrincipal CustomUserDetails principal,
+    @RequestParam("channel_name") String channel_name){
+    log.info("[GET] /api/subscription/is_subscription - {}", principal.getUserid());
+    Map<String,Object> result=new HashMap<>();
+    boolean check= channelService.checkSubscription(principal.getUserid(), channel_name);
+    if(check){
+      result.put("result",true);
+      result.put("subscription", true);
+    }else{
+      result.put("result",true);
+      result.put("subscription", false);
+    }
+    return ResponseEntity.ok(result);
+  }
+
   @PostMapping("/user")
   public ResponseEntity<?> userSubscriptionList(
     @AuthenticationPrincipal CustomUserDetails principal,

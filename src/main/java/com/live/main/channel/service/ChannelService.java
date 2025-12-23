@@ -234,6 +234,9 @@ public class ChannelService implements ChannelServiceInterface {
     }
   }
 
+  public boolean checkSubscription(String user_login_id, String channel_name){
+    return subscriptionRepository.existsByUserLoginIdAndChannelName(user_login_id,channel_name);
+  }
   @Override
   @Transactional
   public SubscriptionDto updateSubscription(SubscriptionDto subscriptionDto){
