@@ -11,9 +11,9 @@ import './ChannelDetailPage.css';
 
 function ChannelDetailPage() {
     const { id } = useParams(); // URL에서 채널 ID 추출
+    const loginId= localStorage.getItem("loginId");
     const [searchParams, setSearchParams] = useSearchParams();
     const [channel, setChannel] = useState(null);
-    const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -28,21 +28,9 @@ function ChannelDetailPage() {
         setSearchParams({ tab: tabKey });
     };
 
-    // 현재 사용자 정보 조회
+    // 현재 사용자 정보 조회(일단 안씀)
     useEffect(() => {
-        const fetchCurrentUser = async () => {
-            try {
-                const response = await ApiService.user.info();
-                if (response.data && response.data.result) {
-                    setCurrentUser(response.data.user);
-                }
-            } catch (err) {
-                // 로그인하지 않은 사용자일 수 있음 (무시)
-                console.log('사용자 정보 조회:', err.response?.status === 401 ? '로그인 필요' : err);
-            }
-        };
 
-        fetchCurrentUser();
     }, []);
 
     // 채널 정보 조회
@@ -82,8 +70,8 @@ function ChannelDetailPage() {
     }, [id]);
 
     // 채널 소유주 여부 확인
-    const isOwner = currentUser && channel &&
-        currentUser.login_id === channel.user_login_id;
+    const isOwner = loginId && channel &&
+        loginId === channel.user_login_id;
 
     // 구독 상태 변경 시 처리 (필요시 count 증감)
     const handleSubStatusChange = (isSubscribing) => {
@@ -132,11 +120,11 @@ function ChannelDetailPage() {
                     </div>
 
                     {/* 구독 버튼 (자기 채널이 아닐 때만 표시) */}
-                    {!isOwner && channel && (
+                    {!isOwner && (
                         <div className="pb-2">
                             <SubscribeButton
                                 channelName={channel.name}
-                                userLoginId={currentUser?.login_id}
+                                userLoginId={loginId}
                                 onStatusChange={handleSubStatusChange}
                             />
                         </div>
