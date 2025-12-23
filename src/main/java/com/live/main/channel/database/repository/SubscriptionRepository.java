@@ -5,6 +5,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Optional;
+
 public interface SubscriptionRepository extends JpaRepository<SubscriptionEntity, Long> {
 
     Page<SubscriptionEntity> findByChannelName(String channel_name, Pageable pageable);
@@ -22,4 +24,6 @@ public interface SubscriptionRepository extends JpaRepository<SubscriptionEntity
     long deleteByChannelName(String channel_name);
 
     boolean existsByUserLoginIdAndChannelName(String user_login_id, String channel_name);
+
+    Optional<SubscriptionEntity> findByUserLoginIdAndChannelName(String userLoginId, String channelName);
 }

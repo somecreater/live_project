@@ -34,7 +34,7 @@ public interface ChannelServiceInterface {
   /**채널 구독 기능*/
   public SubscriptionDto insertSubscription(SubscriptionDto subscriptionDto);
   /**채널 구독여부 확인 기능*/
-  public boolean checkSubscription(String user_login_id, String channel_name);
+  public SubscriptionDto checkSubscription(String user_login_id, String channel_name);
   /**채널 구독 상태 업데이트 기능*/
   public SubscriptionDto updateSubscription(SubscriptionDto subscriptionDto);
   /**채널 구독 해제 기능*/
