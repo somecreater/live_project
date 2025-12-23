@@ -63,7 +63,3 @@ export const API_END_POINT = {
 
 }
 
-
-export const createHeaders = () => ({
-  'Content-Type': 'application/json',
-});
