@@ -3,6 +3,7 @@ import { Button } from 'react-bootstrap';
 import { FaBell, FaBellSlash, FaPlus, FaCheck } from 'react-icons/fa';
 import PropTypes from 'prop-types';
 import './Subscription.css';
+import ApiService from '../../common/api/ApiService';
 
 /**
  * SubscribeButton 컴포넌트 (UI/Mock 버전 - API 생략)
@@ -10,14 +11,14 @@ import './Subscription.css';
  * @param {string} userLoginId - 현재 로그인한 유저 아이디
  * @param {function} onStatusChange - 상태 변경 시 콜백
  */
-const SubscribeButton = ({ channelName, userLoginId, onStatusChange }) => {
+const SubscribeButton = ({ subscriptionData, is_subscribed, channelName, userLoginId, onStatusChange }) => {
     // SubscriptionDto 관련 Mock 상태
-    const [subId, setSubId] = useState(null);
-    const [notification, setNotification] = useState(false);
-    const [createdAt, setCreatedAt] = useState(null);
+    const [subId, setSubId] = useState(subscriptionData ? subscriptionData.id : null);
+    const [notification, setNotification] = useState(subscriptionData ? subscriptionData.notification : false);
+    const [createdAt, setCreatedAt] = useState(subscriptionData.createdAt || null);
 
     // UI 관련 상태
-    const [isSubscribed, setIsSubscribed] = useState(false);
+    const [isSubscribed, setIsSubscribed] = useState(is_subscribed);
 
     const handleSubscribe = () => {
         const nextState = !isSubscribed;
@@ -38,10 +39,31 @@ const SubscribeButton = ({ channelName, userLoginId, onStatusChange }) => {
         if (onStatusChange) onStatusChange(nextState);
     };
 
-    const toggleNotification = (e) => {
+    const toggleNotification = async (e) => {
         e.stopPropagation();
         const nextNotify = !notification;
-        // 알림 설정 변경 Mock (추후 update API 호출부)
+        const result = window.confirm(`알림을 ${nextNotify ? '켤' : '끄실'} 건가요?`);
+        if (result){
+            try{
+                const response = await ApiService.subscription.update({
+                    id: subId,
+                    userLoginId: userLoginId,
+                    channelName: channelName,
+                    createdAt: null,
+                    notification: nextNotify
+                });
+                const data= response.data;
+                if(data.result){
+                    alert('알림 설정이 변경되었습니다.');
+                }
+            }
+            catch(error){
+                console.error('알림 설정 변경 실패:', error);
+                alert('알림 설정 변경에 실패했습니다. 다시 시도해주세요.');
+                setNotification(!nextNotify);
+                return;
+            }
+        }
         setNotification(nextNotify);
     };
 

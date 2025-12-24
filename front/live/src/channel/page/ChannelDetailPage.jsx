@@ -13,6 +13,8 @@ function ChannelDetailPage() {
     const { id } = useParams(); // URL에서 채널 ID 추출
     const loginId= localStorage.getItem("loginId");
     const [searchParams, setSearchParams] = useSearchParams();
+    const [isSubscribed, setIsSubscribed] = useState(false);
+    const [subscriptionData, setSubscriptionData] = useState(null);
     const [channel, setChannel] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -69,6 +71,27 @@ function ChannelDetailPage() {
         fetchChannel();
     }, [id]);
 
+    // 구독 상태 조회
+    useEffect(() => {
+        const fetchSubscriptionStatus = async () => {
+            if (!channel || !loginId) return;
+            try {
+                const response = await ApiService.subscription.is_subscribed(channel.name);
+                if (response.data && response.data.is_subscription !== false) {
+                    setIsSubscribed(response.data.is_subscription);
+                    setSubscriptionData(response.data.subscription);
+                } else {
+                    setIsSubscribed(false);
+                    setSubscriptionData(null);
+                }
+            } catch (err) {
+                console.error('구독 상태 조회 실패:', err);
+            }
+        };
+
+        fetchSubscriptionStatus();
+    }, [channel, loginId]);
+
     // 채널 소유주 여부 확인
     const isOwner = loginId && channel &&
         loginId === channel.user_login_id;
@@ -123,8 +146,10 @@ function ChannelDetailPage() {
                     {!isOwner && (
                         <div className="pb-2">
                             <SubscribeButton
+                                subscriptionData={subscriptionData}
                                 channelName={channel.name}
                                 userLoginId={loginId}
+                                is_subscribed={isSubscribed}
                                 onStatusChange={handleSubStatusChange}
                             />
                         </div>
