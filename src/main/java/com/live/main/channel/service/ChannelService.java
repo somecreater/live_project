@@ -165,6 +165,47 @@ public class ChannelService implements ChannelServiceInterface {
   }
 
   @Override
+  @Transactional
+  public boolean increaseSubscription(String channel_name){
+    try{
+      ChannelEntity entity= channelRepository.findByName(channel_name).orElse(null);
+      if(entity!=null){
+        Long current_count=entity.getSubscription_count();
+        entity.setSubscription_count(current_count+1);
+        channelRepository.save(entity);
+        return true;
+      }else{
+        return false;
+      }
+    }catch (Exception e){
+      e.printStackTrace();
+      return false;
+    }
+  }
+
+  @Override
+  @Transactional
+  public boolean decreaseSubscription(String channel_name){
+    try{
+      ChannelEntity entity= channelRepository.findByName(channel_name).orElse(null);
+      if(entity!=null){
+        Long current_count=entity.getSubscription_count();
+        if(current_count == 0){
+          return false;
+        }
+        entity.setSubscription_count(current_count-1);
+        channelRepository.save(entity);
+        return true;
+      }else{
+        return false;
+      }
+    }catch (Exception e){
+      e.printStackTrace();
+      return false;
+    }
+  }
+
+  @Override
   @Transactional(readOnly = true)
   public Page<SubscriptionDto> getSubscriptionPageByUser(
     int page, int size, String keyword, String userLoginId

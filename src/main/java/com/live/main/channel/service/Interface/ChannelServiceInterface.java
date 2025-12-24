@@ -31,6 +31,10 @@ public interface ChannelServiceInterface {
   public Page<SubscriptionDto> getSubscriptionPageByChannel(
     int page, int size, String keyword, String channel_name
   );
+  /**채널 구독자 증가 기능*/
+  public boolean increaseSubscription(String channel_name);
+  /**채널 구독자 감소 기능*/
+  public boolean decreaseSubscription(String channel_name);
   /**채널 구독 기능*/
   public SubscriptionDto insertSubscription(SubscriptionDto subscriptionDto);
   /**채널 구독여부 확인 기능*/
