@@ -11,7 +11,7 @@ import './ChannelDetailPage.css';
 
 function ChannelDetailPage() {
     const { id } = useParams(); // URL에서 채널 ID 추출
-    const loginId= localStorage.getItem("loginId");
+    const loginId = localStorage.getItem("loginId");
     const [searchParams, setSearchParams] = useSearchParams();
     const [isSubscribed, setIsSubscribed] = useState(false);
     const [subscriptionData, setSubscriptionData] = useState(null);
@@ -97,8 +97,14 @@ function ChannelDetailPage() {
         loginId === channel.user_login_id;
 
     // 구독 상태 변경 시 처리 (필요시 count 증감)
-    const handleSubStatusChange = (isSubscribing) => {
+    const handleSubStatusChange = (isSubscribing, data) => {
         setSubCount(prev => isSubscribing ? prev + 1 : prev - 1);
+        setIsSubscribed(isSubscribing);
+        if (isSubscribing && data) {
+            setSubscriptionData(data);
+        } else if (!isSubscribing) {
+            setSubscriptionData(null);
+        }
     };
 
     if (loading) {

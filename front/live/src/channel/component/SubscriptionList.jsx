@@ -1,40 +1,124 @@
-import React, { useState } from 'react';
-import { Row, Col, Card, Button } from 'react-bootstrap';
-import { FaBell, FaBellSlash, FaTrash, FaUser } from 'react-icons/fa';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Row, Col, Card, Button, Spinner } from 'react-bootstrap';
+import { FaBell, FaBellSlash, FaTrash, FaUser, FaSync } from 'react-icons/fa';
 import PropTypes from 'prop-types';
 import ChannelOwnerAvatar from './ChannelOwnerAvatar';
 import './Subscription.css';
+import ApiService from '../../common/api/ApiService';
 
 /**
- * SubscriptionList 컴포넌트 (스타일링/이벤트 집중 버전 - API 생략)
- * @param {string} type - 'mine' (내가 구독한 채널), 'to_me' (나를 구독한 유저)
+ * SubscriptionList 컴포넌트
+ * @param {string} type - 'channel_type' (채널 회원), 'user_type' (일반 회원)
  */
-const SubscriptionList = ({ type = 'mine' }) => {
-    // 스타일 및 인터랙션 확인을 위한 Mock 데이터
-    const mockData = type === 'mine' ? [
-        { id: 1, channelName: '테크 브리핑', notification: true, createdAt: '2023-10-01' },
-        { id: 2, channelName: '공부하는 개발자', notification: false, createdAt: '2023-11-15' },
-        { id: 3, channelName: '여행의 정석', notification: true, createdAt: '2023-12-20' },
-    ] : [
-        { id: 10, userLoginId: 'user_alpha', createdAt: '2024-01-05' },
-        { id: 11, userLoginId: 'tester_01', createdAt: '2024-02-10' },
-        { id: 12, userLoginId: 'creative_mind', createdAt: '2024-03-01' },
-    ];
+const SubscriptionList = ({ type = 'user_type' }) => {
+    const [subscriptions, setSubscriptions] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [request, setRequest] = useState({
+        name: '',
+        keyword: '',
+        page: 0,
+        size: 10
+    });
+    const loginId = localStorage.getItem("loginId");
+    const channelName = localStorage.getItem("channelName");
+    const fetchSubscriptions = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const apiMethod = type === 'user_type'
+                ? ApiService.subscription.my_subscription
+                : ApiService.subscription.my_channel;
 
-    const [subscriptions, setSubscriptions] = useState(mockData);
+            if (type === 'user_type') {
+                setRequest({
+                    name: loginId,
+                    keyword: null,
+                    page: 0,
+                    size: 10
+                });
+            } else {
+                setRequest({
+                    name: channelName,
+                    keyword: null,
+                    page: 0,
+                    size: 10
+                });
+            }
+            const response = await apiMethod(request);
+            if (response.data && (response.data.subscription_list || response.data.list)) {
+                // 백엔드 응답 구조에 따라 조정 (subscription_list 또는 list)
+                setSubscriptions(response.data.subscription_list || response.data.list || []);
+            } else {
+                setSubscriptions([]);
+            }
 
-    const handleAction = (sub, action) => {
+        } catch (err) {
+            console.error('구독 목록 로딩 실패:', err);
+            setError('목록을 불러오는 중 오류가 발생했습니다.');
+        } finally {
+            setLoading(false);
+        }
+    }, [type, loginId]);
+
+    useEffect(() => {
+        fetchSubscriptions();
+    }, [fetchSubscriptions]);
+
+    const handleAction = async (sub, action) => {
         if (action === 'delete') {
             if (window.confirm('구독을 취소하시겠습니까?')) {
-                setSubscriptions(prev => prev.filter(s => s.id !== sub.id));
+                try {
+                    const response = await ApiService.subscription.delete(sub);
+                    if (response.data.result) {
+                        alert('구독이 취소되었습니다.');
+                        setSubscriptions(prev => prev.filter(s => s.id !== sub.id));
+                    } else {
+                        alert('구독 취소에 실패했습니다.');
+                    }
+                } catch (error) {
+                    console.error('구독 취소 실패:', error);
+                    alert('오류가 발생했습니다.');
+                }
             }
         } else if (action === 'toggle_notify') {
-            // 알림 여부 변경 (추후 update API 호출부)
-            setSubscriptions(prev => prev.map(s =>
-                s.id === sub.id ? { ...s, notification: !s.notification } : s
-            ));
+            const nextNotify = !sub.notification;
+            try {
+                const response = await ApiService.subscription.update({
+                    ...sub,
+                    notification: nextNotify
+                });
+                if (response.data.result) {
+                    setSubscriptions(prev => prev.map(s =>
+                        s.id === sub.id ? { ...s, notification: nextNotify } : s
+                    ));
+                }
+            } catch (error) {
+                console.error('알림 설정 실패:', error);
+                alert('알림 설정 변경에 실패했습니다.');
+            }
         }
     };
+
+    if (loading) {
+        return (
+            <div className="text-center py-5">
+                <Spinner animation="border" variant="danger" />
+                <p className="mt-2 text-muted">목록을 불러오는 중...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="text-center py-5 text-danger">
+                <p>{error}</p>
+                <Button variant="outline-danger" onClick={fetchSubscriptions}>
+                    <FaSync className="me-2" /> 다시 시도
+                </Button>
+            </div>
+        );
+    }
 
     if (subscriptions.length === 0) {
         return (
@@ -64,7 +148,7 @@ const SubscriptionList = ({ type = 'mine' }) => {
                                         <h6 className="channel-title mb-1 text-truncate">{displayName}</h6>
                                         <div className="sub-info d-flex align-items-center gap-2">
                                             <span className="date-badge">
-                                                구독일: {new Date(sub.createdAt).toLocaleDateString()}
+                                                구독일: {sub.createdAt ? new Date(sub.createdAt).toLocaleDateString() : '-'}
                                             </span>
                                         </div>
                                     </div>
@@ -75,6 +159,7 @@ const SubscriptionList = ({ type = 'mine' }) => {
                                                 variant="light"
                                                 className="btn-circle-small"
                                                 onClick={() => handleAction(sub, 'toggle_notify')}
+                                                title={sub.notification ? "알림 끄기" : "알림 켜기"}
                                             >
                                                 {sub.notification ? <FaBell className="text-primary" /> : <FaBellSlash className="text-muted" />}
                                             </Button>
@@ -82,6 +167,7 @@ const SubscriptionList = ({ type = 'mine' }) => {
                                                 variant="light"
                                                 className="btn-circle-small text-danger"
                                                 onClick={() => handleAction(sub, 'delete')}
+                                                title="구독 취소"
                                             >
                                                 <FaTrash />
                                             </Button>
