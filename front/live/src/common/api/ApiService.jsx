@@ -46,7 +46,7 @@ const ApiService = {
   },
 
   subscription: {
-    is_subscribed: (channel_name) => RefreshApi.post(`${API_END_POINT.subscription.is_subscribed}?channel_name=${channel_name}`),
+    is_subscribed: (channel_name) => RefreshApi.get(`${API_END_POINT.subscription.is_subscribed}?channel_name=${channel_name}`),
     user_list: (dto) => RefreshApi.post(API_END_POINT.subscription.user_list, dto),
     my_subscription: (dto) => RefreshApi.post(API_END_POINT.subscription.my_subscription, dto),
     channel_list: (dto) => RefreshApi.post(API_END_POINT.subscription.channel_list, dto),
