@@ -38,6 +38,7 @@ export const API_END_POINT = {
     search: `${API_BASE_URL}/api/channel/search`
   },
   subscription: {
+    is_subscribed: `${API_BASE_URL}/api/subscription/is_subscription`,
     user_list: `${API_BASE_URL}/api/subscription/user`,
     my_subscription: `${API_BASE_URL}/api/subscription/my_subscription`,
     channel_list: `${API_BASE_URL}/api/subscription/channel`,
