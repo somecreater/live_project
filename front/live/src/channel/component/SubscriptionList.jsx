@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Row, Col, Card, Button, Spinner } from 'react-bootstrap';
+import { Row, Col, Card, Button, Spinner, Pagination } from 'react-bootstrap';
 import { FaBell, FaBellSlash, FaTrash, FaUser, FaSync } from 'react-icons/fa';
 import PropTypes from 'prop-types';
 import ChannelOwnerAvatar from './ChannelOwnerAvatar';
@@ -17,12 +17,9 @@ const SubscriptionList = ({ type = 'mine', name }) => {
     const [subscriptions, setSubscriptions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [request, setRequest] = useState({
-        name: '',
-        keyword: null,
-        page: 0,
-        size: 10
-    });
+    const [page, setPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const pageSize = 12; // 한 페이지에 표시할 항목 수 (Row/Col 구조상 12가 적당)
 
     const loginId = user?.loginId || localStorage.getItem("loginId");
     const channelName = channel?.name || localStorage.getItem("channelName");
@@ -47,11 +44,10 @@ const SubscriptionList = ({ type = 'mine', name }) => {
             const currentRequest = {
                 name: nameValue,
                 keyword: null,
-                page: 0,
-                size: 10
+                page: page,
+                size: pageSize
             };
 
-            setRequest(currentRequest);
             const response = await apiMethod(currentRequest);
 
             if (response.data) {
@@ -69,8 +65,13 @@ const SubscriptionList = ({ type = 'mine', name }) => {
                         || data.items
                         || [];
                     setSubscriptions(Array.isArray(list) ? list : []);
+
+                    // 페이지 정보 추출
+                    const total = (data.subscription && data.subscription.totalPages) || 0;
+                    setTotalPages(total);
                 } else {
                     setSubscriptions([]);
+                    setTotalPages(0);
                 }
             } else {
                 setSubscriptions([]);
@@ -82,7 +83,7 @@ const SubscriptionList = ({ type = 'mine', name }) => {
         } finally {
             setLoading(false);
         }
-    }, [type, loginId, channelName, name]);
+    }, [type, loginId, channelName, name, page]);
 
     useEffect(() => {
         fetchSubscriptions();
@@ -121,6 +122,11 @@ const SubscriptionList = ({ type = 'mine', name }) => {
                 alert('알림 설정 변경에 실패했습니다.');
             }
         }
+    };
+
+    const handlePageChange = (newPage) => {
+        setPage(newPage);
+        window.scrollTo(0, 0);
     };
 
     if (loading) {
@@ -202,6 +208,29 @@ const SubscriptionList = ({ type = 'mine', name }) => {
                     );
                 })}
             </Row>
+
+            {/* 페이징 UI */}
+            {totalPages > 1 && (
+                <div className="d-flex justify-content-center mt-5">
+                    <Pagination className="premium-pagination">
+                        <Pagination.First disabled={page === 0} onClick={() => handlePageChange(0)} />
+                        <Pagination.Prev disabled={page === 0} onClick={() => handlePageChange(page - 1)} />
+
+                        {[...Array(totalPages)].map((_, idx) => (
+                            <Pagination.Item
+                                key={idx}
+                                active={idx === page}
+                                onClick={() => handlePageChange(idx)}
+                            >
+                                {idx + 1}
+                            </Pagination.Item>
+                        ))}
+
+                        <Pagination.Next disabled={page === totalPages - 1} onClick={() => handlePageChange(page + 1)} />
+                        <Pagination.Last disabled={page === totalPages - 1} onClick={() => handlePageChange(totalPages - 1)} />
+                    </Pagination>
+                </div>
+            )}
         </div>
     );
 };

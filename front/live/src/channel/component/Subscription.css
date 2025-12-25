@@ -53,11 +53,25 @@
 }
 
 @keyframes ring {
-    0% { transform: rotate(0); }
-    25% { transform: rotate(20deg); }
-    50% { transform: rotate(-20deg); }
-    75% { transform: rotate(10deg); }
-    100% { transform: rotate(0); }
+    0% {
+        transform: rotate(0);
+    }
+
+    25% {
+        transform: rotate(20deg);
+    }
+
+    50% {
+        transform: rotate(-20deg);
+    }
+
+    75% {
+        transform: rotate(10deg);
+    }
+
+    100% {
+        transform: rotate(0);
+    }
 }
 
 /* Subscription List */
@@ -69,7 +83,7 @@
     background: #ffffff;
     border-radius: 18px;
     transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
-    border: 1px solid rgba(0,0,0,0.03) !important;
+    border: 1px solid rgba(0, 0, 0, 0.03) !important;
 }
 
 .subscription-card-premium:hover {
@@ -105,5 +119,31 @@
 }
 
 .btn-circle-small:hover {
-    background: rgba(0,0,0,0.05) !important;
+    background: rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Pagination */
+.premium-pagination .page-item .page-link {
+    border: none;
+    color: #495057;
+    margin: 0 4px;
+    border-radius: 8px !important;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.premium-pagination .page-item.active .page-link {
+    background-color: #f72c3d !important;
+    color: white !important;
+    box-shadow: 0 4px 10px rgba(247, 44, 61, 0.3);
+}
+
+.premium-pagination .page-item .page-link:hover {
+    background-color: #f8f9fa;
+    color: #f72c3d;
+}
+
+.premium-pagination .page-item.disabled .page-link {
+    background-color: transparent;
+    opacity: 0.5;
 }
