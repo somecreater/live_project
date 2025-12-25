@@ -65,7 +65,7 @@ public class SubscriptionController {
     @RequestBody SubscriptionRequest request){
     log.info("[POST] /api/subscription/my_subscription - {}", principal.getUserid());
     Map<String,Object> result=new HashMap<>();
-    if(Objects.equals(principal.getUserid(), request.getName()) || request.getKeyword() != null){
+    if(!Objects.equals(principal.getUserid(), request.getName()) || request.getKeyword() != null){
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
     Page<SubscriptionDto> subscriptionDtoPage= channelService.getSubscriptionPageByUser(
