@@ -84,8 +84,10 @@ public class ChannelService implements ChannelServiceInterface {
   @Override
   @Transactional
   public ChannelDto createChannel(ChannelDto channelDto) {
-    if(channelDto.getName().isEmpty()
-    || channelDto.getUser_login_id().isEmpty()){
+    if(channelDto.getName() == null
+    || channelDto.getUser_login_id() == null
+    || channelDto.getName().isBlank()
+    || channelDto.getUser_login_id().isBlank()){
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
     boolean isExist= channelRepository.existsByNameOrUsers_LoginId(
@@ -109,8 +111,10 @@ public class ChannelService implements ChannelServiceInterface {
   @Override
   @Transactional
   public ChannelDto updateChannel(ChannelDto channelDto) {
-    if(channelDto.getName().isEmpty()
-    || channelDto.getUser_login_id().isEmpty()){
+    if(channelDto.getName() == null
+      || channelDto.getUser_login_id() == null
+      || channelDto.getName().isBlank()
+      || channelDto.getUser_login_id().isBlank()){
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
     ChannelEntity entity= channelRepository.findByName(channelDto.getName()).orElse(null);
@@ -130,8 +134,10 @@ public class ChannelService implements ChannelServiceInterface {
   @Transactional
   public boolean deleteChannel(ChannelDto channelDto) {
     try {
-        if (channelDto.getName().isEmpty()
-                || channelDto.getUser_login_id().isEmpty()) {
+        if (channelDto.getName() == null
+          || channelDto.getUser_login_id() == null
+          || channelDto.getName().isBlank()
+          || channelDto.getUser_login_id().isBlank()) {
             throw new CustomException(ErrorCode.BAD_REQUEST);
         }
         ChannelEntity entity = channelRepository.findByName(channelDto.getName()).orElse(null);
@@ -171,8 +177,12 @@ public class ChannelService implements ChannelServiceInterface {
       ChannelEntity entity= channelRepository.findByName(channel_name).orElse(null);
       if(entity!=null){
         Long current_count=entity.getSubscription_count();
-        entity.setSubscription_count(current_count+1);
-        channelRepository.save(entity);
+        if(current_count==null){
+          entity.setSubscription_count(1L);
+        }else {
+          entity.setSubscription_count(current_count + 1);
+          channelRepository.save(entity);
+        }
         return true;
       }else{
         return false;
@@ -212,14 +222,14 @@ public class ChannelService implements ChannelServiceInterface {
   ){
     Pageable pageable = PageRequest.of(page, size);
     Page<SubscriptionEntity> subscriptionEntityPage= null;
-    if(userLoginId.isBlank()){
+    if(userLoginId == null ||userLoginId.isBlank()){
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
 
-    if(keyword.isBlank()){
-      subscriptionEntityPage= subscriptionRepository.findByUserLoginId(userLoginId,pageable);
-    }else{
+    if(keyword != null && !keyword.isBlank()){
       subscriptionEntityPage=subscriptionRepository.findByUserLoginIdAndChannelNameContaining(userLoginId, keyword, pageable);
+    }else{
+      subscriptionEntityPage= subscriptionRepository.findByUserLoginId(userLoginId,pageable);
     }
 
     if(subscriptionEntityPage.hasContent()){
@@ -236,14 +246,14 @@ public class ChannelService implements ChannelServiceInterface {
   ){
     Pageable pageable = PageRequest.of(page, size);
     Page<SubscriptionEntity> subscriptionEntityPage= null;
-    if(channel_name.isBlank()){
+    if(channel_name==null || channel_name.isBlank()){
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
 
-    if(keyword.isBlank()){
-      subscriptionEntityPage= subscriptionRepository.findByChannelName(channel_name,pageable);
-    }else{
+    if(keyword != null && !keyword.isBlank()){
       subscriptionEntityPage= subscriptionRepository.findByChannelNameAndUserLoginIdLike(channel_name, keyword, pageable);
+    }else{
+      subscriptionEntityPage= subscriptionRepository.findByChannelName(channel_name,pageable);
     }
 
     if(subscriptionEntityPage.hasContent()){
@@ -303,7 +313,9 @@ public class ChannelService implements ChannelServiceInterface {
   @Transactional
   public boolean deleteSubscription(SubscriptionDto subscriptionDto){
     try {
-      if (subscriptionDto.getUserLoginId().isBlank()
+      if (subscriptionDto.getUserLoginId() == null
+           || subscriptionDto.getChannelName() == null
+           || subscriptionDto.getUserLoginId().isBlank()
            || subscriptionDto.getChannelName().isBlank()) {
         throw new CustomException(ErrorCode.BAD_REQUEST);
       }

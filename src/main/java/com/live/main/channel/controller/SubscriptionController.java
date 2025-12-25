@@ -127,11 +127,12 @@ public class SubscriptionController {
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
     SubscriptionDto newSubscription= channelService.insertSubscription(subscriptionDto);
-    if(newSubscription==null){
-      result.put("result", false);
-    }else{
+    boolean increate_subscription= channelService.increaseSubscription(subscriptionDto.getChannelName());
+    if(newSubscription!=null && increate_subscription){
       result.put("result", true);
       result.put("new_subscription", newSubscription);
+    }else{
+      result.put("result", false);
     }
     return ResponseEntity.ok(result);
   }
@@ -160,7 +161,8 @@ public class SubscriptionController {
     if(subscriptionDto == null || !Objects.equals(subscriptionDto.getUserLoginId(), principal.getUserid())){
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
-    if(channelService.deleteSubscription(subscriptionDto)){
+    boolean decrease_subscription= channelService.decreaseSubscription(subscriptionDto.getChannelName());
+    if(channelService.deleteSubscription(subscriptionDto) && decrease_subscription){
       result.put("result",true);
     }else{
       result.put("result",false);
