@@ -200,7 +200,7 @@ public class ChannelService implements ChannelServiceInterface {
       ChannelEntity entity= channelRepository.findByName(channel_name).orElse(null);
       if(entity!=null){
         Long current_count=entity.getSubscription_count();
-        if(current_count == 0){
+        if( current_count == null|| current_count == 0){
           return false;
         }
         entity.setSubscription_count(current_count-1);

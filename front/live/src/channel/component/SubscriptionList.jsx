@@ -5,50 +5,73 @@ import PropTypes from 'prop-types';
 import ChannelOwnerAvatar from './ChannelOwnerAvatar';
 import './Subscription.css';
 import ApiService from '../../common/api/ApiService';
+import { userStateStore } from '../../common/context/userStateStore';
 
 /**
  * SubscriptionList 컴포넌트
- * @param {string} type - 'channel_type' (채널 회원), 'user_type' (일반 회원)
+ * @param {string} type - 'mine' (내가 구독한 채널), 'to_me' (나를 구독한 유저)
+ * @param {string} name - 명시적인 전송 용 이름(null이면 store/storage에서 가져옴)
  */
-const SubscriptionList = ({ type = 'user_type' }) => {
+const SubscriptionList = ({ type = 'mine', name }) => {
+    const { user, channel, getUserInfo, getUserChannel } = userStateStore();
     const [subscriptions, setSubscriptions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [request, setRequest] = useState({
         name: '',
-        keyword: '',
+        keyword: null,
         page: 0,
         size: 10
     });
-    const loginId = localStorage.getItem("loginId");
-    const channelName = localStorage.getItem("channelName");
+
+    const loginId = user?.loginId || localStorage.getItem("loginId");
+    const channelName = channel?.name || localStorage.getItem("channelName");
+
     const fetchSubscriptions = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            const apiMethod = type === 'user_type'
+            const isMine = type === 'mine';
+            const apiMethod = isMine
                 ? ApiService.subscription.my_subscription
                 : ApiService.subscription.my_channel;
 
-            if (type === 'user_type') {
-                setRequest({
-                    name: loginId,
-                    keyword: null,
-                    page: 0,
-                    size: 10
-                });
-            } else {
-                setRequest({
-                    name: channelName,
-                    keyword: null,
-                    page: 0,
-                    size: 10
-                });
+            const nameValue = name || (isMine ? loginId : channelName);
+
+            if (!nameValue) {
+                setSubscriptions([]);
+                setLoading(false);
+                return;
             }
-            const response = await apiMethod(request);
-            if (response.data && (response.data.subscription_list || response.data.list)) {
-                // 백엔드 응답 구조에 따라 조정 (subscription_list 또는 list)
-                setSubscriptions(response.data.subscription_list || response.data.list || []);
+
+            const currentRequest = {
+                name: nameValue,
+                keyword: null,
+                page: 0,
+                size: 10
+            };
+
+            setRequest(currentRequest);
+            const response = await apiMethod(currentRequest);
+
+            if (response.data) {
+                const data = response.data;
+                // 'result' 필드가 있으면 확인, 없으면 데이터가 있는지만 확인
+                // 'result' 필드가 없거나 true이면 성공으로 간주, false이면 실패
+                const isSuccess = data.result === undefined || data.result !== false;
+
+                if (isSuccess) {
+                    // 가능한 모든 필드명을 확인하여 목록 추출
+                    const list = (data.subscription && data.subscription.content)
+                        || data.subscription_list
+                        || data.list
+                        || data.content
+                        || data.items
+                        || [];
+                    setSubscriptions(Array.isArray(list) ? list : []);
+                } else {
+                    setSubscriptions([]);
+                }
             } else {
                 setSubscriptions([]);
             }
@@ -59,7 +82,7 @@ const SubscriptionList = ({ type = 'user_type' }) => {
         } finally {
             setLoading(false);
         }
-    }, [type, loginId]);
+    }, [type, loginId, channelName, name]);
 
     useEffect(() => {
         fetchSubscriptions();
@@ -184,7 +207,8 @@ const SubscriptionList = ({ type = 'user_type' }) => {
 };
 
 SubscriptionList.propTypes = {
-    type: PropTypes.oneOf(['mine', 'to_me'])
+    type: PropTypes.oneOf(['mine', 'to_me']),
+    name: PropTypes.string
 };
 
 export default SubscriptionList;

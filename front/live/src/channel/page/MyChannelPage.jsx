@@ -205,7 +205,7 @@ function MyChannelPage() {
                         <Tab.Pane eventKey="subscribers">
                             <div className="py-4">
                                 <h4 className="mb-4">나를 구독 중인 사용자</h4>
-                                <SubscriptionList type="to_me" />
+                                <SubscriptionList type="to_me" name={channel?.name} />
                             </div>
                         </Tab.Pane>
 
