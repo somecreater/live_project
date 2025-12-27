@@ -2,7 +2,6 @@ package com.live.main.common.database.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.springframework.http.HttpStatus;
 
 @Getter
 @AllArgsConstructor
