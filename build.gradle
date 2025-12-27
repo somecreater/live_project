@@ -35,6 +35,11 @@ dependencies {
 	// WebSocket 관련 의존성
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
+	// Apache Kafka 의존성
+	implementation 'org.springframework.kafka:spring-kafka'
+	testImplementation 'org.springframework.kafka:spring-kafka-test'
+	testImplementation 'org.testcontainers:kafka'
+
 	// 보안 관련 의존성
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'

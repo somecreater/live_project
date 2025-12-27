@@ -8,6 +8,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MimeTypeUtils;
 
@@ -15,21 +16,25 @@ import org.springframework.util.MimeTypeUtils;
 @RequiredArgsConstructor
 @Service
 public class AlertService implements AlertServiceInterface {
+
   private final SimpMessagingTemplate messagingTemplate;
 
-    @Override
-    @EventListener
-    public AlertEvent sendAlert(AlertEvent alertEvent) {
-      SimpMessageHeaderAccessor headerAccessor = SimpMessageHeaderAccessor.create();
-      headerAccessor.setContentType(MimeTypeUtils.APPLICATION_JSON);
-      headerAccessor.setNativeHeader("eventType", alertEvent.getType().getType());
-      headerAccessor.setNativeHeader("priority", alertEvent.getType().getPriority());
-      headerAccessor.setLeaveMutable(true);
-      MessageHeaders headers = headerAccessor.getMessageHeaders();
+  @Override
+  @Async("IOTaskExecutor")
+  @EventListener
+  public void sendAlert(AlertEvent alertEvent) {
+    SimpMessageHeaderAccessor headerAccessor = SimpMessageHeaderAccessor.create();
+    headerAccessor.setContentType(MimeTypeUtils.APPLICATION_JSON);
+    headerAccessor.setNativeHeader("sender", alertEvent.getPublisher());
 
-      messagingTemplate.convertAndSend("/topic/alerts/"+alertEvent.getReceiver(),
-        alertEvent.getContent(),
-        headers);
-      return null;
-    }
+    headerAccessor.setNativeHeader("eventSubType", alertEvent.getType().getSubtype());
+    headerAccessor.setNativeHeader("priority", alertEvent.getType().getPriority());
+    headerAccessor.setLeaveMutable(true);
+    MessageHeaders headers = headerAccessor.getMessageHeaders();
+
+    messagingTemplate.convertAndSend("/topic/alerts/"+ alertEvent.getPublisher(),
+      alertEvent.getContent(),
+      headers);
+  }
+
 }
