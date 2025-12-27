@@ -5,11 +5,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface SubscriptionRepository extends JpaRepository<SubscriptionEntity, Long> {
 
     Page<SubscriptionEntity> findByChannelName(String channel_name, Pageable pageable);
+
+    List<SubscriptionEntity> findByChannelName(String channel_name);
 
     Page<SubscriptionEntity> findByUserLoginId(String user_login_id, Pageable pageable);
 
