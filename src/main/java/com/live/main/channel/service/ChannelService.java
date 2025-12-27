@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 
 @Service
@@ -77,6 +78,19 @@ public class ChannelService implements ChannelServiceInterface {
     if (channelEntityPage.hasContent()) {
       return channelEntityPage.map(channelMapper::toDto);
     }else{
+      return null;
+    }
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<String> getsubscriptionUserList(String channel_name){
+    try {
+      return subscriptionRepository.findByChannelName(channel_name)
+              .stream().map(SubscriptionEntity::getUserLoginId).toList();
+    }
+    catch(Exception e){
+      e.printStackTrace();
       return null;
     }
   }

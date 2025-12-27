@@ -4,6 +4,8 @@ import com.live.main.channel.database.dto.ChannelDto;
 import com.live.main.channel.database.dto.SubscriptionDto;
 import org.springframework.data.domain.Page;
 
+import java.util.List;
+
 /**채널 기능 (2025-12-04)*/
 public interface ChannelServiceInterface {
   /**채널 정보 확인 기능*/
@@ -31,6 +33,8 @@ public interface ChannelServiceInterface {
   public Page<SubscriptionDto> getSubscriptionPageByChannel(
     int page, int size, String keyword, String channel_name
   );
+  /**채널 전체 구독자 목록 가져오기 기능*/
+  public List<String> getsubscriptionUserList(String channel_name);
   /**채널 구독자 증가 기능*/
   public boolean increaseSubscription(String channel_name);
   /**채널 구독자 감소 기능*/
