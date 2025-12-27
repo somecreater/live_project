@@ -166,7 +166,7 @@ public class ChannelService implements ChannelServiceInterface {
       return true;
     }catch (Exception e){
       e.printStackTrace();
-      return false;
+      throw new CustomException(ErrorCode.SERVER_ERROR);
     }
   }
 
@@ -189,7 +189,7 @@ public class ChannelService implements ChannelServiceInterface {
       }
     }catch (Exception e){
       e.printStackTrace();
-      return false;
+      throw new CustomException(ErrorCode.SERVER_ERROR);
     }
   }
 
@@ -211,7 +211,7 @@ public class ChannelService implements ChannelServiceInterface {
       }
     }catch (Exception e){
       e.printStackTrace();
-      return false;
+      throw new CustomException(ErrorCode.SERVER_ERROR);
     }
   }
 
@@ -326,7 +326,7 @@ public class ChannelService implements ChannelServiceInterface {
 
     } catch (Exception e) {
       e.printStackTrace();
-      return false;
+      throw new CustomException(ErrorCode.SERVER_ERROR);
     }
     return true;
   }
@@ -340,7 +340,7 @@ public class ChannelService implements ChannelServiceInterface {
       return true;
     } catch (Exception e) {
       e.printStackTrace();
-      return false;
+      throw new CustomException(ErrorCode.SERVER_ERROR);
     }
   }
 
@@ -352,7 +352,7 @@ public class ChannelService implements ChannelServiceInterface {
       return true;
     } catch (Exception e) {
       e.printStackTrace();
-      return false;
+      throw new CustomException(ErrorCode.SERVER_ERROR);
     }
   }
 }

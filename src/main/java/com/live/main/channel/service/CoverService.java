@@ -145,7 +145,7 @@ public class CoverService implements CoverServiceInterface {
       return true;
     } catch (S3Exception s3) {
       s3.printStackTrace();
-      return false;
+      throw new CustomException(ErrorCode.SERVER_ERROR);
     }
   }
 

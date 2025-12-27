@@ -168,7 +168,7 @@ public class PostService implements PostServiceInterface {
       return true;
     }catch(Exception e){
       e.printStackTrace();
-      return false;
+      throw new CustomException(ErrorCode.SERVER_ERROR);
     }
   }
 
@@ -179,7 +179,7 @@ public class PostService implements PostServiceInterface {
       return true;
     }catch (Exception e){
       e.printStackTrace();
-      return false;
+      throw new CustomException(ErrorCode.SERVER_ERROR);
     }
   }
 }
