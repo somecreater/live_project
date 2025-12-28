@@ -5,12 +5,14 @@ import com.live.main.channel.database.dto.SearchRequest;
 import com.live.main.channel.service.Interface.ChannelServiceInterface;
 import com.live.main.channel.service.Interface.CoverServiceInterface;
 import com.live.main.channel.service.Interface.PostServiceInterface;
+import com.live.main.common.database.dto.AlertEvent;
 import com.live.main.common.database.dto.ErrorCode;
 import com.live.main.common.exception.CustomException;
 import com.live.main.user.database.dto.CustomUserDetails;
 import com.live.main.video.service.Interface.VideoServiceInterface;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,6 +31,8 @@ public class ChannelController {
   private final VideoServiceInterface videoService;
   private final CoverServiceInterface coverService;
   private final PostServiceInterface postService;
+
+  private final ApplicationEventPublisher publisher;
 
   @GetMapping("/my_channel")
   public ResponseEntity<?> getMyChannel(@AuthenticationPrincipal CustomUserDetails principal){
@@ -102,6 +106,8 @@ public class ChannelController {
 
     result.put("result",true);
     result.put("update_channel",updateChannel);
+    publisher.publishEvent(new AlertEvent(
+            "CHANNEL_UPDATE", channelDto.getName(), channelDto.getName()+" 채널이 업데이트 되었습니다."));
     return ResponseEntity.ok(result);
   }
 
