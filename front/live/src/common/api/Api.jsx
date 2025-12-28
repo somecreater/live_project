@@ -2,7 +2,17 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localho
 export const API_BASE_URL_2 = import.meta.env.VITE_API_BASE_URL_2 || 'http://localhost:8081';
 export const API_BASE_URL_3 = import.meta.env.VITE_API_BASE_URL_3 || 'http://localhost:8082';
 
+export const ALERT_BASE_URL = import.meta.env.VITE_ALERT_BASE_URL || 'http://localhost:8083';
+
 export const API_END_POINT = {
+  online: {
+    connect: `${API_BASE_URL}/app/connect`,
+    disconnect: `${API_BASE_URL}/app/disconnect`,
+    ping: `${API_BASE_URL}/app/ping`
+  },
+  alert: {
+    get_list: `${API_BASE_URL}/api/alert/get_list`,
+  },
   user: {
     login: `${API_BASE_URL}/api/user/login`,
     kakaoLogin: `${API_BASE_URL}/oauth2/authorization/kakao`,
@@ -61,6 +71,4 @@ export const API_END_POINT = {
     update: `${API_BASE_URL}/api/post/update`,
     delete: `${API_BASE_URL}/api/post/delete`
   }
-
-}
-
+};

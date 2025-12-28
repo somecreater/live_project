@@ -5,6 +5,9 @@ import { API_END_POINT } from "./Api";
  * API 호출 서비스.
  */
 const ApiService = {
+  alert: {
+    get_list: () => RefreshApi.post(API_END_POINT.alert.get_list)
+  },
   user: {
     login: (dto) => RefreshApi.post(API_END_POINT.user.login, dto),
     logout: () => RefreshApi.post(API_END_POINT.user.logout),
