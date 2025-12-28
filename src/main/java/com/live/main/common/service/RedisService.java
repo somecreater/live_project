@@ -1,11 +1,9 @@
 package com.live.main.common.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -146,6 +144,13 @@ public class RedisService {
      */
     public long hDelete(String key, Object... hashKeys) {
         return redisTemplate.opsForHash().delete(key, hashKeys);
+    }
+
+    /**
+     * List 조회
+     */
+    public List<Object> lGet(String key){
+      return redisTemplate.opsForList().range(key, 0, -1);
     }
 
     /**
