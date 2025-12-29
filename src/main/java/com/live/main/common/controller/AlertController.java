@@ -2,15 +2,14 @@ package com.live.main.common.controller;
 
 import com.live.main.common.database.dto.AlertEvent;
 import com.live.main.common.service.Interface.AlertServiceInterface;
-import com.live.main.user.database.dto.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,20 +20,18 @@ import java.util.Map;
 @Slf4j
 public class AlertController {
 
-    private final AlertServiceInterface alertService;
+  private final AlertServiceInterface alertService;
 
-    @PostMapping("/get_alert")
-    public ResponseEntity<?> getAlertList(@AuthenticationPrincipal CustomUserDetails principal) {
+  @PostMapping("/get_alert")
+  public ResponseEntity<?> getAlertList(Principal principal) {
+    log.info("[POST] /api/alert/get_alert - {}", principal.getName());
+    Map<String, Object> result = new HashMap<>();
 
-        log.info("[POST] /public/get_alert - {}", principal.getUserid());
+    List<AlertEvent> alertEvents = alertService.sendAlertList(principal.getName());
 
-        Map<String, Object> result = new HashMap<>();
-        List<AlertEvent> alertEvents =
-                alertService.sendAlertList(principal.getUserid());
+    result.put("result", alertEvents != null);
+    result.put("alerts", alertEvents);
 
-        result.put("result", alertEvents != null);
-        result.put("alerts", alertEvents);
-
-        return ResponseEntity.ok(result);
-    }
+    return ResponseEntity.ok(result);
+  }
 }

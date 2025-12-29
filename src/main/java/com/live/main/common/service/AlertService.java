@@ -103,6 +103,7 @@ public class AlertService implements AlertServiceInterface {
     }
   }
 
+  //나중에 API 호출로 전환
   @Override
   public List<String> searchSendAlert(String type, String publisher){
     List<String> targetList=null;
