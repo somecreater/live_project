@@ -57,11 +57,18 @@ public class AlertService implements AlertServiceInterface {
 
   @KafkaListener(
           topics = "notification-topic",
+          groupId = "notification_group",
           containerFactory = "kafkaListenerContainerFactory"
   )
   @Override
   public void consumerKafka(AlertEvent alertEvent, Acknowledgment ack){
     try {
+      log.info("Kafka Alert Received by Kafka - type: {},  subType: {}, publisher: {}, content: {}",
+              alertEvent.getType().getType(),
+              alertEvent.getType().getSubtype(),
+              alertEvent.getPublisher(),
+              alertEvent.getContent());
+
       sendAlert(alertEvent);
       ack.acknowledge();
     } catch (Exception e) {
@@ -83,10 +90,25 @@ public class AlertService implements AlertServiceInterface {
     List<String> targetList= searchSendAlert(alertEvent.getType().getType(),alertEvent.getPublisher());
     for(String target: targetList){
       if (isOnline(target)) {
-        messagingTemplate.convertAndSend("/topic/alerts/"+ target,
+        log.info("WebSocket Alert Send [Online] - target: {}, type: {},  subType: {}, publisher: {}, content: {}",
+                target,
+                alertEvent.getType().getType(),
+                alertEvent.getType().getSubtype(),
+                alertEvent.getPublisher(),
+                alertEvent.getContent());
+        log.info("[SEND] URL: /user/{}/queue/alerts", target );
+        messagingTemplate.convertAndSendToUser(
+                target,
+                "/queue/alerts",
                 alertEvent.getContent(),
                 headers);
       }else{
+        log.info("WebSocket Alert Send [Offline] - target: {}, type: {},  subType: {}, publisher: {}, content: {}",
+                target,
+                alertEvent.getType().getType(),
+                alertEvent.getType().getSubtype(),
+                alertEvent.getPublisher(),
+                alertEvent.getContent());
         alertRepository.save(target, alertEvent);
       }
     }

@@ -22,7 +22,6 @@ public class SessionController {
 
     String memberId = principal.getName();
     String sessionId = accessor.getSessionId();
-    onlineRepository.save(memberId,sessionId);
 
     log.info("[WS CONNECT] memberId={}, sessionId={}", memberId, sessionId);
 

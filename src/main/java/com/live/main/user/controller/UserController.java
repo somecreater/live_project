@@ -5,6 +5,7 @@ import com.live.main.channel.service.Interface.ChannelServiceInterface;
 import com.live.main.channel.service.Interface.CoverServiceInterface;
 import com.live.main.channel.service.Interface.PostServiceInterface;
 import com.live.main.common.database.dto.ErrorCode;
+import com.live.main.common.database.repository.OnlineRepository;
 import com.live.main.common.exception.CustomException;
 import com.live.main.profile.service.Interface.ProfileServiceInterface;
 import com.live.main.user.database.dto.CustomUserDetails;
@@ -46,6 +47,8 @@ public class UserController {
   private final CoverServiceInterface coverService;
   private final PostServiceInterface postService;
   private final JwtService jwtService;
+
+  private final OnlineRepository onlineRepository;
 
   @PostMapping("/register")
   public ResponseEntity<?> UserRegister(@RequestBody UserDto userDto){
@@ -91,6 +94,8 @@ public class UserController {
 
     response.addHeader(HttpHeaders.SET_COOKIE,newAccessCookie.toString());
     response.addHeader(HttpHeaders.SET_COOKIE, newRefreshCookie.toString());
+    onlineRepository.save(login.getLoginId(),"online");
+
     result.put("result", true);
 
     return ResponseEntity.ok(result);
@@ -113,6 +118,7 @@ public class UserController {
 
     response.addHeader(HttpHeaders.SET_COOKIE,clearAccessCookie.toString());
     response.addHeader(HttpHeaders.SET_COOKIE, clearRefreshCookie.toString());
+    onlineRepository.delete(loginId);
 
     return ResponseEntity.ok().build();
   }
