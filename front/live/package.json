@@ -23,6 +23,7 @@
     "react-router-dom": "^7.9.5",
     "router": "^2.2.0",
     "sockjs-client": "^1.6.1",
+    "stompjs": "^2.3.3",
     "use-indexeddb": "^2.0.2",
     "zustand": "^5.0.8"
   },

@@ -42,14 +42,13 @@ public class WebSocketChannelInterceptor implements ChannelInterceptor {
         String memberId= jwtService.getUserId(token);
         String auth= jwtService.getAuth(token);
         Authentication authentication = new UsernamePasswordAuthenticationToken(memberId, token, List.of(new SimpleGrantedAuthority(auth)));
-        log.info("[WS] Websocket Token AUTHENTICATION OK");
+        log.info("[WS] Websocket Token AUTHENTICATION OK memberId={}", memberId);
         accessor.setUser(authentication);
       }else {
         return null;
       }
     }
 
-    log.info("[WS] Websocket AUTHENTICATION OK");
     return message;
   }
 

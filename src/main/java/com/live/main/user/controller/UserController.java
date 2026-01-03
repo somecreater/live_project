@@ -48,8 +48,6 @@ public class UserController {
   private final PostServiceInterface postService;
   private final JwtService jwtService;
 
-  private final OnlineRepository onlineRepository;
-
   @PostMapping("/register")
   public ResponseEntity<?> UserRegister(@RequestBody UserDto userDto){
     log.info("[POST] /api/user/register - {}", userDto.getLoginId());
@@ -94,7 +92,6 @@ public class UserController {
 
     response.addHeader(HttpHeaders.SET_COOKIE,newAccessCookie.toString());
     response.addHeader(HttpHeaders.SET_COOKIE, newRefreshCookie.toString());
-    onlineRepository.save(login.getLoginId(),"online");
 
     result.put("result", true);
 
@@ -118,7 +115,6 @@ public class UserController {
 
     response.addHeader(HttpHeaders.SET_COOKIE,clearAccessCookie.toString());
     response.addHeader(HttpHeaders.SET_COOKIE, clearRefreshCookie.toString());
-    onlineRepository.delete(loginId);
 
     return ResponseEntity.ok().build();
   }
