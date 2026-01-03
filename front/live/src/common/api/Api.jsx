@@ -5,12 +5,9 @@ export const API_BASE_URL_3 = import.meta.env.VITE_API_BASE_URL_3 || 'http://loc
 export const ALERT_BASE_URL = import.meta.env.VITE_ALERT_BASE_URL || 'http://localhost:8083';
 
 export const API_END_POINT = {
-  online: {
-    connect: `${API_BASE_URL}/app/connect`,
-    disconnect: `${API_BASE_URL}/app/disconnect`,
-    ping: `${API_BASE_URL}/app/ping`
-  },
   alert: {
+    alert_connect: `${API_BASE_URL}/notify`,
+    alert_subscribe: `/user/queue/alerts`,
     get_list: `${API_BASE_URL}/api/alert/get_list`,
   },
   user: {

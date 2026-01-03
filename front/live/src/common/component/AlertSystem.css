@@ -1,0 +1,142 @@
+.alert-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 360px;
+    max-width: calc(100vw - 48px);
+    pointer-events: none;
+}
+
+.alert-item {
+    pointer-events: auto;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+    padding: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    position: relative;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.alert-icon {
+    font-size: 1.25rem;
+    color: #4a90e2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.alert-content {
+    flex: 1;
+    min-width: 0; /* Text truncation fix */
+}
+
+.alert-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 4px;
+}
+
+.alert-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #111;
+    margin-right: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.alert-time {
+    font-size: 0.75rem;
+    color: #999;
+    flex-shrink: 0;
+}
+
+.alert-message {
+    font-size: 0.875rem;
+    color: #555;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.alert-close {
+    background: transparent;
+    border: none;
+    color: #bbb;
+    cursor: pointer;
+    padding: 4px;
+    margin: -4px -4px 0 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.alert-close:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: #333;
+    transform: rotate(90deg);
+}
+
+/* Priority Indicators */
+.alert-item.priority-HIGH .alert-icon {
+    color: #ff4757;
+}
+
+.alert-item.priority-MEDIUM .alert-icon {
+    color: #ffa502;
+}
+
+.alert-item.priority-LOW .alert-icon {
+    color: #2ed573;
+}
+
+/* Dark Mode Support (if applicable, strictly scoped usually, but adding media query helps) */
+@media (prefers-color-scheme: dark) {
+    .alert-item {
+        background: rgba(30, 30, 30, 0.95);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: #fff;
+    }
+    .alert-title {
+        color: #fff;
+    }
+    .alert-message {
+        color: #ccc;
+    }
+    .alert-close {
+        color: #666;
+    }
+    .alert-close:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+    }
+}
