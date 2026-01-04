@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 import { API_END_POINT } from '../api/Api';
+import { getAllAlerts, addAlert, deleteAlert, clearAllAlerts, markAllAlertsAsRead, deleteExcessAlerts, AlertEvent } from '../config/IndexedDB';
 
 let stompClient = null;
 let reconnectTimeout = null;
@@ -14,16 +15,74 @@ export const alertStateStore = create((set, get) => ({
     reconnectAttempts: 0,
     maxReconnectAttempts: 5,
     connectionError: null,
+    hasLoaded: false,
 
     // 알림 추가
-    addNotification: (notification) => set((state) => ({
-        notifications: [...state.notifications,
-        { ...notification, id: notification.id || Date.now() + Math.random().toString(36).substring(2, 11) }
-        ]
-    })),
+    addNotification: async (notification) => {
+        try {
+            const alertEvent = new AlertEvent(
+                notification.eventSubType || 'NORMAL',
+                notification.publisher || 'System',
+                notification.content,
+                Date.now()
+            );
+
+            // IndexedDB에 저장
+            await addAlert(alertEvent);
+
+            // 개수 제한 (100개 유지)
+            await deleteExcessAlerts(100);
+
+            set((state) => ({
+                notifications: [...state.notifications, {
+                    ...alertEvent.toJSON(),
+                    timestamp: new Date(alertEvent.timestamp).toISOString()
+                }]
+            }));
+        } catch (error) {
+            console.error('❌ Failed to add notification to IndexedDB:', error);
+        }
+    },
+
+    // 알림 불러오기 (IndexedDB)
+    loadNotifications: async () => {
+        if (get().hasLoaded) return;
+
+        try {
+            const saved = await getAllAlerts({ orderBy: 'timestamp', order: 'asc' });
+            set({
+                notifications: saved.map(a => ({
+                    ...a.toJSON(),
+                    timestamp: new Date(a.timestamp).toISOString()
+                })),
+                hasLoaded: true
+            });
+        } catch (error) {
+            console.error('❌ Failed to load notifications:', error);
+        }
+    },
+
+    // 모든 알림 읽음 처리
+    markNotificationsAsRead: async () => {
+        try {
+            await markAllAlertsAsRead();
+            set((state) => ({
+                notifications: state.notifications.map(n => ({ ...n, read: true }))
+            }));
+        } catch (error) {
+            console.error('❌ Failed to mark alerts as read:', error);
+        }
+    },
 
     // 알림 목록 초기화
-    clearNotifications: () => set({ notifications: [] }),
+    clearNotifications: async () => {
+        try {
+            await clearAllAlerts();
+            set({ notifications: [] });
+        } catch (error) {
+            console.error('❌ Failed to clear notifications:', error);
+        }
+    },
 
     // 재연결 로직
     scheduleReconnect: () => {
@@ -35,7 +94,6 @@ export const alertStateStore = create((set, get) => ({
         }
 
         if (state.reconnectAttempts >= state.maxReconnectAttempts) {
-            console.error('❌ Max reconnect attempts reached');
             set({
                 reconnectAttempts: 0,
                 connectionError: 'Maximum reconnection attempts reached'
@@ -46,8 +104,6 @@ export const alertStateStore = create((set, get) => ({
 
         isReconnecting = true;
         const delay = Math.min(1000 * Math.pow(2, state.reconnectAttempts), 30000); // 최대 30초
-
-        console.log(`🔄 Reconnecting in ${delay}ms... (Attempt ${state.reconnectAttempts + 1}/${state.maxReconnectAttempts})`);
 
         if (reconnectTimeout) clearTimeout(reconnectTimeout);
 
@@ -64,7 +120,6 @@ export const alertStateStore = create((set, get) => ({
 
         // 이미 연결된 상태면 중복 연결 방지
         if (state.isConnected || state.isConnecting) {
-            console.log('⚠️ Already connected or connecting');
             return;
         }
 
@@ -83,21 +138,18 @@ export const alertStateStore = create((set, get) => ({
 
             stompClient = new Client({
                 webSocketFactory: () => {
-                    console.log('🌐 Creating SockJS connection to:', API_END_POINT.alert.alert_connect);
                     return new SockJS(API_END_POINT.alert.alert_connect, null, {
                         withCredentials: true
                     });
                 },
                 debug: (str) => {
-                    // 디버그 로그 
-                    console.log('STOMP:', str);
+                    // console.log('STOMP:', str);
                 },
                 reconnectDelay: 0, // 자동 재연결 비활성화 (직접 관리)
                 heartbeatIncoming: 10000,
                 heartbeatOutgoing: 10000,
                 onConnect: (frame) => {
                     console.log('✅ WebSocket Connected Successfully');
-                    console.log('📋 Connection Frame:', frame);
                     set({
                         isConnected: true,
                         isConnecting: false,
@@ -108,14 +160,10 @@ export const alertStateStore = create((set, get) => ({
 
 
                     const subscriptionPath = API_END_POINT.alert.alert_subscribe;
-                    console.log('📡 Subscribing to:', subscriptionPath);
 
                     // 알림 구독
                     stompClient.subscribe(subscriptionPath, (message) => {
                         try {
-                            console.log('📨 Raw message received:', message);
-                            console.log('📨 Message body:', message.body);
-                            console.log('📨 Message headers:', message.headers);
 
                             let content = message.body;
 
@@ -145,7 +193,7 @@ export const alertStateStore = create((set, get) => ({
                                 priority,
                                 eventType,
                                 eventSubType,
-                                timestamp: new Date().toLocaleTimeString()
+                                timestamp: new Date().toISOString()
                             });
                         } catch (error) {
                             console.error('❌ Error processing notification:', error);
@@ -154,9 +202,6 @@ export const alertStateStore = create((set, get) => ({
                 },
 
                 onStompError: (frame) => {
-                    console.error('❌ STOMP Error Frame:', frame);
-                    console.error('❌ Error Message:', frame.headers['message']);
-                    console.error('❌ Error Body:', frame.body);
                     set({
                         isConnected: false,
                         isConnecting: false,
@@ -206,7 +251,6 @@ export const alertStateStore = create((set, get) => ({
                 }
             });
 
-            console.log('🚀 Activating STOMP client...');
             stompClient.activate();
 
         } catch (error) {
@@ -222,13 +266,19 @@ export const alertStateStore = create((set, get) => ({
 
 
     // 알림 삭제
-    removeNotification: (id) => set((state) => ({
-        notifications: state.notifications.filter((n) => n.id !== id)
-    })),
+    removeNotification: async (id) => {
+        try {
+            await deleteAlert(id);
+            set((state) => ({
+                notifications: state.notifications.filter((n) => n.id !== id)
+            }));
+        } catch (error) {
+            console.error('❌ Failed to delete alert:', error);
+        }
+    },
 
     // 웹소켓 연결 해제
     disconnect: () => {
-        console.log('⛔ Disconnecting WebSocket...');
 
         if (reconnectTimeout) {
             clearTimeout(reconnectTimeout);
@@ -240,7 +290,6 @@ export const alertStateStore = create((set, get) => ({
         if (stompClient) {
             try {
                 stompClient.deactivate();
-                console.log('✅ STOMP client deactivated');
             } catch (error) {
                 console.error('❌ Error during disconnect:', error);
             }

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { userStateStore } from "../context/userStateStore";
 import { useEffect } from "react";
 import UserDropDown from "./UserDropDown";
+import NotificationCenter from "./NotificationCenter";
 
 const TopItem = [
   { title: "홈", link: "/" },
@@ -45,7 +46,8 @@ function TopMenu({ props }) {
             </Nav.Item>
           ))}
         </Nav>
-        <Nav className="ms-auto">
+        <Nav className="ms-auto d-flex align-items-center" style={{ gap: '0.5rem' }}>
+          <NotificationCenter />
           <UserDropDown />
         </Nav>
       </Container>

@@ -440,6 +440,34 @@ export const deleteOldAlerts = async (days = 30) => {
 };
 
 /**
+ * 알림 개수 제한 유지 (오래된 것부터 삭제)
+ * @param {number} maxCount - 유지할 최대 알림 개수 (기본값: 100)
+ * @returns {Promise<number>} 삭제된 알림 개수
+ */
+export const deleteExcessAlerts = async (maxCount = 100) => {
+    try {
+        const db = await initDB();
+        const allAlerts = await db.getAllFromIndex(STORE_NAME, 'timestamp');
+
+        if (allAlerts.length <= maxCount) return 0;
+
+        const deleteCount = allAlerts.length - maxCount;
+        const toDelete = allAlerts.slice(0, deleteCount);
+
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        await Promise.all(
+            toDelete.map(alert => tx.store.delete(alert.id))
+        );
+        await tx.done;
+
+        return deleteCount;
+    } catch (error) {
+        console.error('Error deleting excess alerts:', error);
+        throw error;
+    }
+};
+
+/**
  * 알림 개수 조회
  * @param {Object} filter - 필터 조건
  * @param {boolean} filter.read - 읽음 여부
@@ -485,6 +513,7 @@ export default {
     deleteAlerts,
     clearAllAlerts,
     deleteOldAlerts,
+    deleteExcessAlerts,
     getAlertCount,
     getUnreadAlertCount
 };

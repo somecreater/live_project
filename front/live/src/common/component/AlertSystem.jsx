@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useRef } from 'react';
+import React, { useEffect, useCallback, useRef, useState } from 'react';
 import { alertStateStore } from '../context/alertStateStore';
 import { userStateStore } from '../context/userStateStore';
 import './AlertSystem.css';
@@ -16,17 +16,24 @@ const AlertSystem = () => {
     const removeNotification = alertStateStore((state) => state.removeNotification);
     const connect = alertStateStore((state) => state.connect);
     const disconnect = alertStateStore((state) => state.disconnect);
+    const loadNotifications = alertStateStore((state) => state.loadNotifications);
     const isAuthenticated = userStateStore((state) => state.isAuthenticated);
 
     // 연결 상태 추적
     const hasInitialized = useRef(false);
     const connectAttempted = useRef(false);
+    const mountTime = useRef(Date.now());
+    const [activeToasts, setActiveToasts] = useState([]);
+    const processedIds = useRef(new Set());
 
+    // 초기화: 마운트 시 저장된 알림 로드
     useEffect(() => {
-        console.log('🔄 AlertSystem Effect - Auth:', isAuthenticated, 'Initialized:', hasInitialized.current);
+        loadNotifications();
+    }, [loadNotifications]);
 
+    // 인증 상태에 따른 웹소켓 연결 관리
+    useEffect(() => {
         if (!hasInitialized.current && isAuthenticated) {
-            console.log('🔌 First time connection attempt...');
             hasInitialized.current = true;
             connectAttempted.current = true;
 
@@ -39,14 +46,31 @@ const AlertSystem = () => {
         }
 
         if (!isAuthenticated && hasInitialized.current) {
-            console.log('🔌 User logged out - disconnecting...');
             disconnect();
             hasInitialized.current = false;
             connectAttempted.current = false;
         }
     }, [isAuthenticated, connect, disconnect]);
 
-    // 연결 상태 모니터링
+    // 신규 알림 감지하여 토스트에 추가
+    useEffect(() => {
+        const newNotifications = notifications.filter(n => {
+            // 마운트 시점 이후 & 아직 토스트로 처리되지 않은 알림만 필터링
+            return new Date(n.timestamp).getTime() > mountTime.current && !processedIds.current.has(n.id);
+        });
+
+        if (newNotifications.length > 0) {
+            newNotifications.forEach(n => processedIds.current.add(n.id));
+            setActiveToasts(prev => [...prev, ...newNotifications]);
+        }
+    }, [notifications]);
+
+    const removeToast = useCallback((id) => {
+        setActiveToasts(prev => prev.filter(t => t.id !== id));
+    }, []);
+
+    // 연결 상태 모니터링 (필요시 활성화)
+    /*
     useEffect(() => {
         console.log('📊 Connection Status:', {
             isAuthenticated,
@@ -55,11 +79,11 @@ const AlertSystem = () => {
             connectionError
         });
     }, [isAuthenticated, isConnected, isConnecting, connectionError]);
+    */
 
     // cleanup
     useEffect(() => {
         return () => {
-            console.log('🧹 AlertSystem unmounting - cleaning up...');
             if (hasInitialized.current) {
                 disconnect();
             }
@@ -67,35 +91,15 @@ const AlertSystem = () => {
     }, [disconnect]);
 
     return (
-        <>
-            {/* 연결 상태 표시 (개발용 - 프로덕션에서는 제거) */}
-            {process.env.NODE_ENV === 'development' && (
-                <div style={{
-                    position: 'fixed',
-                    top: '10px',
-                    right: '10px',
-                    padding: '10px',
-                    background: isConnected ? '#4CAF50' : isConnecting ? '#FFC107' : '#F44336',
-                    color: 'white',
-                    borderRadius: '5px',
-                    fontSize: '12px',
-                    zIndex: 10000
-                }}>
-                    WS: {isConnected ? '연결됨' : isConnecting ? '연결중...' : '연결안됨'}
-                    {connectionError && <div style={{ fontSize: '10px' }}>Error: {connectionError}</div>}
-                </div>
-            )}
-
-            <div className="alert-container">
-                {notifications.map((notification) => (
-                    <AlertItem
-                        key={notification.id}
-                        notification={notification}
-                        onRemove={removeNotification}
-                    />
-                ))}
-            </div>
-        </>
+        <div className="alert-container">
+            {activeToasts.map((notification) => (
+                <AlertItem
+                    key={notification.id}
+                    notification={notification}
+                    onRemove={removeToast}
+                />
+            ))}
+        </div>
     );
 };
 
@@ -166,7 +170,7 @@ const AlertItem = ({ notification, onRemove }) => {
             <div className="alert-content">
                 <div className="alert-header">
                     <span className="alert-title">{sender || '알림'}</span>
-                    <span className="alert-time">{timestamp}</span>
+                    <span className="alert-time">{new Date(timestamp).toLocaleTimeString()}</span>
                 </div>
                 <div className="alert-message">
                     {renderMessage(content)}
