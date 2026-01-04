@@ -2,7 +2,14 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localho
 export const API_BASE_URL_2 = import.meta.env.VITE_API_BASE_URL_2 || 'http://localhost:8081';
 export const API_BASE_URL_3 = import.meta.env.VITE_API_BASE_URL_3 || 'http://localhost:8082';
 
+export const ALERT_BASE_URL = import.meta.env.VITE_ALERT_BASE_URL || 'http://localhost:8083';
+
 export const API_END_POINT = {
+  alert: {
+    alert_connect: `${API_BASE_URL}/notify`,
+    alert_subscribe: `/user/queue/alerts`,
+    get_list: `${API_BASE_URL}/api/alert/get_list`,
+  },
   user: {
     login: `${API_BASE_URL}/api/user/login`,
     kakaoLogin: `${API_BASE_URL}/oauth2/authorization/kakao`,
@@ -37,6 +44,16 @@ export const API_END_POINT = {
     my_channel: `${API_BASE_URL}/api/channel/my_channel`,
     search: `${API_BASE_URL}/api/channel/search`
   },
+  subscription: {
+    is_subscribed: `${API_BASE_URL}/api/subscription/is_subscription`,
+    user_list: `${API_BASE_URL}/api/subscription/user`,
+    my_subscription: `${API_BASE_URL}/api/subscription/my_subscription`,
+    channel_list: `${API_BASE_URL}/api/subscription/channel`,
+    my_channel: `${API_BASE_URL}/api/subscription/my_channel`,
+    insert: `${API_BASE_URL}/api/subscription/insert`,
+    update: `${API_BASE_URL}/api/subscription/update`,
+    delete: `${API_BASE_URL}/api/subscription/delete`
+  },
   cover: {
     upload: `${API_BASE_URL}/api/cover_image/upload`,
     delete: `${API_BASE_URL}/api/cover_image/delete`,
@@ -51,10 +68,4 @@ export const API_END_POINT = {
     update: `${API_BASE_URL}/api/post/update`,
     delete: `${API_BASE_URL}/api/post/delete`
   }
-
-}
-
-
-export const createHeaders = () => ({
-  'Content-Type': 'application/json',
-});
+};

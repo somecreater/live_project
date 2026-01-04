@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Spinner, Alert, Button, Modal, Nav, Tab } from 'react-bootstrap';
 import { useSearchParams } from 'react-router-dom';
-import { FaHome, FaNewspaper, FaVideo, FaInfoCircle, FaList } from 'react-icons/fa';
+import { FaHome, FaNewspaper, FaVideo, FaInfoCircle, FaList, FaUsers } from 'react-icons/fa';
 import Cover from '../component/Cover';
 import ChannelHome from '../component/ChannelHome';
 import PostList from '../../post/component/PostList';
 import ApiService from '../../common/api/ApiService';
+import SubscribeButton from '../component/SubscribeButton';
+import SubscriptionList from '../component/SubscriptionList';
 import './ChannelDetailPage.css';
 
 function MyChannelPage() {
@@ -115,6 +117,9 @@ function MyChannelPage() {
             <Container className="mt-4">
                 <div className="channel-header-info mb-4">
                     <h2 className="channel-name">{channel?.name || '내 채널'}</h2>
+                    <div className="text-secondary mb-2">
+                        구독자 {channel?.subscription_count || 0}명
+                    </div>
                     {channel?.description && (
                         <p className="text-muted channel-description">{channel.description}</p>
                     )}
@@ -145,6 +150,12 @@ function MyChannelPage() {
                             <Nav.Link eventKey="playlists" className="channel-tab-link">
                                 <FaList className="me-2" />
                                 재생목록
+                            </Nav.Link>
+                        </Nav.Item>
+                        <Nav.Item>
+                            <Nav.Link eventKey="subscribers" className="channel-tab-link">
+                                <FaUsers className="me-2" />
+                                구독자
                             </Nav.Link>
                         </Nav.Item>
                         <Nav.Item>
@@ -190,6 +201,14 @@ function MyChannelPage() {
                             </div>
                         </Tab.Pane>
 
+                        {/* 구독자 탭 */}
+                        <Tab.Pane eventKey="subscribers">
+                            <div className="py-4">
+                                <h4 className="mb-4">나를 구독 중인 사용자</h4>
+                                <SubscriptionList type="to_me" name={channel?.name} />
+                            </div>
+                        </Tab.Pane>
+
                         {/* 정보 탭 */}
                         <Tab.Pane eventKey="about">
                             <div className="channel-about-section">
@@ -203,6 +222,10 @@ function MyChannelPage() {
                                         <div className="about-info-item">
                                             <span className="info-label">채널 이름</span>
                                             <span className="info-value">{channel?.name}</span>
+                                        </div>
+                                        <div className="about-info-item">
+                                            <span className="info-label">구독자 수</span>
+                                            <span className="info-value">{channel?.subscription_count || 0}명</span>
                                         </div>
                                         {channel?.createdAt && (
                                             <div className="about-info-item">

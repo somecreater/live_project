@@ -131,11 +131,10 @@ public class ProfileService implements ProfileServiceInterface {
       profileCacheRepository.delete(user_login_id);
       return true;
 
-      }catch (S3Exception s3){
-        s3.printStackTrace();
-      return false;
-      }
-
+    }catch (S3Exception s3){
+      s3.printStackTrace();
+      throw new CustomException(ErrorCode.SERVER_ERROR);
+    }
   }
 
   @Override

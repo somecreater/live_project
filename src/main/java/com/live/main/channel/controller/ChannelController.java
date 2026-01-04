@@ -4,12 +4,15 @@ import com.live.main.channel.database.dto.ChannelDto;
 import com.live.main.channel.database.dto.SearchRequest;
 import com.live.main.channel.service.Interface.ChannelServiceInterface;
 import com.live.main.channel.service.Interface.CoverServiceInterface;
+import com.live.main.channel.service.Interface.PostServiceInterface;
+import com.live.main.common.database.dto.AlertEvent;
 import com.live.main.common.database.dto.ErrorCode;
 import com.live.main.common.exception.CustomException;
 import com.live.main.user.database.dto.CustomUserDetails;
 import com.live.main.video.service.Interface.VideoServiceInterface;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,6 +30,9 @@ public class ChannelController {
   private final ChannelServiceInterface channelService;
   private final VideoServiceInterface videoService;
   private final CoverServiceInterface coverService;
+  private final PostServiceInterface postService;
+
+  private final ApplicationEventPublisher publisher;
 
   @GetMapping("/my_channel")
   public ResponseEntity<?> getMyChannel(@AuthenticationPrincipal CustomUserDetails principal){
@@ -100,6 +106,8 @@ public class ChannelController {
 
     result.put("result",true);
     result.put("update_channel",updateChannel);
+    publisher.publishEvent(new AlertEvent(
+            "CHANNEL_UPDATE", channelDto.getName(), channelDto.getName()+" 채널이 업데이트 되었습니다."));
     return ResponseEntity.ok(result);
   }
 
@@ -114,9 +122,11 @@ public class ChannelController {
 
     boolean video_delete= videoService.VideoDeleteOnChannel(channelDto.getName());
     boolean cover_delete= coverService.cover_delete_on_channel(channelDto.getName());
+    boolean post_delete= postService.deletePostOnChannel(channelDto.getName());
+    boolean subscription_delete= channelService.deleteSubscriptionOnChannel(channelDto.getName());
     boolean channel_delete= channelService.deleteChannel(channelDto);
 
-    if(video_delete && cover_delete && channel_delete){
+    if(video_delete && cover_delete && post_delete && subscription_delete && channel_delete){
       result.put("result",true);
     }else{
       result.put("result",false);

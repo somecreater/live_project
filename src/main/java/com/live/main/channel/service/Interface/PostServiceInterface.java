@@ -25,5 +25,5 @@ public interface PostServiceInterface {
   /**게시글 삭제*/
   public boolean deletePost(Long post_id);
   /**게시글 삭제(채널 삭제)*/
-  public boolean deletePostOnChannel(Long channel_id);
+  public boolean deletePostOnChannel(String channel_name);
 }

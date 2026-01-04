@@ -1,14 +1,21 @@
 import React from 'react';
 import { Card, Badge, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import PropTypes from 'prop-types';
-import { FaArrowCircleRight } from 'react-icons/fa';
+import { FaArrowCircleRight, FaUsers } from 'react-icons/fa';
 import ChannelOwnerAvatar from './ChannelOwnerAvatar';
 import { useNavigate } from 'react-router-dom';
+
+const formatNumber = (num) => {
+  if (num === undefined || num === null) return '0';
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+  if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+  return num.toString();
+};
 
 const Channel = ({ channel }) => {
   if (!channel) return null;
   const navigate = useNavigate();
-  const { id, name, description, createdAt, user_login_id } = channel;
+  const { id, name, description, createdAt, user_login_id, subscription_count } = channel;
 
   // Generate avatar initial
   const initial = name ? name.charAt(0).toUpperCase() : (user_login_id ? user_login_id.charAt(0).toUpperCase() : 'C');
@@ -32,9 +39,15 @@ const Channel = ({ channel }) => {
           <Badge bg="light" text="secondary" className="border">#{id}</Badge>
         </div>
 
-        <div className="mb-3 text-muted small d-flex align-items-center">
-          <ChannelOwnerAvatar userId={user_login_id} size={24} />
-          <strong>{user_login_id || 'Unknown Owner'}</strong>
+        <div className="mb-3 text-muted small d-flex align-items-center justify-content-between">
+          <div className="d-flex align-items-center">
+            <ChannelOwnerAvatar userId={user_login_id} size={24} />
+            <strong className="ms-2">{user_login_id || 'Unknown Owner'}</strong>
+          </div>
+          <div className="d-flex align-items-center" title="Subscribers">
+            <FaUsers className="me-1" />
+            <span>{formatNumber(subscription_count) || 0}</span>
+          </div>
         </div>
 
         <Card.Text className="text-muted text-truncate-2" style={{ minHeight: '3rem' }}>
@@ -60,6 +73,8 @@ const Channel = ({ channel }) => {
   );
 };
 
+
+
 Channel.propTypes = {
   channel: PropTypes.shape({
     id: PropTypes.number,
@@ -68,6 +83,7 @@ Channel.propTypes = {
     createdAt: PropTypes.string,
     updatedAt: PropTypes.string,
     user_login_id: PropTypes.string,
+    subscription_count: PropTypes.number,
   }),
 };
 
