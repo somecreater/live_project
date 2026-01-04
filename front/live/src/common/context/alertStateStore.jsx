@@ -180,7 +180,7 @@ export const alertStateStore = create((set, get) => ({
                             }
 
                             // 헤더 정보 추출
-                            const sender = message.headers['sender'] || 'System';
+                            const publisher = message.headers['sender'] || 'System';
                             const priority = message.headers['priority'] || 'NORMAL';
                             const eventType = message.headers['eventType'] || 'UNKNOWN';
                             const eventSubType = message.headers['eventSubType'] || 'UNKNOWN';
@@ -189,7 +189,7 @@ export const alertStateStore = create((set, get) => ({
 
                             get().addNotification({
                                 content,
-                                sender,
+                                publisher,
                                 priority,
                                 eventType,
                                 eventSubType,

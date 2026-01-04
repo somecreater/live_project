@@ -82,6 +82,7 @@ const AlertSystem = () => {
     */
 
     // cleanup
+    /* 
     useEffect(() => {
         return () => {
             if (hasInitialized.current) {
@@ -89,6 +90,7 @@ const AlertSystem = () => {
             }
         };
     }, [disconnect]);
+    */
 
     return (
         <div className="alert-container">
@@ -104,7 +106,7 @@ const AlertSystem = () => {
 };
 
 const AlertItem = ({ notification, onRemove }) => {
-    const { id, content, priority, timestamp, sender, eventType, eventSubType } = notification;
+    const { id, content, priority, timestamp, publisher, eventType, eventSubType } = notification;
     const timerRef = useRef(null);
 
     useEffect(() => {
@@ -169,7 +171,7 @@ const AlertItem = ({ notification, onRemove }) => {
             </div>
             <div className="alert-content">
                 <div className="alert-header">
-                    <span className="alert-title">{sender || '알림'}</span>
+                    <span className="alert-title">{publisher || '알림'}</span>
                     <span className="alert-time">{new Date(timestamp).toLocaleTimeString()}</span>
                 </div>
                 <div className="alert-message">

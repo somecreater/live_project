@@ -25,9 +25,10 @@ public class WebSocketConnectListener {
       String memberId = principal.getName();
       String sessionId = accessor.getSessionId();
 
+      log.info("[WS CONNECTED] memberId={}, sessionId={}", memberId, sessionId);
+
       // Redis에 온라인 상태 저장
       onlineRepository.save(memberId, sessionId);
-      log.info("[WS CONNECTED] memberId={}, sessionId={}", memberId, sessionId);
     }
   }
 
@@ -37,11 +38,11 @@ public class WebSocketConnectListener {
     Principal principal = accessor.getUser();
     if (principal== null) return;
 
-    // Redis에 있는 온라인 상태 삭제
     String memberId = principal.getName();
-    onlineRepository.delete(memberId);
-
     log.info("[WS SESSION DISCONNECT] memberId={}", memberId);
+
+    // Redis에 있는 온라인 상태 삭제
+    onlineRepository.delete(memberId);
   }
 
 }
