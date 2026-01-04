@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Form, Button } from "react-bootstrap";
 import { userStateStore } from "../../common/context/userStateStore";
+import { alertStateStore } from "../../common/context/alertStateStore";
 import ApiService from "../../common/api/ApiService";
 import { useNavigate } from "react-router-dom";
 import { API_END_POINT } from "../../common/api/Api";
@@ -35,6 +36,8 @@ function LoginForm() {
       if (data.result) {
         await getUserInfo();
         await getUserChannel();
+        // 로그인 성공 즉시 알림 시스템 연결 시작
+        alertStateStore.getState().connect();
         navigate("/user/mypage");
       }
 

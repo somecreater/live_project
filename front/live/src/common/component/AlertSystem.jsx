@@ -37,12 +37,8 @@ const AlertSystem = () => {
             hasInitialized.current = true;
             connectAttempted.current = true;
 
-            // 약간의 지연을 두고 연결 (토큰이 완전히 저장될 시간 확보)
-            const timer = setTimeout(() => {
-                connect();
-            }, 100);
-
-            return () => clearTimeout(timer);
+            // 즉시 연결 시도
+            connect();
         }
 
         if (!isAuthenticated && hasInitialized.current) {
