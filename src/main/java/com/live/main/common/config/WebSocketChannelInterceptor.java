@@ -9,12 +9,9 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 
 @Slf4j
 @Component
@@ -28,27 +25,26 @@ public class WebSocketChannelInterceptor implements ChannelInterceptor {
   public Message<?> preSend(Message<?> message, MessageChannel channel){
 
     StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+
+    log.info("[WS INTERCEPTOR] Command: {}, SessionId: {}",
+            accessor.getCommand(),
+            accessor.getSessionId());
+
     if (StompCommand.CONNECT.equals(accessor.getCommand())) {
+      log.info("[WS INTERCEPTOR] CONNECT command received");
+      var sessionAttributes = accessor.getSessionAttributes();
+      if (sessionAttributes != null) {
+        Authentication principal = (Authentication) sessionAttributes.get("principal");
 
-      String bearer = accessor.getFirstNativeHeader("Authorization");
-
-      if (bearer == null || !bearer.startsWith("Bearer ")) {
-        return null;
-      }
-
-      String token = bearer.substring(7);
-
-      if(jwtService.ValidationToken(token)){
-        String memberId= jwtService.getUserId(token);
-        String auth= jwtService.getAuth(token);
-        Authentication authentication = new UsernamePasswordAuthenticationToken(memberId, token, List.of(new SimpleGrantedAuthority(auth)));
-        log.info("[WS] Websocket Token AUTHENTICATION OK memberId={}", memberId);
-        accessor.setUser(authentication);
-      }else {
-        return null;
+        if (principal != null) {
+          accessor.setUser(principal);
+          log.info("[WS INTERCEPTOR] ✅ Principal set from handshake - user: {}",
+                  principal.getName());
+        } else {
+          log.warn("[WS INTERCEPTOR] ⚠️ No principal found in session attributes");
+        }
       }
     }
-
     return message;
   }
 

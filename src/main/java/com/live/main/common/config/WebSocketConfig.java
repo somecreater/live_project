@@ -14,7 +14,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final WebSocketChannelInterceptor webSocketChannelInterceptor;
-
+    private final WebSocketHandshake webSocketHandshake;
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.setUserDestinationPrefix("/user");
@@ -25,12 +25,15 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/notify")
+                .addInterceptors(webSocketHandshake)
                 .setAllowedOriginPatterns("*")
                 .withSockJS();
     }
+
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
         registration.interceptors(webSocketChannelInterceptor);
     }
+
 }
