@@ -34,6 +34,7 @@
         opacity: 0;
         transform: translateY(20px) scale(0.95);
     }
+
     to {
         opacity: 1;
         transform: translateY(0) scale(1);
@@ -52,7 +53,8 @@
 
 .alert-content {
     flex: 1;
-    min-width: 0; /* Text truncation fix */
+    min-width: 0;
+    /* Text truncation fix */
 }
 
 .alert-header {
@@ -111,7 +113,8 @@
     color: #ff4757;
 }
 
-.alert-item.priority-MEDIUM .alert-icon {
+.alert-item.priority-MEDIUM .alert-icon,
+.alert-item.priority-NORMAL .alert-icon {
     color: #ffa502;
 }
 
@@ -126,15 +129,19 @@
         border-color: rgba(255, 255, 255, 0.1);
         color: #fff;
     }
+
     .alert-title {
         color: #fff;
     }
+
     .alert-message {
         color: #ccc;
     }
+
     .alert-close {
         color: #666;
     }
+
     .alert-close:hover {
         background: rgba(255, 255, 255, 0.1);
         color: #fff;
