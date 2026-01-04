@@ -86,7 +86,9 @@ public class SecurityConfig{
                 "/oauth2/**",
                 "/public/**",
                 "/api/user/login",
-                "/api/user/register").permitAll()
+                "/api/user/register",
+                "/notify/**",
+                "/topic/alerts/**").permitAll()
             .requestMatchers("/api/**").authenticated()
             .requestMatchers("/manager/**").hasRole("MANAGER")
         ).formLogin(AbstractHttpConfigurer::disable)

@@ -6,15 +6,21 @@ import Cover from '../component/Cover';
 import ChannelHome from '../component/ChannelHome';
 import PostList from '../../post/component/PostList';
 import ApiService from '../../common/api/ApiService';
+import SubscribeButton from '../component/SubscribeButton';
 import './ChannelDetailPage.css';
 
 function ChannelDetailPage() {
     const { id } = useParams(); // URL에서 채널 ID 추출
+    const loginId = localStorage.getItem("loginId");
     const [searchParams, setSearchParams] = useSearchParams();
+    const [isSubscribed, setIsSubscribed] = useState(false);
+    const [subscriptionData, setSubscriptionData] = useState(null);
     const [channel, setChannel] = useState(null);
-    const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    // 구속자 수 실시간 업데이트 시각화를 위한 상태 (선택적)
+    const [subCount, setSubCount] = useState(0);
 
     // 현재 활성 탭 (URL 파라미터에서 가져오거나 기본값 'home')
     const activeTab = searchParams.get('tab') || 'home';
@@ -24,21 +30,9 @@ function ChannelDetailPage() {
         setSearchParams({ tab: tabKey });
     };
 
-    // 현재 사용자 정보 조회
+    // 현재 사용자 정보 조회(일단 안씀)
     useEffect(() => {
-        const fetchCurrentUser = async () => {
-            try {
-                const response = await ApiService.user.info();
-                if (response.data && response.data.result) {
-                    setCurrentUser(response.data.user);
-                }
-            } catch (err) {
-                // 로그인하지 않은 사용자일 수 있음 (무시)
-                console.log('사용자 정보 조회:', err.response?.status === 401 ? '로그인 필요' : err);
-            }
-        };
 
-        fetchCurrentUser();
     }, []);
 
     // 채널 정보 조회
@@ -56,7 +50,9 @@ function ChannelDetailPage() {
             try {
                 const response = await ApiService.channel.info(id);
                 if (response.data && response.data.result) {
-                    setChannel(response.data.channel);
+                    const channelData = response.data.channel;
+                    setChannel(channelData);
+                    setSubCount(channelData.subscription_count || 0);
                 } else {
                     setError('채널 정보를 찾을 수 없습니다.');
                 }
@@ -75,9 +71,41 @@ function ChannelDetailPage() {
         fetchChannel();
     }, [id]);
 
+    // 구독 상태 조회
+    useEffect(() => {
+        const fetchSubscriptionStatus = async () => {
+            if (!channel || !loginId) return;
+            try {
+                const response = await ApiService.subscription.is_subscribed(channel.name);
+                if (response.data && response.data.is_subscription !== false) {
+                    setIsSubscribed(response.data.is_subscription);
+                    setSubscriptionData(response.data.subscription);
+                } else {
+                    setIsSubscribed(false);
+                    setSubscriptionData(null);
+                }
+            } catch (err) {
+                console.error('구독 상태 조회 실패:', err);
+            }
+        };
+
+        fetchSubscriptionStatus();
+    }, [channel, loginId]);
+
     // 채널 소유주 여부 확인
-    const isOwner = currentUser && channel &&
-        currentUser.login_id === channel.user_login_id;
+    const isOwner = loginId && channel &&
+        loginId === channel.user_login_id;
+
+    // 구독 상태 변경 시 처리 (필요시 count 증감)
+    const handleSubStatusChange = (isSubscribing, data) => {
+        setSubCount(prev => isSubscribing ? prev + 1 : prev - 1);
+        setIsSubscribed(isSubscribing);
+        if (isSubscribing && data) {
+            setSubscriptionData(data);
+        } else if (!isSubscribing) {
+            setSubscriptionData(null);
+        }
+    };
 
     if (loading) {
         return (
@@ -107,15 +135,30 @@ function ChannelDetailPage() {
 
             {/* 채널 정보 영역 */}
             <Container className="mt-4">
-                <div className="channel-header-info mb-4">
-                    <h2 className="channel-name">{channel?.name || '채널'}</h2>
-                    {channel?.description && (
-                        <p className="text-muted channel-description">{channel.description}</p>
-                    )}
-                    {channel?.user_login_id && (
-                        <p className="text-secondary channel-owner">
-                            @{channel.user_login_id}
-                        </p>
+                <div className="channel-header-info mb-4 d-flex justify-content-between align-items-end">
+                    <div>
+                        <h2 className="channel-name mb-1">{channel?.name || '채널'}</h2>
+                        <div className="text-secondary mb-2 d-flex align-items-center gap-2">
+                            <span>@{channel?.user_login_id}</span>
+                            <span className="text-muted">•</span>
+                            <span>구독자 {subCount.toLocaleString()}명</span>
+                        </div>
+                        {channel?.description && (
+                            <p className="text-muted channel-description mb-0">{channel.description}</p>
+                        )}
+                    </div>
+
+                    {/* 구독 버튼 (자기 채널이 아닐 때만 표시) */}
+                    {!isOwner && (
+                        <div className="pb-2">
+                            <SubscribeButton
+                                subscriptionData={subscriptionData}
+                                channelName={channel.name}
+                                userLoginId={loginId}
+                                is_subscribed={isSubscribed}
+                                onStatusChange={handleSubStatusChange}
+                            />
+                        </div>
                     )}
                 </div>
 

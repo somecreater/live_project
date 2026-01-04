@@ -15,6 +15,7 @@ public class ChannelMapper {
     entity.setId(channelDto.getId());
     entity.setName(channelDto.getName());
     entity.setDescription(channelDto.getDescription());
+    entity.setSubscription_count(channelDto.getSubscription_count());
     entity.setUpdatedAt(channelDto.getUpdatedAt());
     entity.setCreatedAt(channelDto.getCreatedAt());
     if(channelDto.getUser_id() != null) {
@@ -37,6 +38,7 @@ public class ChannelMapper {
     channelDto.setId(channelEntity.getId());
     channelDto.setName(channelEntity.getName());
     channelDto.setDescription(channelEntity.getDescription());
+    channelDto.setSubscription_count(channelEntity.getSubscription_count());
     channelDto.setUpdatedAt(channelEntity.getUpdatedAt());
     channelDto.setCreatedAt(channelEntity.getCreatedAt());
     if(channelEntity.getUsers() != null) {

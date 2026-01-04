@@ -12,14 +12,20 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.948.0",
     "@aws-sdk/s3-presigned-post": "^3.948.0",
+    "@stomp/stompjs": "^7.2.1",
     "axios": "^1.13.2",
     "bootstrap": "^5.3.8",
+    "idb": "^8.0.3",
     "react": "^19.1.0",
     "react-bootstrap": "^2.10.10",
+    "react-cookie": "^8.0.1",
     "react-dom": "^19.1.0",
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.9.5",
     "router": "^2.2.0",
+    "sockjs-client": "^1.6.1",
+    "stompjs": "^2.3.3",
+    "use-indexeddb": "^2.0.2",
     "zustand": "^5.0.8"
   },
   "devDependencies": {

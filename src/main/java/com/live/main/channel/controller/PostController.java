@@ -6,11 +6,13 @@ import com.live.main.channel.database.dto.PostDto;
 import com.live.main.channel.database.dto.PostSearchRequest;
 import com.live.main.channel.service.Interface.ChannelServiceInterface;
 import com.live.main.channel.service.Interface.PostServiceInterface;
+import com.live.main.common.database.dto.AlertEvent;
 import com.live.main.common.database.dto.ErrorCode;
 import com.live.main.common.exception.CustomException;
 import com.live.main.user.database.dto.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,6 +29,8 @@ import java.util.Objects;
 public class PostController {
   private final PostServiceInterface postService;
   private final ChannelServiceInterface channelService;
+
+  private final ApplicationEventPublisher publisher;
 
   @GetMapping("/read/{post_id}")
   public ResponseEntity<?> readPost(
@@ -113,6 +117,9 @@ public class PostController {
       PostDto newPost= postService.writePost(postDto);
       result.put("result", true);
       result.put("new_post", newPost);
+      publisher.publishEvent(new AlertEvent(
+        "POST_UPLOAD", channelDto.getName(),
+        channelDto.getName()+" 채널이 새 게시글을 업로드 했습니다. \n제목: '" + newPost.getTitle()+"'"));
     }else{
       result.put("result", false);
     }
@@ -135,6 +142,9 @@ public class PostController {
       PostDto updateDto= postService.updatePost(postDto);
       result.put("result", true);
       result.put("update_post", updateDto);
+      publisher.publishEvent(new AlertEvent(
+        "POST_UPDATE", channelDto.getName(),
+        channelDto.getName()+" 채널이 게시물을 수정 했습니다. \n제목: '" + updateDto.getTitle()+"'"));
     }else{
       result.put("result", false);
     }
@@ -157,6 +167,9 @@ public class PostController {
       boolean delete= postService.deletePost(postDeleteRequest.getPost_id());
       if(delete){
         result.put("result", true);
+        publisher.publishEvent(new AlertEvent(
+          "POST_DELETE", channelDto.getName(),
+          channelDto.getName()+" 채널이 게시물을 삭제 했습니다."));
       }else{
         result.put("result",false);
       }

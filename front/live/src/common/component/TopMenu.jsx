@@ -1,7 +1,9 @@
 import { Container, Dropdown, Image, Nav, Navbar, NavItem, NavLink } from "react-bootstrap";
+import { Link } from "react-router-dom";
 import { userStateStore } from "../context/userStateStore";
 import { useEffect } from "react";
 import UserDropDown from "./UserDropDown";
+import NotificationCenter from "./NotificationCenter";
 
 const TopItem = [
   { title: "홈", link: "/" },
@@ -24,7 +26,7 @@ function TopMenu({ props }) {
   return (
     <Navbar bg="danger" variant="dark" fixed="top">
       <Container fluid>
-        <Navbar.Brand href="/" className="d-flex align-items-center">
+        <Navbar.Brand as={Link} to="/" className="d-flex align-items-center">
           <Image
             src={logoUrl}
             width={70}
@@ -40,11 +42,12 @@ function TopMenu({ props }) {
         >
           {TopItem.map(item => (
             <Nav.Item key={item.title}>
-              <Nav.Link href={item.link}>{item.title}</Nav.Link>
+              <Nav.Link as={Link} to={item.link}>{item.title}</Nav.Link>
             </Nav.Item>
           ))}
         </Nav>
-        <Nav className="ms-auto">
+        <Nav className="ms-auto d-flex align-items-center" style={{ gap: '0.5rem' }}>
+          <NotificationCenter />
           <UserDropDown />
         </Nav>
       </Container>

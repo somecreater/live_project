@@ -1,7 +1,10 @@
 package com.live.main.channel.service.Interface;
 
 import com.live.main.channel.database.dto.ChannelDto;
+import com.live.main.channel.database.dto.SubscriptionDto;
 import org.springframework.data.domain.Page;
+
+import java.util.List;
 
 /**채널 기능 (2025-12-04)*/
 public interface ChannelServiceInterface {
@@ -21,4 +24,31 @@ public interface ChannelServiceInterface {
   public boolean deleteChannel(ChannelDto channelDto);
   /**채널 삭제 기능(회원 탈퇴시 사용)*/
   public boolean deleteChannelOnUser(String userLoginId);
+
+  /**회원 채널 구독 목록 가져오기 기능*/
+  public Page<SubscriptionDto> getSubscriptionPageByUser(
+    int page, int size, String keyword, String userLoginId
+  );
+  /**채널 구독 회원 목록 가져오기 기능*/
+  public Page<SubscriptionDto> getSubscriptionPageByChannel(
+    int page, int size, String keyword, String channel_name
+  );
+  /**채널 전체 구독자 목록 가져오기 기능*/
+  public List<String> getsubscriptionUserList(String channel_name);
+  /**채널 구독자 증가 기능*/
+  public boolean increaseSubscription(String channel_name);
+  /**채널 구독자 감소 기능*/
+  public boolean decreaseSubscription(String channel_name);
+  /**채널 구독 기능*/
+  public SubscriptionDto insertSubscription(SubscriptionDto subscriptionDto);
+  /**채널 구독여부 확인 기능*/
+  public SubscriptionDto checkSubscription(String user_login_id, String channel_name);
+  /**채널 구독 상태 업데이트 기능*/
+  public SubscriptionDto updateSubscription(SubscriptionDto subscriptionDto);
+  /**채널 구독 해제 기능*/
+  public boolean deleteSubscription(SubscriptionDto subscriptionDto);
+  /**채널 구독 정보 삭제(회원 탈퇴시 사용)*/
+  public boolean deleteSubscriptionOnUser(String user_login_id);
+  /**채널 구독 정보 삭제(채널 삭제시 사용)*/
+  public boolean deleteSubscriptionOnChannel(String channel_name);
 }

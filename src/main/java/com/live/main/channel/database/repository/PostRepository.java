@@ -41,4 +41,6 @@ public interface PostRepository extends JpaRepository<PostEntity, Long> {
     );
 
     void deleteByChannelEntity_Id(Long id);
+
+    long deleteByChannelEntity_Name(String name);
 }
