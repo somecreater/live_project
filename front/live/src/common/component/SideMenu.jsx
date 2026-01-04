@@ -38,7 +38,7 @@ function SideMenu({ collapsed, toggle }) {
           ))
           ) : (
             <Nav.Item>
-              <Nav.Link href={"/user/login"}>
+              <Nav.Link as={Link} to="/user/login">
                 로그인 하기
               </Nav.Link>
             </Nav.Item>
