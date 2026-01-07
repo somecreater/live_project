@@ -8,7 +8,7 @@ export const API_END_POINT = {
   alert: {
     alert_connect: `${API_BASE_URL}/notify`,
     alert_subscribe: `/user/queue/alerts`,
-    get_list: `${API_BASE_URL}/api/alert/get_list`,
+    get_list: `${API_BASE_URL}/api/alert/get_alert`,
   },
   user: {
     login: `${API_BASE_URL}/api/user/login`,
