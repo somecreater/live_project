@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.live.main.common.database.dto.AlertEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,6 +16,7 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 //Redis 설정
@@ -39,6 +41,27 @@ public class RedisConfig {
     }
 
     /**
+     * RedisTemplate 설정(알림 서버에만 존재)
+     * 알림 데이터 처리 할때 이용
+     */
+    @Bean
+    public RedisTemplate<String, AlertEvent> alertEventRedisTemplate(
+      RedisConnectionFactory connectionFactory, ObjectMapper objectMapper){
+      Jackson2JsonRedisSerializer<AlertEvent> serializer =
+        new Jackson2JsonRedisSerializer<>(objectMapper, AlertEvent.class);
+      RedisTemplate<String, AlertEvent> template = new RedisTemplate<>();
+      template.setConnectionFactory(connectionFactory);
+
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(serializer);
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(serializer);
+
+        template.afterPropertiesSet();
+        return template;
+    }
+
+    /**
      * RedisTemplate 설정
      * JSON 직렬화를 사용하여 객체를 Redis에 저장
      */
@@ -54,7 +77,7 @@ public class RedisConfig {
             .build();
 
         /*
-        SON 처리를 위한 Jackson ObjectMapper 생성 및 설정
+        JSON 처리를 위한 Jackson ObjectMapper 생성 및 설정
         */
         ObjectMapper objectMapper = new ObjectMapper()
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)

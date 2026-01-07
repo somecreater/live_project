@@ -1,8 +1,8 @@
 package com.live.main.common.database.repository;
 
 import com.live.main.common.database.dto.AlertEvent;
-import com.live.main.common.service.RedisService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -11,23 +11,18 @@ import java.util.List;
 @Repository
 public class AlertRepository {
 
-  private final RedisService redisService;
+  private final RedisTemplate<String, AlertEvent> redisTemplate;
   private final String PREFIX="ALERT:";
 
   public void save(String userId, AlertEvent alertEvent){
-      redisService.rPush(PREFIX+userId, alertEvent);
+    redisTemplate.opsForList().rightPush(PREFIX + userId, alertEvent);
   }
 
   public List<AlertEvent> get(String userId){
-    List<Object> alertEvents= redisService.lGet(PREFIX+userId);
-    if(alertEvents == null){
-      return null;
-    }else{
-      return alertEvents.stream().map(o -> (AlertEvent) o).toList();
-    }
+    return redisTemplate.opsForList().range(PREFIX + userId, 0, -1);
   }
 
   public void delete(String userId){
-    redisService.delete(PREFIX+userId);
+    redisTemplate.delete(PREFIX + userId);
   }
 }
