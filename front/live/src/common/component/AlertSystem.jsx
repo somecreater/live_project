@@ -17,6 +17,7 @@ const AlertSystem = () => {
     const connect = alertStateStore((state) => state.connect);
     const disconnect = alertStateStore((state) => state.disconnect);
     const loadNotifications = alertStateStore((state) => state.loadNotifications);
+    const fetchNotifications = alertStateStore((state) => state.fetchNotifications);
     const isAuthenticated = userStateStore((state) => state.isAuthenticated);
 
     // 연결 상태 추적
@@ -37,14 +38,20 @@ const AlertSystem = () => {
             hasInitialized.current = true;
             connectAttempted.current = true;
 
-            // 즉시 연결 시도
-            connect();
+            // 서버에서 저장된 알림을 먼저 가져온 후 웹소켓 연결
+            fetchNotifications().then(() => {
+                connect();
+            });
         }
 
         if (!isAuthenticated && hasInitialized.current) {
             disconnect();
             hasInitialized.current = false;
             connectAttempted.current = false;
+            // 상태 초기화
+            processedIds.current.clear();
+            setActiveToasts([]);
+            mountTime.current = Date.now();
         }
     }, [isAuthenticated, connect, disconnect]);
 

@@ -69,6 +69,12 @@ export const AlertType = {
         type: 'CHANNEL',
         subtype: 'CHANNEL_DELETE',
         priority: 'HIGH'
+    },
+    NORMAL: {
+        name: 'NORMAL',
+        type: 'SYSTEM',
+        subtype: 'NORMAL',
+        priority: 'NORMAL'
     }
 };
 
@@ -76,12 +82,9 @@ export class AlertEvent {
     constructor(type, publisher, content, timestamp = Date.now()) {
         // type이 문자열인 경우 AlertType에서 찾기
         if (typeof type === 'string') {
-            this.type = AlertType[type];
-            if (!this.type) {
-                throw new Error(`Invalid alert type: ${type}`);
-            }
+            this.type = AlertType[type] || AlertType['NORMAL'];
         } else {
-            this.type = type;
+            this.type = type || AlertType['NORMAL'];
         }
 
         this.publisher = publisher;

@@ -3,6 +3,7 @@ import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 import { API_END_POINT } from '../api/Api';
 import { getAllAlerts, addAlert, deleteAlert, clearAllAlerts, markAllAlertsAsRead, deleteExcessAlerts, AlertEvent } from '../config/IndexedDB';
+import ApiService from '../api/ApiService';
 
 let stompClient = null;
 let reconnectTimeout = null;
@@ -57,8 +58,75 @@ export const alertStateStore = create((set, get) => ({
                 })),
                 hasLoaded: true
             });
+            return saved;
         } catch (error) {
             console.error('❌ Failed to load notifications:', error);
+            return [];
+        }
+    },
+
+    // 서버에서 알림 목록 가져와서 동기화
+    fetchNotifications: async () => {
+        try {
+            console.log('📡 서버에서 알림 목록 요청 중...');
+            const response = await ApiService.alert.get_list();
+            const data = response.data;
+
+            let serverAlerts = [];
+            if (Array.isArray(data)) {
+                serverAlerts = data;
+            } else if (data && Array.isArray(data.content)) {
+                serverAlerts = data.content;
+            } else if (data && Array.isArray(data.alert_list)) {
+                serverAlerts = data.alert_list;
+            } else if (data && data.result && Array.isArray(data.alerts)) {
+                serverAlerts = data.alerts;
+            }
+
+            console.log(`📥 서버 응답 수신: ${serverAlerts.length}개의 알림 발견`);
+
+            // 기존 데이터(메모리 & IndexedDB) 초기화
+            set({ notifications: [], hasLoaded: false });
+            await clearAllAlerts();
+
+            if (serverAlerts.length > 0) {
+                const alertEvents = serverAlerts.map(alert => {
+                    // 서버 데이터 구조에 맞춰 AlertEvent 생성
+                    const event = new AlertEvent(
+                        alert.eventSubType || alert.type || 'NORMAL',
+                        alert.publisher || 'System',
+                        alert.content || alert.message || '알림 내용 없음',
+                        alert.timestamp ? new Date(alert.timestamp).getTime() : Date.now()
+                    );
+
+                    if (alert.id) event.id = alert.id;
+                    event.read = alert.read || false;
+
+                    return event;
+                });
+
+                // IndexedDB에 저장
+                for (const event of alertEvents) {
+                    await addAlert(event);
+                }
+
+                // 상태 업데이트
+                set({
+                    notifications: alertEvents.map(a => ({
+                        ...a.toJSON(),
+                        timestamp: new Date(a.timestamp).toISOString()
+                    })),
+                    hasLoaded: true
+                });
+                console.log('✅ 알림 상태 동기화 완료');
+            } else {
+                set({ hasLoaded: true });
+                console.log('ℹ️ 가져올 알림이 없습니다.');
+            }
+        } catch (error) {
+            console.error('❌ Failed to fetch notifications from server:', error);
+            // 에러 시에도 최소한 로딩 완료 처리는 해서 무한 요청 방지
+            set({ hasLoaded: true });
         }
     },
 
@@ -297,6 +365,8 @@ export const alertStateStore = create((set, get) => ({
         }
 
         set({
+            notifications: [],
+            hasLoaded: false,
             isConnected: false,
             isConnecting: false,
             reconnectAttempts: 0,

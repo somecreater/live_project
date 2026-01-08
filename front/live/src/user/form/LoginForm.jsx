@@ -36,8 +36,11 @@ function LoginForm() {
       if (data.result) {
         await getUserInfo();
         await getUserChannel();
-        // 로그인 성공 즉시 알림 시스템 연결 시작
-        alertStateStore.getState().connect();
+        // 로그인 성공 즉시 서버에서 알림 가져오기 및 연결 시작
+        const alertStore = alertStateStore.getState();
+        await alertStore.fetchNotifications();
+        alertStore.connect();
+
         navigate("/user/mypage");
       }
 
