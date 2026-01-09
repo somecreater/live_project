@@ -2,8 +2,8 @@ package com.live.main.common.service;
 
 import com.live.main.channel.service.Interface.ChannelServiceInterface;
 import com.live.main.common.database.dto.AlertEvent;
-import com.live.main.common.database.repository.AlertRepository;
 import com.live.main.common.database.repository.OnlineRepository;
+import com.live.main.common.service.Interface.AlertCustomServiceInterface;
 import com.live.main.common.service.Interface.AlertServiceInterface;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +31,8 @@ public class AlertService implements AlertServiceInterface {
   private final ChannelServiceInterface channelService;
 
   private final OnlineRepository onlineRepository;
-  private final AlertRepository alertRepository;
+  private final AlertCustomServiceInterface alertCustomService;
+
   private final KafkaTemplate<String, AlertEvent> kafkaTemplate;
 
   @Value("${app.kafka.topic.notification.name}")
@@ -109,16 +110,16 @@ public class AlertService implements AlertServiceInterface {
                 alertEvent.getType().getSubtype(),
                 alertEvent.getPublisher(),
                 alertEvent.getContent());
-        alertRepository.save(target, alertEvent);
+        alertCustomService.save(target, alertEvent);
       }
     }
   }
 
   @Override
   public List<AlertEvent> sendAlertList(String target){
-    List<AlertEvent> alertEvents= alertRepository.get(target);
+    List<AlertEvent> alertEvents= alertCustomService.get(target);
     if(alertEvents!=null){
-      alertRepository.delete(target);
+      alertCustomService.delete(target);
       return alertEvents;
     }else{
       return null;

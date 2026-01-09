@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.live.main.common.database.dto.AlertEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,7 +15,6 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 //Redis 설정
@@ -38,27 +36,6 @@ public class RedisConfig {
         RedisStandaloneConfiguration config=new RedisStandaloneConfiguration(host, port);
         config.setPassword(pass);
         return new LettuceConnectionFactory(config);
-    }
-
-    /**
-     * RedisTemplate 설정(알림 서버에만 존재)
-     * 알림 데이터 처리 할때 이용
-     */
-    @Bean
-    public RedisTemplate<String, AlertEvent> alertEventRedisTemplate(
-      RedisConnectionFactory connectionFactory, ObjectMapper objectMapper){
-      Jackson2JsonRedisSerializer<AlertEvent> serializer =
-        new Jackson2JsonRedisSerializer<>(objectMapper, AlertEvent.class);
-      RedisTemplate<String, AlertEvent> template = new RedisTemplate<>();
-      template.setConnectionFactory(connectionFactory);
-
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(serializer);
-        template.setHashKeySerializer(new StringRedisSerializer());
-        template.setHashValueSerializer(serializer);
-
-        template.afterPropertiesSet();
-        return template;
     }
 
     /**

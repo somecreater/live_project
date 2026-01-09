@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Dropdown, Badge, Button } from 'react-bootstrap';
 import { FaBell, FaTrash, FaCheckDouble, FaVideo, FaBroadcastTower, FaEdit, FaTrashAlt, FaComment, FaUser, FaCheckCircle, FaExclamationCircle, FaInfoCircle } from 'react-icons/fa';
 import { alertStateStore } from '../context/alertStateStore';
+import { userStateStore } from '../context/userStateStore';
 import './NotificationCenter.css';
 
 const NotificationCenter = () => {
@@ -13,15 +14,19 @@ const NotificationCenter = () => {
     const loadNotifications = alertStateStore((state) => state.loadNotifications);
     const hasLoaded = alertStateStore((state) => state.hasLoaded);
 
+    // 로그인 상태 확인
+    const isAuthenticated = userStateStore((state) => state.isAuthenticated);
+
     useEffect(() => {
-        if (!hasLoaded) {
+        // 로그인 상태일 때만 알림 로드
+        if (!hasLoaded && isAuthenticated) {
             loadNotifications();
         }
-    }, [hasLoaded, loadNotifications]);
+    }, [hasLoaded, loadNotifications, isAuthenticated]);
 
-    // 알림 리스트는 최신순으로 정렬
-    const sortedNotifications = [...notifications].reverse();
-    const unreadCount = notifications.filter(n => !n.read).length;
+    const displayNotifications = isAuthenticated ? notifications : [];
+    const sortedNotifications = [...displayNotifications].reverse();
+    const unreadCount = isAuthenticated ? displayNotifications.filter(n => !n.read).length : 0;
 
     const getIcon = (subType, priority) => {
         switch (subType) {

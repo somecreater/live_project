@@ -69,6 +69,20 @@ export const alertStateStore = create((set, get) => ({
     fetchNotifications: async () => {
         try {
             console.log('📡 서버에서 알림 목록 요청 중...');
+
+            // 기존 IndexedDB에서 읽음 상태 맵 저장 (알림 ID -> 읽음 여부)
+            const existingAlerts = await getAllAlerts({ orderBy: 'timestamp', order: 'asc' });
+            const readStatusMap = new Map();
+            existingAlerts.forEach(alert => {
+                // id 또는 content+timestamp 조합을 키로 사용
+                readStatusMap.set(alert.id, alert.read);
+                // 서버 알림과 매칭을 위한 추가 키 (content + publisher + timestamp 근사치)
+                const contentKey = `${alert.publisher}_${alert.content}_${Math.floor(alert.timestamp / 60000)}`;
+                if (alert.read) {
+                    readStatusMap.set(contentKey, true);
+                }
+            });
+
             const response = await ApiService.alert.get_list();
             const data = response.data;
 
@@ -100,7 +114,13 @@ export const alertStateStore = create((set, get) => ({
                     );
 
                     if (alert.id) event.id = alert.id;
-                    event.read = alert.read || false;
+
+                    if (alert.read !== undefined) {
+                        event.read = alert.read;
+                    } else {
+                        const contentKey = `${event.publisher}_${event.content}_${Math.floor(event.timestamp / 60000)}`;
+                        event.read = readStatusMap.get(alert.id) || readStatusMap.get(contentKey) || false;
+                    }
 
                     return event;
                 });
@@ -347,12 +367,12 @@ export const alertStateStore = create((set, get) => ({
 
     // 웹소켓 연결 해제
     disconnect: () => {
+        console.log('🔌 알림 시스템 연결 해제 중...');
 
         if (reconnectTimeout) {
             clearTimeout(reconnectTimeout);
             reconnectTimeout = null;
         }
-
 
         // STOMP 연결 해제
         if (stompClient) {
@@ -372,5 +392,7 @@ export const alertStateStore = create((set, get) => ({
             reconnectAttempts: 0,
             connectionError: null
         });
+
+        console.log('✅ 알림 연결 해제 완료 (알림 데이터는 유지됨)');
     }
 }));
