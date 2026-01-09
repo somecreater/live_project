@@ -1,28 +1,13 @@
 package com.live.main.common.database.repository;
 
-import com.live.main.common.database.dto.AlertEvent;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Repository;
+import com.live.main.common.database.entity.AlertEventEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-@RequiredArgsConstructor
-@Repository
-public class AlertRepository {
+public interface AlertRepository extends JpaRepository<AlertEventEntity,Long> {
 
-  private final RedisTemplate<String, AlertEvent> redisTemplate;
-  private final String PREFIX="ALERT:";
+    List<AlertEventEntity> findByTargetUser(String targetUser);
 
-  public void save(String userId, AlertEvent alertEvent){
-    redisTemplate.opsForList().rightPush(PREFIX + userId, alertEvent);
-  }
-
-  public List<AlertEvent> get(String userId){
-    return redisTemplate.opsForList().range(PREFIX + userId, 0, -1);
-  }
-
-  public void delete(String userId){
-    redisTemplate.delete(PREFIX + userId);
-  }
+    void deleteByTargetUser(String targetUser);
 }
