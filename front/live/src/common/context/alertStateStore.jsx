@@ -57,6 +57,8 @@ export const alertStateStore = create((set, get) => ({
             let serverAlerts = [];
             if (Array.isArray(data)) {
                 serverAlerts = data;
+            } else if (data && Array.isArray(data.data)) {
+                serverAlerts = data.data;
             } else if (data && Array.isArray(data.content)) {
                 serverAlerts = data.content;
             } else if (data && Array.isArray(data.alert_list)) {
@@ -67,14 +69,25 @@ export const alertStateStore = create((set, get) => ({
 
             console.log(`📥 서버 응답 수신: ${serverAlerts.length}개의 알림 발견`);
 
-            const mappedAlerts = serverAlerts.map(alert => ({
-                id: alert.id,
-                type: alert.type || 'NORMAL',
-                publisher: alert.publisher || 'System',
-                content: alert.content || '알림 내용 없음',
-                read: alert.read || false,
-                timestamp: alert.timestamp || new Date().toISOString()
-            }));
+            const mappedAlerts = serverAlerts.map(alert => {
+                const rawId = alert.alertId || alert.id;
+                let finalId;
+                if (rawId) {
+                    const parsed = parseInt(rawId, 10);
+                    finalId = !isNaN(parsed) && String(parsed) === String(rawId) ? parsed : rawId;
+                } else {
+                    finalId = Date.now() + Math.random();
+                }
+
+                return {
+                    id: finalId,
+                    type: alert.type || 'NORMAL',
+                    publisher: alert.publisher || alert.sender || 'System',
+                    content: alert.content || alert.message || '알림 내용 없음',
+                    read: alert.read !== undefined ? alert.read : (alert.isRead || false),
+                    timestamp: alert.timestamp || alert.createdDate || alert.createdAt || new Date().toISOString()
+                };
+            });
 
             set({
                 notifications: mappedAlerts,
@@ -94,7 +107,7 @@ export const alertStateStore = create((set, get) => ({
             await ApiService.alert.get_read(id);
             set((state) => ({
                 notifications: state.notifications.map(n =>
-                    n.id === id ? { ...n, read: true } : n
+                    String(n.id) === String(id) ? { ...n, read: true } : n
                 )
             }));
         } catch (error) {
@@ -119,7 +132,7 @@ export const alertStateStore = create((set, get) => ({
         try {
             await ApiService.alert.get_delete(id);
             set((state) => ({
-                notifications: state.notifications.filter((n) => n.id !== id)
+                notifications: state.notifications.filter((n) => String(n.id) !== String(id))
             }));
         } catch (error) {
             console.error('❌ Failed to delete alert:', error);
@@ -227,7 +240,17 @@ export const alertStateStore = create((set, get) => ({
 
                             const alertIdHeader = message.headers['alertId'];
 
-                            const notificationId = alertIdHeader ? parseInt(alertIdHeader, 10) : (parsedData.id || Date.now());
+                            let notificationId;
+                            if (alertIdHeader) {
+                                const parsedId = Number(alertIdHeader);
+                                if (!isNaN(parsedId) && String(parsedId) === alertIdHeader) {
+                                    notificationId = parsedId;
+                                } else {
+                                    notificationId = alertIdHeader;
+                                }
+                            } else {
+                                notificationId = parsedData.id || Date.now();
+                            }
 
                             const notification = {
                                 id: notificationId,
