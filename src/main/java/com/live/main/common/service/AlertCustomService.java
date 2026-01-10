@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -20,9 +21,10 @@ public class AlertCustomService implements AlertCustomServiceInterface {
 
   @Override
   @Transactional
-  public void save(String userId, AlertEvent alertEvent) {
+  public Long save(String userId, AlertEvent alertEvent) {
       AlertEventEntity alertEventEntity= mapper.toEntity(alertEvent, userId);
-      alertRepository.save(alertEventEntity);
+      AlertEventEntity event=alertRepository.save(alertEventEntity);
+      return event.getId();
   }
 
   @Override
@@ -40,5 +42,41 @@ public class AlertCustomService implements AlertCustomServiceInterface {
   @Transactional
   public void delete(String userId) {
     alertRepository.deleteByTargetUser(userId);
+  }
+
+  @Override
+  @Transactional
+  public void deleteById(String userId, Long id){
+    AlertEventEntity entity=alertRepository.findById(id).orElse(null);
+    if(entity ==null){
+      return;
+    }
+    if(!Objects.equals(entity.getTargetUser(), userId)){
+      return;
+    }
+
+    alertRepository.deleteById(id);
+  }
+
+  @Override
+  @Transactional
+  public boolean read(String userId, Long id){
+    AlertEventEntity entity=alertRepository.findById(id).orElse(null);
+    if(entity ==null){
+      return false;
+    }
+    if(!Objects.equals(entity.getTargetUser(), userId)){
+      return false;
+    }
+
+    int update=alertRepository.updateReadById(true,id);
+    return update == 1;
+  }
+
+  @Override
+  @Transactional
+  public boolean readAll(String userId){
+    int update=alertRepository.updateReadByTargetUser(true,userId);
+    return update>0;
   }
 }

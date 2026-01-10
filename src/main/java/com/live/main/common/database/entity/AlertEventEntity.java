@@ -30,4 +30,7 @@ public class AlertEventEntity extends timeEntity {
 
   @Column(nullable = false, length = 100)
   private String targetUser;
+
+  @Column(name="isRead", nullable = false)
+  private boolean read;
 }

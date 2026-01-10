@@ -107,7 +107,10 @@ public class ChannelController {
     result.put("result",true);
     result.put("update_channel",updateChannel);
     publisher.publishEvent(new AlertEvent(
-            "CHANNEL_UPDATE", channelDto.getName(), channelDto.getName()+" 채널이 업데이트 되었습니다."));
+      null,
+      "CHANNEL_UPDATE",
+      channelDto.getName(), channelDto.getName()+" 채널이 업데이트 되었습니다.",
+      false));
     return ResponseEntity.ok(result);
   }
 

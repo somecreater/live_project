@@ -98,6 +98,10 @@ public class AlertService implements AlertServiceInterface {
                 alertEvent.getPublisher(),
                 alertEvent.getContent());
         log.info("[SEND] URL: /user/{}/queue/alerts", target );
+
+        Long id=alertCustomService.save(target, alertEvent);
+        headerAccessor.setHeader("alertId", String.valueOf(id));
+
         messagingTemplate.convertAndSendToUser(
                 target,
                 "/queue/alerts",
@@ -119,7 +123,6 @@ public class AlertService implements AlertServiceInterface {
   public List<AlertEvent> sendAlertList(String target){
     List<AlertEvent> alertEvents= alertCustomService.get(target);
     if(alertEvents!=null){
-      alertCustomService.delete(target);
       return alertEvents;
     }else{
       return null;
