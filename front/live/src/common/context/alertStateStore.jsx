@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 import { API_END_POINT } from '../api/Api';
-import { getAllAlerts, addAlert, deleteAlert, clearAllAlerts, markAllAlertsAsRead, deleteExcessAlerts, AlertEvent } from '../config/IndexedDB';
 import ApiService from '../api/ApiService';
 
 let stompClient = null;
@@ -18,70 +17,39 @@ export const alertStateStore = create((set, get) => ({
     connectionError: null,
     hasLoaded: false,
 
-    // 알림 추가
-    addNotification: async (notification) => {
-        try {
-            const alertEvent = new AlertEvent(
-                notification.eventSubType || 'NORMAL',
-                notification.publisher || 'System',
-                notification.content,
-                Date.now()
-            );
+    // 알림 추가 (웹소켓으로 받은 실시간 알림)
+    addNotification: (notification) => {
+        const newNotification = {
+            id: notification.id || Date.now(),
+            type: notification.type || 'NORMAL',
+            publisher: notification.publisher || 'System',
+            content: notification.content || '알림이 도착했습니다.',
+            read: notification.read || false,
+            timestamp: notification.timestamp || new Date().toISOString()
+        };
 
-            // IndexedDB에 저장
-            await addAlert(alertEvent);
-
-            // 개수 제한 (100개 유지)
-            await deleteExcessAlerts(100);
-
-            set((state) => ({
-                notifications: [...state.notifications, {
-                    ...alertEvent.toJSON(),
-                    timestamp: new Date(alertEvent.timestamp).toISOString()
-                }]
-            }));
-        } catch (error) {
-            console.error('❌ Failed to add notification to IndexedDB:', error);
-        }
+        set((state) => ({
+            notifications: [...state.notifications, newNotification]
+        }));
     },
 
-    // 알림 불러오기 (IndexedDB)
+    // 알림 불러오기 (서버 API 호출)
     loadNotifications: async () => {
-        if (get().hasLoaded) return;
-
-        try {
-            const saved = await getAllAlerts({ orderBy: 'timestamp', order: 'asc' });
-            set({
-                notifications: saved.map(a => ({
-                    ...a.toJSON(),
-                    timestamp: new Date(a.timestamp).toISOString()
-                })),
-                hasLoaded: true
-            });
-            return saved;
-        } catch (error) {
-            console.error('❌ Failed to load notifications:', error);
-            return [];
-        }
+        return get().fetchNotifications();
     },
 
-    // 서버에서 알림 목록 가져와서 동기화
-    fetchNotifications: async () => {
+    // 알림 강제 새로고침 (hasLoaded 무시)
+    refetchNotifications: async () => {
+        set({ hasLoaded: false });
+        return get().fetchNotifications();
+    },
+
+    // 서버에서 알림 목록 가져오기
+    fetchNotifications: async (force = false) => {
+        if (!force && get().hasLoaded) return;
+
         try {
             console.log('📡 서버에서 알림 목록 요청 중...');
-
-            // 기존 IndexedDB에서 읽음 상태 맵 저장 (알림 ID -> 읽음 여부)
-            const existingAlerts = await getAllAlerts({ orderBy: 'timestamp', order: 'asc' });
-            const readStatusMap = new Map();
-            existingAlerts.forEach(alert => {
-                // id 또는 content+timestamp 조합을 키로 사용
-                readStatusMap.set(alert.id, alert.read);
-                // 서버 알림과 매칭을 위한 추가 키 (content + publisher + timestamp 근사치)
-                const contentKey = `${alert.publisher}_${alert.content}_${Math.floor(alert.timestamp / 60000)}`;
-                if (alert.read) {
-                    readStatusMap.set(contentKey, true);
-                }
-            });
 
             const response = await ApiService.alert.get_list();
             const data = response.data;
@@ -99,73 +67,69 @@ export const alertStateStore = create((set, get) => ({
 
             console.log(`📥 서버 응답 수신: ${serverAlerts.length}개의 알림 발견`);
 
-            // 기존 데이터(메모리 & IndexedDB) 초기화
-            set({ notifications: [], hasLoaded: false });
-            await clearAllAlerts();
+            const mappedAlerts = serverAlerts.map(alert => ({
+                id: alert.id,
+                type: alert.type || 'NORMAL',
+                publisher: alert.publisher || 'System',
+                content: alert.content || '알림 내용 없음',
+                read: alert.read || false,
+                timestamp: alert.timestamp || new Date().toISOString()
+            }));
 
-            if (serverAlerts.length > 0) {
-                const alertEvents = serverAlerts.map(alert => {
-                    // 서버 데이터 구조에 맞춰 AlertEvent 생성
-                    const event = new AlertEvent(
-                        alert.eventSubType || alert.type || 'NORMAL',
-                        alert.publisher || 'System',
-                        alert.content || alert.message || '알림 내용 없음',
-                        alert.timestamp ? new Date(alert.timestamp).getTime() : Date.now()
-                    );
+            set({
+                notifications: mappedAlerts,
+                hasLoaded: true
+            });
 
-                    if (alert.id) event.id = alert.id;
-
-                    if (alert.read !== undefined) {
-                        event.read = alert.read;
-                    } else {
-                        const contentKey = `${event.publisher}_${event.content}_${Math.floor(event.timestamp / 60000)}`;
-                        event.read = readStatusMap.get(alert.id) || readStatusMap.get(contentKey) || false;
-                    }
-
-                    return event;
-                });
-
-                // IndexedDB에 저장
-                for (const event of alertEvents) {
-                    await addAlert(event);
-                }
-
-                // 상태 업데이트
-                set({
-                    notifications: alertEvents.map(a => ({
-                        ...a.toJSON(),
-                        timestamp: new Date(a.timestamp).toISOString()
-                    })),
-                    hasLoaded: true
-                });
-                console.log('✅ 알림 상태 동기화 완료');
-            } else {
-                set({ hasLoaded: true });
-                console.log('ℹ️ 가져올 알림이 없습니다.');
-            }
+            console.log('✅ 알림 상태 동기화 완료');
         } catch (error) {
             console.error('❌ Failed to fetch notifications from server:', error);
-            // 에러 시에도 최소한 로딩 완료 처리는 해서 무한 요청 방지
             set({ hasLoaded: true });
+        }
+    },
+
+    // 특정 알림 읽음 처리
+    markNotificationAsRead: async (id) => {
+        try {
+            await ApiService.alert.get_read(id);
+            set((state) => ({
+                notifications: state.notifications.map(n =>
+                    n.id === id ? { ...n, read: true } : n
+                )
+            }));
+        } catch (error) {
+            console.error('❌ Failed to mark alert as read:', error);
         }
     },
 
     // 모든 알림 읽음 처리
     markNotificationsAsRead: async () => {
         try {
-            await markAllAlertsAsRead();
+            await ApiService.alert.get_read_all();
             set((state) => ({
                 notifications: state.notifications.map(n => ({ ...n, read: true }))
             }));
         } catch (error) {
-            console.error('❌ Failed to mark alerts as read:', error);
+            console.error('❌ Failed to mark all alerts as read:', error);
         }
     },
 
-    // 알림 목록 초기화
+    // 특정 알림 삭제
+    removeNotification: async (id) => {
+        try {
+            await ApiService.alert.get_delete(id);
+            set((state) => ({
+                notifications: state.notifications.filter((n) => n.id !== id)
+            }));
+        } catch (error) {
+            console.error('❌ Failed to delete alert:', error);
+        }
+    },
+
+    // 알림 목록 초기화 (모든 알림 삭제)
     clearNotifications: async () => {
         try {
-            await clearAllAlerts();
+            await ApiService.alert.get_delete_all();
             set({ notifications: [] });
         } catch (error) {
             console.error('❌ Failed to clear notifications:', error);
@@ -252,37 +216,31 @@ export const alertStateStore = create((set, get) => ({
                     // 알림 구독
                     stompClient.subscribe(subscriptionPath, (message) => {
                         try {
-
-                            let content = message.body;
+                            let parsedData = null;
 
                             // JSON 파싱 시도
                             try {
-                                const parsed = JSON.parse(message.body);
-                                if (typeof parsed === 'object' && parsed !== null) {
-                                    content = parsed.content || parsed.message || parsed;
-                                } else {
-                                    content = parsed;
-                                }
+                                parsedData = JSON.parse(message.body);
                             } catch (e) {
-                                content = message.body;
+                                parsedData = { content: message.body };
                             }
 
-                            // 헤더 정보 추출
-                            const publisher = message.headers['sender'] || 'System';
-                            const priority = message.headers['priority'] || 'NORMAL';
-                            const eventType = message.headers['eventType'] || 'UNKNOWN';
-                            const eventSubType = message.headers['eventSubType'] || 'UNKNOWN';
+                            const alertIdHeader = message.headers['alertId'];
 
-                            console.log(`📬 신규 알림 [${eventType}/${eventSubType}][우선순위: ${priority}]:`, content);
+                            const notificationId = alertIdHeader ? parseInt(alertIdHeader, 10) : (parsedData.id || Date.now());
 
-                            get().addNotification({
-                                content,
-                                publisher,
-                                priority,
-                                eventType,
-                                eventSubType,
+                            const notification = {
+                                id: notificationId,
+                                type: parsedData.type || 'NORMAL',
+                                publisher: parsedData.publisher || 'System',
+                                content: parsedData.content || message.body,
+                                read: parsedData.read || false,
                                 timestamp: new Date().toISOString()
-                            });
+                            };
+
+                            console.log(`📬 신규 알림 [ID: ${notification.id}][${notification.type}]:`, notification.content);
+
+                            get().addNotification(notification);
                         } catch (error) {
                             console.error('❌ Error processing notification:', error);
                         }
@@ -352,19 +310,6 @@ export const alertStateStore = create((set, get) => ({
         }
     },
 
-
-    // 알림 삭제
-    removeNotification: async (id) => {
-        try {
-            await deleteAlert(id);
-            set((state) => ({
-                notifications: state.notifications.filter((n) => n.id !== id)
-            }));
-        } catch (error) {
-            console.error('❌ Failed to delete alert:', error);
-        }
-    },
-
     // 웹소켓 연결 해제
     disconnect: () => {
         console.log('🔌 알림 시스템 연결 해제 중...');
@@ -393,6 +338,6 @@ export const alertStateStore = create((set, get) => ({
             connectionError: null
         });
 
-        console.log('✅ 알림 연결 해제 완료 (알림 데이터는 유지됨)');
+        console.log('✅ 알림 연결 해제 완료');
     }
 }));
