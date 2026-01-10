@@ -6,7 +6,11 @@ import { API_END_POINT } from "./Api";
  */
 const ApiService = {
   alert: {
-    get_list: () => RefreshApi.post(API_END_POINT.alert.get_list)
+    get_list: () => RefreshApi.post(API_END_POINT.alert.get_list),
+    get_read: (id) => RefreshApi.post(`${API_END_POINT.alert.read_alert}/${id}`),
+    get_read_all: () => RefreshApi.post(API_END_POINT.alert.read_alert_all),
+    get_delete: (id) => RefreshApi.post(`${API_END_POINT.alert.delete_alert}/${id}`),
+    get_delete_all: () => RefreshApi.post(API_END_POINT.alert.delete_alert_all)
   },
   user: {
     login: (dto) => RefreshApi.post(API_END_POINT.user.login, dto),
