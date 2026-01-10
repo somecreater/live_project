@@ -23,6 +23,7 @@ public class AlertCustomService implements AlertCustomServiceInterface {
   @Transactional
   public Long save(String userId, AlertEvent alertEvent) {
       AlertEventEntity alertEventEntity= mapper.toEntity(alertEvent, userId);
+      alertEventEntity.setCreatedAt(alertEvent.getCreatedAt());
       AlertEventEntity event=alertRepository.save(alertEventEntity);
       return event.getId();
   }

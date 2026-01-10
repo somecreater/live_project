@@ -79,17 +79,10 @@ public class AlertService implements AlertServiceInterface {
 
   @Override
   public void sendAlert(AlertEvent alertEvent) {
-    SimpMessageHeaderAccessor headerAccessor = SimpMessageHeaderAccessor.create();
-    headerAccessor.setContentType(MimeTypeUtils.APPLICATION_JSON);
-    headerAccessor.setNativeHeader("sender", alertEvent.getPublisher());
-    headerAccessor.setNativeHeader("eventType",alertEvent.getType().getType());
-    headerAccessor.setNativeHeader("eventSubType", alertEvent.getType().getSubtype());
-    headerAccessor.setNativeHeader("priority", alertEvent.getType().getPriority());
-    headerAccessor.setLeaveMutable(true);
-    MessageHeaders headers = headerAccessor.getMessageHeaders();
 
     List<String> targetList= searchSendAlert(alertEvent.getType().getType(),alertEvent.getPublisher());
     for(String target: targetList){
+      Long id=alertCustomService.save(target, alertEvent);
       if (isOnline(target)) {
         log.info("WebSocket Alert Send [Online] - target: {}, type: {},  subType: {}, publisher: {}, content: {}",
                 target,
@@ -99,9 +92,16 @@ public class AlertService implements AlertServiceInterface {
                 alertEvent.getContent());
         log.info("[SEND] URL: /user/{}/queue/alerts", target );
 
-        Long id=alertCustomService.save(target, alertEvent);
-        headerAccessor.setHeader("alertId", String.valueOf(id));
 
+        SimpMessageHeaderAccessor headerAccessor = SimpMessageHeaderAccessor.create();
+        headerAccessor.setContentType(MimeTypeUtils.APPLICATION_JSON);
+        headerAccessor.setNativeHeader("sender", alertEvent.getPublisher());
+        headerAccessor.setNativeHeader("eventType",alertEvent.getType().getType());
+        headerAccessor.setNativeHeader("eventSubType", alertEvent.getType().getSubtype());
+        headerAccessor.setNativeHeader("priority", alertEvent.getType().getPriority());
+        headerAccessor.setHeader("alertTime", alertEvent.getCreatedAt());
+        headerAccessor.setHeader("alertId", id);
+        MessageHeaders headers = headerAccessor.getMessageHeaders();
         messagingTemplate.convertAndSendToUser(
                 target,
                 "/queue/alerts",
@@ -114,7 +114,6 @@ public class AlertService implements AlertServiceInterface {
                 alertEvent.getType().getSubtype(),
                 alertEvent.getPublisher(),
                 alertEvent.getContent());
-        alertCustomService.save(target, alertEvent);
       }
     }
   }

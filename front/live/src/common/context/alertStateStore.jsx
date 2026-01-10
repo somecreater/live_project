@@ -74,7 +74,12 @@ export const alertStateStore = create((set, get) => ({
                 let finalId;
                 if (rawId) {
                     const parsed = parseInt(rawId, 10);
-                    finalId = !isNaN(parsed) && String(parsed) === String(rawId) ? parsed : rawId;
+                    // 유효한 숫자이고, 문자열과 일치할 경우에만 숫자로 사용
+                    if (!isNaN(parsed) && String(parsed) === String(rawId)) {
+                        finalId = parsed;
+                    } else {
+                        finalId = rawId;
+                    }
                 } else {
                     finalId = Date.now() + Math.random();
                 }
@@ -85,7 +90,7 @@ export const alertStateStore = create((set, get) => ({
                     publisher: alert.publisher || alert.sender || 'System',
                     content: alert.content || alert.message || '알림 내용 없음',
                     read: alert.read !== undefined ? alert.read : (alert.isRead || false),
-                    timestamp: alert.timestamp || alert.createdDate || alert.createdAt || new Date().toISOString()
+                    timestamp: alert.alertTime || alert.timestamp || alert.createdDate || alert.createdAt || new Date().toISOString()
                 };
             });
 
@@ -101,7 +106,6 @@ export const alertStateStore = create((set, get) => ({
         }
     },
 
-    // 특정 알림 읽음 처리
     markNotificationAsRead: async (id) => {
         try {
             await ApiService.alert.get_read(id);
@@ -238,7 +242,9 @@ export const alertStateStore = create((set, get) => ({
                                 parsedData = { content: message.body };
                             }
 
+                            // 헤더에서 alertId 및 alertTime 추출
                             const alertIdHeader = message.headers['alertId'];
+                            const alertTimeHeader = message.headers['alertTime'];
 
                             let notificationId;
                             if (alertIdHeader) {
@@ -258,7 +264,7 @@ export const alertStateStore = create((set, get) => ({
                                 publisher: parsedData.publisher || 'System',
                                 content: parsedData.content || message.body,
                                 read: parsedData.read || false,
-                                timestamp: new Date().toISOString()
+                                timestamp: alertTimeHeader || parsedData.timestamp || new Date().toISOString()
                             };
 
                             console.log(`📬 신규 알림 [ID: ${notification.id}][${notification.type}]:`, notification.content);

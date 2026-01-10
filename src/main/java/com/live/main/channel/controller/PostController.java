@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -121,7 +122,8 @@ public class PostController {
         null,
         "POST_UPLOAD", channelDto.getName(),
         channelDto.getName()+" 채널이 새 게시글을 업로드 했습니다. \n제목: '" + newPost.getTitle()+"'",
-        false));
+        false,
+        LocalDateTime.now()));
     }else{
       result.put("result", false);
     }
@@ -148,7 +150,8 @@ public class PostController {
         null,
         "POST_UPDATE", channelDto.getName(),
         channelDto.getName()+" 채널이 게시물을 수정 했습니다. \n제목: '" + updateDto.getTitle()+"'",
-        false));
+        false,
+        LocalDateTime.now()));
     }else{
       result.put("result", false);
     }
@@ -175,7 +178,8 @@ public class PostController {
           null,
           "POST_DELETE", channelDto.getName(),
           channelDto.getName()+" 채널이 게시물을 삭제 했습니다.",
-          false));
+          false,
+          LocalDateTime.now()));
       }else{
         result.put("result",false);
       }

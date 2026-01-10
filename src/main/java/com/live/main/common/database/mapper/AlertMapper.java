@@ -26,7 +26,8 @@ public class AlertMapper {
               alert.getAlertType(),
               alert.getPublisher(),
               alert.getContent(),
-              alert.isRead()
+              alert.isRead(),
+              alert.getCreatedAt()
       );
     }
 }

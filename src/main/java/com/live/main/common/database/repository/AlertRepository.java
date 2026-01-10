@@ -12,6 +12,9 @@ public interface AlertRepository extends JpaRepository<AlertEventEntity,Long> {
 
     List<AlertEventEntity> findByTargetUser(String targetUser);
 
+    @Transactional
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from AlertEventEntity a where a.targetUser = :targetUser")
     void deleteByTargetUser(String targetUser);
 
     @Transactional
