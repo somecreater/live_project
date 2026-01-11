@@ -54,7 +54,7 @@ public class RedisConfig {
             .build();
 
         /*
-        SON 처리를 위한 Jackson ObjectMapper 생성 및 설정
+        JSON 처리를 위한 Jackson ObjectMapper 생성 및 설정
         */
         ObjectMapper objectMapper = new ObjectMapper()
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)

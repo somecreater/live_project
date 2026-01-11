@@ -1,33 +1,29 @@
 package com.live.main.common.database.repository;
 
-import com.live.main.common.database.dto.AlertEvent;
-import com.live.main.common.service.RedisService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
+import com.live.main.common.database.entity.AlertEventEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-@RequiredArgsConstructor
-@Repository
-public class AlertRepository {
+public interface AlertRepository extends JpaRepository<AlertEventEntity,Long> {
 
-  private final RedisService redisService;
-  private final String PREFIX="ALERT:";
+    List<AlertEventEntity> findByTargetUser(String targetUser);
 
-  public void save(String userId, AlertEvent alertEvent){
-      redisService.rPush(PREFIX+userId, alertEvent);
-  }
+    @Transactional
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from AlertEventEntity a where a.targetUser = :targetUser")
+    void deleteByTargetUser(String targetUser);
 
-  public List<AlertEvent> get(String userId){
-    List<Object> alertEvents= redisService.lGet(PREFIX+userId);
-    if(alertEvents == null){
-      return null;
-    }else{
-      return alertEvents.stream().map(o -> (AlertEvent) o).toList();
-    }
-  }
+    @Transactional
+    @Modifying
+    @Query("update AlertEventEntity a set a.read = ?1 where a.id = ?2")
+    int updateReadById(boolean read, Long id);
 
-  public void delete(String userId){
-    redisService.delete(PREFIX+userId);
-  }
+    @Transactional
+    @Modifying
+    @Query("update AlertEventEntity a set a.read = ?1 where a.targetUser = ?2")
+    int updateReadByTargetUser(boolean read, String targetUser);
 }

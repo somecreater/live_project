@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -107,7 +108,12 @@ public class ChannelController {
     result.put("result",true);
     result.put("update_channel",updateChannel);
     publisher.publishEvent(new AlertEvent(
-            "CHANNEL_UPDATE", channelDto.getName(), channelDto.getName()+" 채널이 업데이트 되었습니다."));
+      null,
+      "CHANNEL_UPDATE",
+      channelDto.getName(),
+      channelDto.getName()+" 채널이 업데이트 되었습니다.",
+      false,
+      LocalDateTime.now()));
     return ResponseEntity.ok(result);
   }
 
