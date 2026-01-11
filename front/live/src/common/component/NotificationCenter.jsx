@@ -11,18 +11,17 @@ const NotificationCenter = () => {
     const clearNotifications = alertStateStore((state) => state.clearNotifications);
     const markNotificationsAsRead = alertStateStore((state) => state.markNotificationsAsRead);
 
-    const loadNotifications = alertStateStore((state) => state.loadNotifications);
-    const hasLoaded = alertStateStore((state) => state.hasLoaded);
+    const fetchNotifications = alertStateStore((state) => state.fetchNotifications);
 
     // 로그인 상태 확인
     const isAuthenticated = userStateStore((state) => state.isAuthenticated);
 
     useEffect(() => {
-        // 로그인 상태일 때만 알림 로드
-        if (!hasLoaded && isAuthenticated) {
-            loadNotifications();
+        // 로그인 시 바로 알림 정보를 가져오도록 수정
+        if (isAuthenticated) {
+            fetchNotifications(true);
         }
-    }, [hasLoaded, loadNotifications, isAuthenticated]);
+    }, [isAuthenticated, fetchNotifications]);
 
     const displayNotifications = isAuthenticated ? notifications : [];
     const sortedNotifications = [...displayNotifications].reverse();
