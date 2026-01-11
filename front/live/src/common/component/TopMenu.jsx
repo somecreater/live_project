@@ -16,13 +16,14 @@ const TopItem = [
 function TopMenu({ props }) {
   const logoUrl = "/public/image/Logo.png";
   const { user, getUserProfile, getUserProfileCache, profileImageUrl } = userStateStore();
+
   useEffect(() => {
     if (user?.loginId) {
       getUserProfile(user?.loginId);
     } else {
       getUserProfileCache();
     }
-  }, [profileImageUrl, user?.loginId]);
+  }, [user?.loginId]);
   return (
     <Navbar bg="danger" variant="dark" fixed="top">
       <Container fluid>
