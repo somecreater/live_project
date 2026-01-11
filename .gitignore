@@ -1,5 +1,6 @@
 HELP.md
 .gradle
+front/live/.env.frontend
 build/
 .env
 src/.env_aws.backend

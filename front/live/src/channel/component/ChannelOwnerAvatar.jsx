@@ -1,27 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { Image } from 'react-bootstrap';
-import ApiService from '../../common/api/ApiService';
+import { imageCacheStore } from '../../common/context/imageCacheStore';
 import PropTypes from 'prop-types';
 import { FaUserCircle } from 'react-icons/fa';
 
 const ChannelOwnerAvatar = ({ userId, size = 30 }) => {
     const [imageUrl, setImageUrl] = useState(null);
+    const getImageUrl = imageCacheStore(state => state.getImageUrl);
 
     useEffect(() => {
         let isMounted = true;
+
         if (userId) {
-            ApiService.profile_image.read_image(userId)
-                .then(response => {
-                    if (isMounted && response.data && response.data.image_url) {
-                        setImageUrl(response.data.image_url);
-                    }
-                })
-                .catch(() => {
-                    // Keep fallback
-                });
+            getImageUrl(userId).then(url => {
+                if (isMounted && url) {
+                    setImageUrl(url);
+                }
+            });
         }
+
         return () => { isMounted = false; };
-    }, [userId]);
+    }, [userId, getImageUrl]);
 
     if (imageUrl) {
         return (

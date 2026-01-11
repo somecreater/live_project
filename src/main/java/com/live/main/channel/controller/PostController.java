@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -118,8 +119,11 @@ public class PostController {
       result.put("result", true);
       result.put("new_post", newPost);
       publisher.publishEvent(new AlertEvent(
+        null,
         "POST_UPLOAD", channelDto.getName(),
-        channelDto.getName()+" 채널이 새 게시글을 업로드 했습니다. \n제목: '" + newPost.getTitle()+"'"));
+        channelDto.getName()+" 채널이 새 게시글을 업로드 했습니다. \n제목: '" + newPost.getTitle()+"'",
+        false,
+        LocalDateTime.now()));
     }else{
       result.put("result", false);
     }
@@ -143,8 +147,11 @@ public class PostController {
       result.put("result", true);
       result.put("update_post", updateDto);
       publisher.publishEvent(new AlertEvent(
+        null,
         "POST_UPDATE", channelDto.getName(),
-        channelDto.getName()+" 채널이 게시물을 수정 했습니다. \n제목: '" + updateDto.getTitle()+"'"));
+        channelDto.getName()+" 채널이 게시물을 수정 했습니다. \n제목: '" + updateDto.getTitle()+"'",
+        false,
+        LocalDateTime.now()));
     }else{
       result.put("result", false);
     }
@@ -168,8 +175,11 @@ public class PostController {
       if(delete){
         result.put("result", true);
         publisher.publishEvent(new AlertEvent(
+          null,
           "POST_DELETE", channelDto.getName(),
-          channelDto.getName()+" 채널이 게시물을 삭제 했습니다."));
+          channelDto.getName()+" 채널이 게시물을 삭제 했습니다.",
+          false,
+          LocalDateTime.now()));
       }else{
         result.put("result",false);
       }

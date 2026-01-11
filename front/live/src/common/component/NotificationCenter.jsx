@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Dropdown, Badge, Button } from 'react-bootstrap';
-import { FaBell, FaTrash, FaCheckDouble, FaVideo, FaBroadcastTower, FaEdit, FaTrashAlt, FaComment, FaUser, FaCheckCircle, FaExclamationCircle, FaInfoCircle } from 'react-icons/fa';
+import { FaBell, FaTrash, FaCheckDouble, FaVideo, FaBroadcastTower, FaEdit, FaTrashAlt, FaComment, FaUser, FaCheckCircle } from 'react-icons/fa';
 import { alertStateStore } from '../context/alertStateStore';
+import { userStateStore } from '../context/userStateStore';
 import './NotificationCenter.css';
 
 const NotificationCenter = () => {
@@ -10,21 +11,25 @@ const NotificationCenter = () => {
     const clearNotifications = alertStateStore((state) => state.clearNotifications);
     const markNotificationsAsRead = alertStateStore((state) => state.markNotificationsAsRead);
 
-    const loadNotifications = alertStateStore((state) => state.loadNotifications);
-    const hasLoaded = alertStateStore((state) => state.hasLoaded);
+    const fetchNotifications = alertStateStore((state) => state.fetchNotifications);
+
+    // 로그인 상태 확인
+    const isAuthenticated = userStateStore((state) => state.isAuthenticated);
 
     useEffect(() => {
-        if (!hasLoaded) {
-            loadNotifications();
+        // 로그인 시 바로 알림 정보를 가져오도록 수정
+        if (isAuthenticated) {
+            fetchNotifications(true);
         }
-    }, [hasLoaded, loadNotifications]);
+    }, [isAuthenticated, fetchNotifications]);
 
-    // 알림 리스트는 최신순으로 정렬
-    const sortedNotifications = [...notifications].reverse();
-    const unreadCount = notifications.filter(n => !n.read).length;
+    const displayNotifications = isAuthenticated ? notifications : [];
+    const sortedNotifications = [...displayNotifications].reverse();
+    const unreadCount = isAuthenticated ? displayNotifications.filter(n => !n.read).length : 0;
 
-    const getIcon = (subType, priority) => {
-        switch (subType) {
+    // AlertType에 따른 아이콘 결정
+    const getIcon = (type) => {
+        switch (type) {
             case 'VIDEO_UPLOAD': return <FaVideo className="icon-video" />;
             case 'STREAMING_START':
             case 'STREAMING_STOP': return <FaBroadcastTower className="icon-stream" />;
@@ -35,13 +40,7 @@ const NotificationCenter = () => {
             case 'REPLY_UPLOAD': return <FaComment className="icon-comment" />;
             case 'USER_UPDATE': return <FaUser className="icon-user" />;
             case 'CHANNEL_UPDATE': return <FaCheckCircle className="icon-channel" />;
-            default: break;
-        }
-
-        switch (priority) {
-            case 'HIGH': return <FaExclamationCircle className="icon-high" />;
-            case 'NORMAL': return <FaInfoCircle className="icon-normal" />;
-            default: return <FaBell className="icon-low" />;
+            default: return <FaBell className="icon-default" />;
         }
     };
 
@@ -52,6 +51,10 @@ const NotificationCenter = () => {
         }
         return '새로운 알림이 있습니다.';
     };
+
+    if (!isAuthenticated) {
+        return null;
+    }
 
     return (
         <Dropdown
@@ -94,7 +97,7 @@ const NotificationCenter = () => {
                         sortedNotifications.map((notification) => (
                             <div key={notification.id} className={`notification-item ${notification.read ? 'read' : 'unread'}`}>
                                 <div className="notification-icon-wrapper">
-                                    {getIcon(notification.type, notification.priority)}
+                                    {getIcon(notification.type)}
                                 </div>
                                 <div className="notification-content-wrapper">
                                     <div className="notification-sender">{notification.publisher || '시스템'}</div>

@@ -17,12 +17,18 @@ public class KafkaTopicConfig {
     private Integer NOTIFICATIOPN_PARTITIONS;
     @Value("${app.kafka.topic.notification.replicas}")
     private Integer NOTIFICATION_REPLICAS;
+    @Value("${app.kafka.topic.notification.retention-ms}")
+    private String RETENTION_MS;
+    @Value("${app.kafka.topic.notification.cleanup-policy}")
+    private String CLEANUP_POLICY;
 
     @Bean
     public NewTopic notificationTopic(){
       return TopicBuilder.name(NOTIFICATION_TOPIC_NAME)
               .partitions(NOTIFICATIOPN_PARTITIONS)
               .replicas(NOTIFICATION_REPLICAS)
+              .config("retention.ms", RETENTION_MS)
+              .config("cleanup.policy", CLEANUP_POLICY)
               .build();
     }
 }
