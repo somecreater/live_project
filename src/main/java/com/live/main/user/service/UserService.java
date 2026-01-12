@@ -219,6 +219,12 @@ public class UserService implements UserServiceInterface, UserDetailsService {
   @Transactional
   @Override
   public boolean DeleteUser(UserDto userDto) {
-      return userRepository.deleteByLoginId(userDto.getLoginId()) > 0;
+    try {
+      userRepository.deleteByLoginId(userDto.getLoginId());
+      return true;
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new CustomException(ErrorCode.USER_BAD_REQUEST);
+    }
   }
 }

@@ -24,8 +24,9 @@ public enum ErrorCode {
   NO_LOGIN(HttpStatus.UNAUTHORIZED, "로그인 상태가 아닙니다."),
 
   ACCESS_DENIED(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
-  ACCESS_LIMIT(HttpStatus.BAD_REQUEST,"요청 횟수가 너무 많습니다.");
+  ACCESS_LIMIT(HttpStatus.BAD_REQUEST,"요청 횟수가 너무 많습니다."),
 
+  SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부에서 오류 발생.");
   private final HttpStatus status;
   private final String message;
 }

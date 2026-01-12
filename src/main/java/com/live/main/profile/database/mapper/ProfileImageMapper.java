@@ -20,6 +20,8 @@ public class ProfileImageMapper {
     entity.setFileType(profileImageDto.getFileType());
     entity.setUser(profileImageDto.isUser());
     entity.setUsers(userRepository.findById(profileImageDto.getUserId()).orElse(null));
+    entity.setCreatedAt(profileImageDto.getCreatedAt());
+    entity.setUpdatedAt(profileImageDto.getUpdatedAt());
     return entity;
   }
 
@@ -32,6 +34,8 @@ public class ProfileImageMapper {
     dto.setFileType(profileImageEntity.getFileType());
     dto.setUser(profileImageEntity.isUser());
     dto.setUserId(profileImageEntity.getUsers().getId());
+    dto.setCreatedAt(profileImageEntity.getCreatedAt());
+    dto.setUpdatedAt(profileImageEntity.getUpdatedAt());
     return dto;
   }
 

@@ -1,51 +1,50 @@
 import { useState } from "react";
 import { Form, Button } from "react-bootstrap";
 import { userStateStore } from "../../common/context/userStateStore";
+import { alertStateStore } from "../../common/context/alertStateStore";
 import ApiService from "../../common/api/ApiService";
 import { useNavigate } from "react-router-dom";
 import { API_END_POINT } from "../../common/api/Api";
 import CustomModal from "../../common/component/CustomModal";
 import SearchForm from "./SearchForm";
 
-function LoginForm(){
-  const [loginId,setLoginId] = useState("");
-  const [pass,setPass] = useState("");
-  const [searchModal,setSearchModal] = useState(false);
-  const {getUserInfo} = userStateStore();
-  const navigate=useNavigate();
+function LoginForm() {
+  const [loginId, setLoginId] = useState("");
+  const [pass, setPass] = useState("");
+  const [searchModal, setSearchModal] = useState(false);
+  const { getUserInfo, getUserChannel } = userStateStore();
+  const navigate = useNavigate();
 
-  const openSearchModal= ()=>setSearchModal(true);
-  const closeSearchModal= ()=>setSearchModal(false);
-  const searchModalFooter=
-  <Button 
-    className='btn_close'
-    variant='secondary'
-    onClick={closeSearchModal}
-  >
-    닫기
-  </Button>;
+  const openSearchModal = () => setSearchModal(true);
+  const closeSearchModal = () => setSearchModal(false);
 
-  const handleSign = ()=>{
+  const handleSign = () => {
     navigate("/user/sign");
   };
-  const handleGoogleLogin = ()=>{
-    window.location.href= API_END_POINT.user.googleLogin;
+  const handleGoogleLogin = () => {
+    window.location.href = API_END_POINT.user.googleLogin;
   };
-  const handleKakaoLogin = ()=>{
-    window.location.href= API_END_POINT.user.kakaoLogin;
+  const handleKakaoLogin = () => {
+    window.location.href = API_END_POINT.user.kakaoLogin;
   };
-  const handleLogin = async (e)=>{
+  const handleLogin = async (e) => {
     e.preventDefault();
-    try{
-      const response= await ApiService.user.login({loginId,pass});
-      const data=response.data;
+    try {
+      const response = await ApiService.user.login({ loginId, pass });
+      const data = response.data;
 
-      if(data.result){
-        getUserInfo();
+      if (data.result) {
+        await getUserInfo();
+        await getUserChannel();
+        // 로그인 성공 즉시 서버에서 알림 가져오기 및 연결 시작
+        const alertStore = alertStateStore.getState();
+        await alertStore.fetchNotifications();
+        alertStore.connect();
+
         navigate("/user/mypage");
       }
 
-    }catch(error){
+    } catch (error) {
       alert(error);
     }
   };
@@ -53,11 +52,11 @@ function LoginForm(){
   return (
     <Form className="p-4 border rounded shadow-sm" style={{ maxWidth: "400px", margin: "0 auto" }} onSubmit={handleLogin}>
       <Form.Group className="mb-3">
-        <Form.Control type="text" placeholder="ID" value={loginId} onChange={(e) => setLoginId(e.target.value)}/>
+        <Form.Control type="text" placeholder="ID" value={loginId} onChange={(e) => setLoginId(e.target.value)} />
       </Form.Group>
 
       <Form.Group className="mb-3">
-        <Form.Control type="password" placeholder="password" value={pass} onChange={(e) => setPass(e.target.value)}/>
+        <Form.Control type="password" placeholder="password" value={pass} onChange={(e) => setPass(e.target.value)} />
       </Form.Group>
 
       <Button variant="info" onClick={handleSign}>Sign</Button>
@@ -67,12 +66,12 @@ function LoginForm(){
       <Button type="button" variant="danger" onClick={openSearchModal}>아이디/비밀번호 찾기</Button>
 
       <CustomModal
-        title={'아이디/비밀번호 찾기'} 
-        modalState={searchModal}
-        close={closeSearchModal}
-        component={<SearchForm/>}
-        footer={searchModalFooter}
-      />
+        title={'아이디/비밀번호 찾기'}
+        show={searchModal}
+        onHide={closeSearchModal}
+      >
+        <SearchForm />
+      </CustomModal>
     </Form>
   );
 }

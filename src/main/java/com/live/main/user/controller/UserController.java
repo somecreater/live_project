@@ -1,13 +1,20 @@
 package com.live.main.user.controller;
 
+import com.live.main.channel.database.dto.ChannelDto;
+import com.live.main.channel.service.Interface.ChannelServiceInterface;
+import com.live.main.channel.service.Interface.CoverServiceInterface;
+import com.live.main.channel.service.Interface.PostServiceInterface;
 import com.live.main.common.database.dto.ErrorCode;
+import com.live.main.common.database.repository.OnlineRepository;
 import com.live.main.common.exception.CustomException;
+import com.live.main.profile.service.Interface.ProfileServiceInterface;
 import com.live.main.user.database.dto.CustomUserDetails;
 import com.live.main.user.database.dto.LoginRequest;
 import com.live.main.user.database.dto.ResetPasswordRequest;
 import com.live.main.user.database.dto.UserDto;
 import com.live.main.user.jwt.JwtService;
 import com.live.main.user.service.Interface.UserServiceInterface;
+import com.live.main.video.service.Interface.VideoServiceInterface;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +41,14 @@ public class UserController {
   private Long refreshTokenExpiration;
 
   private final UserServiceInterface userService;
+  private final ChannelServiceInterface channelService;
+  private final VideoServiceInterface videoService;
+  private final ProfileServiceInterface profileService;
+  private final CoverServiceInterface coverService;
+  private final PostServiceInterface postService;
   private final JwtService jwtService;
+
+  private final OnlineRepository onlineRepository;
 
   @PostMapping("/register")
   public ResponseEntity<?> UserRegister(@RequestBody UserDto userDto){
@@ -80,6 +94,7 @@ public class UserController {
 
     response.addHeader(HttpHeaders.SET_COOKIE,newAccessCookie.toString());
     response.addHeader(HttpHeaders.SET_COOKIE, newRefreshCookie.toString());
+
     result.put("result", true);
 
     return ResponseEntity.ok(result);
@@ -102,7 +117,7 @@ public class UserController {
 
     response.addHeader(HttpHeaders.SET_COOKIE,clearAccessCookie.toString());
     response.addHeader(HttpHeaders.SET_COOKIE, clearRefreshCookie.toString());
-
+    onlineRepository.delete(principal.getUserid());
     return ResponseEntity.ok().build();
   }
 
@@ -176,8 +191,19 @@ public class UserController {
       throw new CustomException(ErrorCode.USER_BAD_REQUEST);
     }
     UserDto user=userService.LoginUser(loginRequest.getLoginId(), loginRequest.getPass());
+    ChannelDto channelDto=channelService.getChannelInfoUser(user.getLoginId());
+    boolean video_delete = videoService.VideoDeleteOnChannel(channelDto.getName());
+    boolean cover_delete= coverService.cover_delete_on_channel(channelDto.getName());
+    boolean channel_delete = channelService.deleteChannelOnUser(user.getLoginId());
+    boolean profile_delete= profileService.profile_delete_onUser(user.getLoginId());
+    boolean post_delete= postService.deletePostOnChannel(channelDto.getName());
+    boolean subscription_delete_1= channelService.deleteSubscriptionOnChannel(channelDto.getName());
+    boolean subscription_delete_2= channelService.deleteSubscriptionOnUser(user.getLoginId());
     boolean delete=userService.DeleteUser(user);
-    if(delete){
+
+    if(video_delete && cover_delete && channel_delete
+       && profile_delete && post_delete &&subscription_delete_1
+       && subscription_delete_2 && delete){
       jwtService.deleteRefreshToken(user.getLoginId());
       ResponseCookie clearAccessCookie=ResponseCookie.from("accessToken","")
           .httpOnly(true).secure(true).sameSite("None").path("/").maxAge(0)
