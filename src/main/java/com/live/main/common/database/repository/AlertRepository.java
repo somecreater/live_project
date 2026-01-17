@@ -19,11 +19,11 @@ public interface AlertRepository extends JpaRepository<AlertEventEntity,Long> {
 
     @Transactional
     @Modifying
-    @Query("update AlertEventEntity a set a.read = ?1 where a.id = ?2")
-    int updateReadById(boolean read, Long id);
+    @Query("update AlertEventEntity a set a.read = true where a.id = ?1")
+    int updateReadById(Long id);
 
     @Transactional
     @Modifying
-    @Query("update AlertEventEntity a set a.read = ?1 where a.targetUser = ?2")
-    int updateReadByTargetUser(boolean read, String targetUser);
+    @Query("update AlertEventEntity a set a.read = true where a.targetUser = ?1")
+    int updateReadByTargetUser(String targetUser);
 }

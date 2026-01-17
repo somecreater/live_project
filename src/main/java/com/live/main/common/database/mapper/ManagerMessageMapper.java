@@ -12,7 +12,7 @@ public class ManagerMessageMapper {
 
   public ManagerMessageEntity toEntity(ManagerMessageEvent managerMessageEvent) {
     ManagerMessageEntity entity = new ManagerMessageEntity();
-    entity.setId(managerMessageEvent.getId());
+    entity.setId(null);
     entity.setTitle(managerMessageEvent.getTitle());
     entity.setContent(managerMessageEvent.getContent());
     entity.setPublisher(managerMessageEvent.getPublisher());
