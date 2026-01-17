@@ -14,19 +14,19 @@ public class ManagerMessageEntity extends timeEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column
+  @Column(nullable = false, length = 100)
   private String title;
 
-  @Column
+  @Column(nullable = false, length = 500)
   private String content;
 
-  @Column
+  @Column(nullable = false, length = 100)
   private String publisher;
 
-  @Column
+  @Column(nullable = false, length = 100)
   private String targetId;
 
-  @Column
+  @Column(name = "isRead")
   private boolean read;
 
 }
