@@ -6,10 +6,7 @@ import com.live.main.common.service.Interface.AlertServiceInterface;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.HashMap;
@@ -67,7 +64,7 @@ public class AlertController {
 
   @PostMapping("/deleteByUser")
   public ResponseEntity<?> deleteByUser(Principal principal) {
-    log.info("[POST] /api/deleteByUser - {}", principal.getName());
+    log.info("[POST] /api/alert/deleteByUser - {}", principal.getName());
     Map<String, Object> result = new HashMap<>();
     alertCustomService.delete(principal.getName());
     result.put("result", true);
