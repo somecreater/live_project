@@ -50,7 +50,7 @@ public class ManagerController {
     log.info("[POST] /api/manager/send_message - {}", principal.getUsername());
     Map<String,Object> result=new HashMap<>();
     managerService.SendManagerMessage(
-      messageEvent.getTitle(), messageEvent.getContent(), messageEvent.getPublisher(), messageEvent.getTargetId());
+      messageEvent.getTitle(), messageEvent.getContent(), principal.getUsername(), messageEvent.getTargetId());
     result.put("result", true);
     return ResponseEntity.ok(result);
   }
