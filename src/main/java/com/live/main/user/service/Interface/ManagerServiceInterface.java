@@ -17,5 +17,5 @@ public interface ManagerServiceInterface {
   public boolean ReviewReportedContent(Long contentId, String contentType, String action);
 
   /**관리자 메시지 전송*/
-  public void SendManagerMessage(ManagerMessageEvent managerMessageEvent);
+  public void SendManagerMessage(String title, String content, String publisher, String targetId);
 }
