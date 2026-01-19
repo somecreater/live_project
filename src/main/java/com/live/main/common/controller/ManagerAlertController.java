@@ -37,7 +37,7 @@ public class ManagerAlertController {
 
     }
 
-    @PostMapping("/read_message/{id}")
+    @PostMapping("/read/{id}")
     public ResponseEntity<?> readAdminMessage(Principal principal, @PathVariable Long id){
         log.info("[POST] /api/manager_message/manager_message/{} - {}", id, principal.getName());
         Map<String, Object> result = new HashMap<>();
@@ -46,7 +46,7 @@ public class ManagerAlertController {
         return ResponseEntity.ok(result);
     }
 
-    @PostMapping("/readAll_message")
+    @PostMapping("/readAll")
     public ResponseEntity<?> readAllAdminMessage(Principal principal) {
         log.info("[POST] /api/manager_message/readAll_message - {}", principal.getName());
         Map<String, Object> result = new HashMap<>();

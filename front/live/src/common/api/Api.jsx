@@ -5,6 +5,13 @@ export const API_BASE_URL_3 = import.meta.env.VITE_API_BASE_URL_3 || 'http://loc
 export const ALERT_BASE_URL = import.meta.env.VITE_ALERT_BASE_URL || 'http://localhost:8083';
 
 export const API_END_POINT = {
+  manager_message: {
+    get_list: `${API_BASE_URL}/api/manager_message/get_message`,
+    read_message: `${API_BASE_URL}/api/manager_message/read`,
+    read_message_all: `${API_BASE_URL}/api/manager_message/readAll`,
+    delete_message: `${API_BASE_URL}/api/manager_message/delete`,
+    delete_message_all: `${API_BASE_URL}/api/manager_message/deleteByUser`
+  },
   alert: {
     alert_connect: `${API_BASE_URL}/notify`,
     alert_subscribe: `/user/queue/alerts`,

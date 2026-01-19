@@ -5,6 +5,13 @@ import { API_END_POINT } from "./Api";
  * API 호출 서비스.
  */
 const ApiService = {
+  manager_message: {
+    get_list: () => RefreshApi.post(API_END_POINT.manager_message.get_list),
+    read_message: (id) => RefreshApi.post(`${API_END_POINT.manager_message.read_message}/${id}`),
+    read_message_all: () => RefreshApi.post(API_END_POINT.manager_message.read_message_all),
+    delete_message: (id) => RefreshApi.post(`${API_END_POINT.manager_message.delete_message}/${id}`),
+    delete_message_all: () => RefreshApi.post(API_END_POINT.manager_message.delete_message_all)
+  },
   alert: {
     get_list: () => RefreshApi.post(API_END_POINT.alert.get_list),
     get_read: (id) => RefreshApi.post(`${API_END_POINT.alert.read_alert}/${id}`),
