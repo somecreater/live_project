@@ -101,8 +101,8 @@ public class AlertService implements AlertServiceInterface {
         headerAccessor.setNativeHeader("eventType",alertEvent.getType().getType());
         headerAccessor.setNativeHeader("eventSubType", alertEvent.getType().getSubtype());
         headerAccessor.setNativeHeader("priority", alertEvent.getType().getPriority());
-        headerAccessor.setHeader("alertTime", alertEvent.getCreatedAt());
-        headerAccessor.setHeader("alertId", id);
+        headerAccessor.setNativeHeader("alertTime", String.valueOf(alertEvent.getCreatedAt()));
+        headerAccessor.setNativeHeader("alertId", String.valueOf(id));
         MessageHeaders headers = headerAccessor.getMessageHeaders();
         messagingTemplate.convertAndSendToUser(
                 target,
