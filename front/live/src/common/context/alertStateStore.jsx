@@ -233,42 +233,45 @@ export const alertStateStore = create((set, get) => ({
                     // 알림 구독
                     stompClient.subscribe(subscriptionPath, (message) => {
                         try {
-                            let parsedData = null;
+                            console.log('📬 웹소켓 메시지 수신:', message);
 
-                            // JSON 파싱 시도
+                            let parsedBody = null;
+
                             try {
-                                parsedData = JSON.parse(message.body);
+                                parsedBody = JSON.parse(message.body);
                             } catch (e) {
-                                parsedData = { content: message.body };
+                                parsedBody = message.body;
                             }
 
-                            // 헤더에서 alertId 및 alertTime 추출
-                            const alertIdHeader = message.headers['alertId'];
-                            const alertTimeHeader = message.headers['alertTime'];
+                            const headers = message.headers || {};
 
-                            let notificationId;
-                            if (alertIdHeader) {
-                                const parsedId = Number(alertIdHeader);
-                                if (!isNaN(parsedId) && String(parsedId) === alertIdHeader) {
-                                    notificationId = parsedId;
-                                } else {
-                                    notificationId = alertIdHeader;
-                                }
+                            // 헤더에서 정보 추출 (우선순위: 헤더 > 바디)
+                            // eventSubType (예: POST_DELETE) -> UI에서 아이콘 결정에 사용
+                            const alertType = headers['eventSubType'] || headers['eventType'] || (parsedBody && parsedBody.type) || 'NORMAL';
+                            const sender = headers['sender'] || (parsedBody && (parsedBody.publisher || parsedBody.sender)) || 'System';
+                            const alertId = headers['alertId'] || headers['message-id'] || (parsedBody && parsedBody.id) || Date.now();
+                            const alertTime = headers['alertTime'] || (parsedBody && (parsedBody.timestamp || parsedBody.alertTime)) || new Date().toISOString();
+
+                            // 내용 추출
+                            let content = '';
+                            if (typeof parsedBody === 'string') {
+                                content = parsedBody;
+                            } else if (parsedBody && typeof parsedBody === 'object') {
+                                content = parsedBody.content || parsedBody.message || message.body;
                             } else {
-                                notificationId = parsedData.id || Date.now();
+                                content = message.body;
                             }
 
                             const notification = {
-                                id: notificationId,
-                                type: parsedData.type || 'NORMAL',
-                                publisher: parsedData.publisher || 'System',
-                                content: parsedData.content || message.body,
-                                read: parsedData.read || false,
-                                timestamp: alertTimeHeader || parsedData.timestamp || new Date().toISOString()
+                                id: Number(alertId),
+                                type: alertType,
+                                publisher: sender,
+                                content: content,
+                                read: (parsedBody && parsedBody.read) || false,
+                                timestamp: alertTime
                             };
 
-                            console.log(`📬 신규 알림 [ID: ${notification.id}][${notification.type}]:`, notification.content);
-
+                            console.log(`✨ 처리된 알림 [ID: ${notification.id}][${notification.type}]:`, notification.content);
                             get().addNotification(notification);
                         } catch (error) {
                             console.error('❌ Error processing notification:', error);
