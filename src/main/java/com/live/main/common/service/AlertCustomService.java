@@ -12,10 +12,10 @@ import com.live.main.common.service.Interface.AlertCustomServiceInterface;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -39,12 +39,13 @@ public class AlertCustomService implements AlertCustomServiceInterface {
 
   @Override
   @Transactional(readOnly = true)
-  public List<AlertEvent> get(String userId) {
-      List<AlertEventEntity> alertEventEntities = alertRepository.findByTargetUser(userId);
-      if (alertEventEntities.isEmpty()) {
+  public Page<AlertEvent> get(String userId, int page, int size) {
+      PageRequest pageRequest=PageRequest.of(page, size, Sort.by(Sort.Direction.DESC,"created_at"));
+      Page<AlertEventEntity> alertEventEntities = alertRepository.findByTargetUser(userId, pageRequest);
+      if (alertEventEntities.getTotalElements() == 0) {
           return null;
       } else {
-          return alertEventEntities.stream().map(mapper::toDto).toList();
+          return alertEventEntities.map(mapper::toDto);
       }
   }
 

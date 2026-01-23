@@ -194,15 +194,6 @@ public class AlertService implements AlertServiceInterface {
 
   }
 
-  @Override
-  public List<AlertEvent> sendAlertList(String target){
-    List<AlertEvent> alertEvents= alertCustomService.get(target);
-    if(alertEvents!=null){
-      return alertEvents;
-    }else{
-      return null;
-    }
-  }
 
   //나중에 API 호출로 전환
   @Override

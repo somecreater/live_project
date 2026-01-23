@@ -4,14 +4,13 @@ import com.live.main.common.database.dto.AlertEvent;
 import com.live.main.common.database.dto.ManagerMessageEvent;
 import org.springframework.data.domain.Page;
 
-import java.util.List;
 
 /**알림 가져오기 기능(2026-01-09)*/
 public interface AlertCustomServiceInterface {
   /**알림 저장 기능*/
   public Long save(String userId, AlertEvent alertEvent);
   /**알림 가져오기 기능*/
-  public List<AlertEvent> get(String userId);
+  public Page<AlertEvent> get(String userId, int page, int size);
   /**알림 삭제 기능*/
   public void delete(String userId);
   /**알림 개별 삭제 기능*/

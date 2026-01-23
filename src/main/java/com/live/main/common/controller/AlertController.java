@@ -1,16 +1,17 @@
 package com.live.main.common.controller;
 
 import com.live.main.common.database.dto.AlertEvent;
+import com.live.main.common.database.dto.AlertRequest;
 import com.live.main.common.service.Interface.AlertCustomServiceInterface;
 import com.live.main.common.service.Interface.AlertServiceInterface;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -23,11 +24,12 @@ public class AlertController {
   private final AlertCustomServiceInterface alertCustomService;
 
   @PostMapping("/get_alert")
-  public ResponseEntity<?> getAlertList(Principal principal) {
-    log.info("[POST] /api/alert/get_alert - {}", principal.getName());
+  public ResponseEntity<?> getAlertList(Principal principal, @RequestBody AlertRequest request) {
+    log.info("[POST] /api/alert/get_alert - {}, page: {}, size: {}",
+      principal.getName(), request.getPage(), request.getSize());
     Map<String, Object> result = new HashMap<>();
 
-    List<AlertEvent> alertEvents = alertService.sendAlertList(principal.getName());
+    Page<AlertEvent> alertEvents = alertCustomService.get(principal.getName(), request.getPage(), request.getSize());
 
     result.put("result", alertEvents != null);
     result.put("alerts", alertEvents);

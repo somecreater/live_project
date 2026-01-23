@@ -20,8 +20,6 @@ public interface AlertServiceInterface {
   public void consumerKafka(AlertEvent alertEvent, Acknowledgment ack);
   /**알림 전송 기능*/
   public void sendAlert(AlertEvent alertEvent);
-  /**RDS 내 저장된 알림 전송 기능*/
-  public List<AlertEvent> sendAlertList(String target);
   /**알림 전송 대상 파악 기능*/
   public List<String> searchSendAlert(String type, String publisher);
   /**접속 여부 검증 기능*/
