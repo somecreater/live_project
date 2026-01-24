@@ -6,14 +6,14 @@ import { API_END_POINT } from "./Api";
  */
 const ApiService = {
   manager_message: {
-    get_list: () => RefreshApi.post(API_END_POINT.manager_message.get_list),
+    get_list: (dto) => RefreshApi.post(API_END_POINT.manager_message.get_list, dto),
     read_message: (id) => RefreshApi.post(`${API_END_POINT.manager_message.read_message}/${id}`),
     read_message_all: () => RefreshApi.post(API_END_POINT.manager_message.read_message_all),
     delete_message: (id) => RefreshApi.post(`${API_END_POINT.manager_message.delete_message}/${id}`),
     delete_message_all: () => RefreshApi.post(API_END_POINT.manager_message.delete_message_all)
   },
   alert: {
-    get_list: () => RefreshApi.post(API_END_POINT.alert.get_list),
+    get_list: (dto) => RefreshApi.post(API_END_POINT.alert.get_list, dto),
     get_read: (id) => RefreshApi.post(`${API_END_POINT.alert.read_alert}/${id}`),
     get_read_all: () => RefreshApi.post(API_END_POINT.alert.read_alert_all),
     get_delete: (id) => RefreshApi.post(`${API_END_POINT.alert.delete_alert}/${id}`),
