@@ -19,7 +19,7 @@ const NotificationCenter = () => {
     useEffect(() => {
         // 로그인 시 바로 알림 정보를 가져오도록 수정
         if (isAuthenticated) {
-            fetchNotifications(true);
+            fetchNotifications(0, 10, true);
         }
     }, [isAuthenticated, fetchNotifications]);
 

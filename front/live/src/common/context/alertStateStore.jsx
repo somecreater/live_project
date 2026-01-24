@@ -33,19 +33,22 @@ export const alertStateStore = create((set, get) => ({
         return get().fetchNotifications();
     },
 
-    fetchNotifications: async (force = false) => {
-        if (!force && get().hasLoaded) return;
+    fetchNotifications: async (pageArg = 0, sizeArg = 10, forceArg = false) => {
+        let page = typeof pageArg === 'number' ? pageArg : 0;
+        let size = typeof sizeArg === 'number' ? sizeArg : 10;
+        let force = forceArg;
+
+
+        if (!force && get().hasLoaded && page === 0) return;
 
         try {
-            const response = await ApiService.alert.get_list();
+            const response = await ApiService.alert.get_list({ page, size });
             const data = response.data;
 
             let serverAlerts = [];
-            if (Array.isArray(data)) serverAlerts = data;
-            else if (data && Array.isArray(data.data)) serverAlerts = data.data;
-            else if (data && Array.isArray(data.content)) serverAlerts = data.content;
-            else if (data && Array.isArray(data.alert_list)) serverAlerts = data.alert_list;
-            else if (data && data.result && Array.isArray(data.alerts)) serverAlerts = data.alerts;
+            if(data && data.result && data.alerts && Array.isArray(data.alerts.content)) {
+                serverAlerts = data.alerts.content;
+            }
 
             const mappedAlerts = serverAlerts.map(alert => {
                 const rawId = alert.alertId || alert.id;
@@ -67,11 +70,12 @@ export const alertStateStore = create((set, get) => ({
                 };
             });
 
-            set({
-                notifications: mappedAlerts,
+            set((state) => ({
+                notifications: page === 0 ? mappedAlerts : [...state.notifications, ...mappedAlerts],
                 hasLoaded: true
-            });
+            }));
         } catch (error) {
+            console.error("Failed to fetch notifications:", error);
             set({ hasLoaded: true });
         }
     },
