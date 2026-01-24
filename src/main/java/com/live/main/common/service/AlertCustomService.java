@@ -40,7 +40,7 @@ public class AlertCustomService implements AlertCustomServiceInterface {
   @Override
   @Transactional(readOnly = true)
   public Page<AlertEvent> get(String userId, int page, int size) {
-      PageRequest pageRequest=PageRequest.of(page, size, Sort.by(Sort.Direction.DESC,"created_at"));
+      PageRequest pageRequest=PageRequest.of(page, size, Sort.by(Sort.Direction.DESC,"createdAt"));
       Page<AlertEventEntity> alertEventEntities = alertRepository.findByTargetUser(userId, pageRequest);
       if (alertEventEntities.getTotalElements() == 0) {
           return null;
