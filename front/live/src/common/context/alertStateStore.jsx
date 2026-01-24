@@ -4,10 +4,15 @@ import { webSocketStateStore } from './webSocketStateStore';
 
 export const alertStateStore = create((set, get) => ({
     notifications: [],
+    currentPage: 0,
+    totalPages: 0,
+    totalElements: 0,
+    pageSize: 10,
     isConnected: false,
     isConnecting: false,
     connectionError: null,
     hasLoaded: false,
+    isLoadingMore: false,
 
     addNotification: (notification) => {
         const newNotification = {
@@ -20,17 +25,26 @@ export const alertStateStore = create((set, get) => ({
         };
 
         set((state) => ({
-            notifications: [...state.notifications, newNotification]
+            notifications: [newNotification, ...state.notifications],
+            totalElements: state.totalElements + 1
         }));
     },
 
     loadNotifications: async () => {
-        return get().fetchNotifications();
+        return get().fetchNotifications(0, get().pageSize, true);
     },
 
     refetchNotifications: async () => {
-        set({ hasLoaded: false });
-        return get().fetchNotifications();
+        return get().fetchNotifications(0, get().pageSize, true);
+    },
+
+    fetchMoreNotifications: async () => {
+        const { currentPage, totalPages, isLoadingMore } = get();
+        if (isLoadingMore || currentPage >= totalPages - 1) return;
+
+        set({ isLoadingMore: true });
+        await get().fetchNotifications(currentPage + 1, get().pageSize);
+        set({ isLoadingMore: false });
     },
 
     fetchNotifications: async (pageArg = 0, sizeArg = 10, forceArg = false) => {
@@ -46,8 +60,17 @@ export const alertStateStore = create((set, get) => ({
             const data = response.data;
 
             let serverAlerts = [];
-            if(data && data.result && data.alerts && Array.isArray(data.alerts.content)) {
-                serverAlerts = data.alerts.content;
+            let totalPages = 0;
+            let totalElements = 0;
+
+            if (data && data.result && data.alerts) {
+                if (Array.isArray(data.alerts.content)) {
+                    serverAlerts = data.alerts.content;
+                    totalPages = data.alerts.totalPages || 0;
+                    totalElements = data.alerts.totalElements || 0;
+                } else if (Array.isArray(data.alerts)) {
+                    serverAlerts = data.alerts;
+                }
             }
 
             const mappedAlerts = serverAlerts.map(alert => {
@@ -72,6 +95,9 @@ export const alertStateStore = create((set, get) => ({
 
             set((state) => ({
                 notifications: page === 0 ? mappedAlerts : [...state.notifications, ...mappedAlerts],
+                currentPage: page,
+                totalPages: totalPages || state.totalPages,
+                totalElements: totalElements || state.totalElements,
                 hasLoaded: true
             }));
         } catch (error) {

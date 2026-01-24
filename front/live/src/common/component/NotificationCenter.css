@@ -176,3 +176,27 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #ccc;
 }
+
+.load-more-container {
+    padding: 10px;
+    border-top: 1px solid rgba(0,0,0,0.05);
+}
+
+.load-more-btn {
+    text-decoration: none !important;
+    color: #ff4b2b !important;
+    font-size: 0.85rem !important;
+    font-weight: 500;
+    width: 100%;
+    transition: all 0.2s;
+}
+
+.load-more-btn:hover {
+    background: rgba(255, 75, 43, 0.05);
+    color: #ff416c !important;
+}
+
+.load-more-btn:disabled {
+    color: #ccc !important;
+    cursor: not-allowed;
+}
