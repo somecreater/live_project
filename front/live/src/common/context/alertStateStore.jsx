@@ -153,6 +153,10 @@ export const alertStateStore = create((set, get) => ({
                 }
 
                 const headers = message.headers || {};
+                if (headers['type'] != 'ALERT_EVENT') {
+                    return;
+                }
+
                 const alertType = headers['eventSubType'] || headers['eventType'] || (parsedBody && parsedBody.type) || 'NORMAL';
                 const sender = headers['sender'] || (parsedBody && (parsedBody.publisher || parsedBody.sender)) || 'System';
                 const alertId = headers['alertId'] || headers['message-id'] || (parsedBody && parsedBody.id) || Date.now();
@@ -183,7 +187,13 @@ export const alertStateStore = create((set, get) => ({
         webSocketStateStore.getState().disconnect();
         set({
             notifications: [],
-            hasLoaded: false
+            currentPage: 0,
+            totalPages: 0,
+            totalElements: 0,
+            hasLoaded: false,
+            isConnected: false,
+            isConnecting: false,
+            connectionError: null
         });
     }
 }));

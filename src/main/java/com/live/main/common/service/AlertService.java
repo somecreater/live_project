@@ -97,6 +97,7 @@ public class AlertService implements AlertServiceInterface {
 
         SimpMessageHeaderAccessor headerAccessor = SimpMessageHeaderAccessor.create();
         headerAccessor.setContentType(MimeTypeUtils.APPLICATION_JSON);
+        headerAccessor.setNativeHeader("type","ALERT_EVENT");
         headerAccessor.setNativeHeader("sender", alertEvent.getPublisher());
         headerAccessor.setNativeHeader("eventType",alertEvent.getType().getType());
         headerAccessor.setNativeHeader("eventSubType", alertEvent.getType().getSubtype());
@@ -171,7 +172,7 @@ public class AlertService implements AlertServiceInterface {
       log.info("[SEND] URL: /user/{}/queue/alerts", messageEvent.getTargetId() );
       SimpMessageHeaderAccessor headerAccessor = SimpMessageHeaderAccessor.create();
       headerAccessor.setContentType(MimeTypeUtils.APPLICATION_JSON);
-      headerAccessor.setNativeHeader("sender", messageEvent.getPublisher());
+      headerAccessor.setNativeHeader("publisher", messageEvent.getPublisher());
       headerAccessor.setNativeHeader("title",messageEvent.getTitle());
       headerAccessor.setNativeHeader("content", messageEvent.getContent());
       headerAccessor.setNativeHeader("eventType","MANAGER_MESSAGE");
