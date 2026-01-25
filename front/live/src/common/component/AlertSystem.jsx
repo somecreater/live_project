@@ -9,10 +9,6 @@ import {
 
 const AlertSystem = () => {
     const notifications = alertStateStore((state) => state.notifications);
-    const isConnected = alertStateStore((state) => state.isConnected);
-    const isConnecting = alertStateStore((state) => state.isConnecting);
-    const connectionError = alertStateStore((state) => state.connectionError);
-    const removeNotification = alertStateStore((state) => state.removeNotification);
     const connect = alertStateStore((state) => state.connect);
     const disconnect = alertStateStore((state) => state.disconnect);
     const refetchNotifications = alertStateStore((state) => state.refetchNotifications);
