@@ -5,6 +5,15 @@ export const API_BASE_URL_3 = import.meta.env.VITE_API_BASE_URL_3 || 'http://loc
 export const ALERT_BASE_URL = import.meta.env.VITE_ALERT_BASE_URL || 'http://localhost:8083';
 
 export const API_END_POINT = {
+  manager: {
+    send_manager_message: `${API_BASE_URL}/manager/send_message`,
+    get_user_list: `${API_BASE_URL}/manager/user_list`,
+    get_channel_list: `${API_BASE_URL}/manager/channel_list`,
+    get_message_list: `${API_BASE_URL}/manager/message_list`,
+    force_user_delete: `${API_BASE_URL}/manager/force_user_delete`,
+    force_channel_delete: `${API_BASE_URL}/manager/force_channel_delete`,
+    force_message_delete: `${API_BASE_URL}/manager/force_message_delete`,
+  },
   manager_message: {
     get_list: `${API_BASE_URL}/api/manager_message/get_message`,
     read_message: `${API_BASE_URL}/api/manager_message/read`,

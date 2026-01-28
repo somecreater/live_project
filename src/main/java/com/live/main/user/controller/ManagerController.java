@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/manager")
+@RequestMapping("/manager")
 @RequiredArgsConstructor
 @Slf4j
 public class ManagerController {
@@ -28,7 +28,14 @@ public class ManagerController {
           @AuthenticationPrincipal CustomUserDetails principal,
           @RequestBody UserSearchRequest request) {
     log.info("[GET] /api/manager/user_list - {}", principal.getUsername());
+    Map<String,Object> result=new HashMap<>();
     Page<UserDto> userList = managerService.GetUserList(request.getPage(), request.getSize(), request.getType(), request.getKeyword());
+    if(userList == null){
+      result.put("result", false);
+    }else{
+      result.put("result", true);
+      result.put("user_list", userList);
+    }
     return ResponseEntity.ok(userList);
   }
 
