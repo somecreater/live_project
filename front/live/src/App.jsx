@@ -34,6 +34,8 @@ function App() {
             <Route path="/channel" element={<ChannelPage />} />
             <Route path="/channel/:id" element={<ChannelDetailPage />} />
             <Route path="/channel/my_channel" element={<MyChannelPage />} />
+
+            <Route path="/manager" element={<ManagerPage />} />
           </Routes>
         </AppLayout>
       </BrowserRouter>
