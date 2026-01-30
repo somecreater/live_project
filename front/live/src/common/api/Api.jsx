@@ -10,9 +10,13 @@ export const API_END_POINT = {
     get_user_list: `${API_BASE_URL}/manager/user_list`,
     get_channel_list: `${API_BASE_URL}/manager/channel_list`,
     get_message_list: `${API_BASE_URL}/manager/message_list`,
+    get_video_list: `${API_BASE_URL}/manager/video_list`,
+    get_post_list: `${API_BASE_URL}/manager/post_list`,
     force_user_delete: `${API_BASE_URL}/manager/force_user_delete`,
     force_channel_delete: `${API_BASE_URL}/manager/force_channel_delete`,
     force_message_delete: `${API_BASE_URL}/manager/force_message_delete`,
+    force_video_delete: `${API_BASE_URL}/manager/force_video_delete`,
+    force_post_delete: `${API_BASE_URL}/manager/force_post_delete`,
   },
   manager_message: {
     get_list: `${API_BASE_URL}/api/manager_message/get_message`,
