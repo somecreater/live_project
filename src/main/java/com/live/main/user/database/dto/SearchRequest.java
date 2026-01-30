@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class UserSearchRequest {
+public class SearchRequest {
   private int page;
   private int size;
   private String type;

@@ -3,7 +3,7 @@ package com.live.main.user.controller;
 import com.live.main.common.database.dto.ManagerMessageEvent;
 import com.live.main.user.database.dto.CustomUserDetails;
 import com.live.main.user.database.dto.UserDto;
-import com.live.main.user.database.dto.UserSearchRequest;
+import com.live.main.user.database.dto.SearchRequest;
 import com.live.main.user.service.Interface.ManagerServiceInterface;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,10 +26,11 @@ public class ManagerController {
   @GetMapping("/user_list")
   public ResponseEntity<?> getUserList(
           @AuthenticationPrincipal CustomUserDetails principal,
-          @RequestBody UserSearchRequest request) {
+          @RequestBody SearchRequest request) {
     log.info("[GET] /api/manager/user_list - {}", principal.getUsername());
     Map<String,Object> result=new HashMap<>();
     Page<UserDto> userList = managerService.GetUserList(request.getPage(), request.getSize(), request.getType(), request.getKeyword());
+
     if(userList == null){
       result.put("result", false);
     }else{
