@@ -29,7 +29,7 @@ const API_CONFIG = {
         send: ApiService.manager.send_manager_message,
     }
 }
-function userManagerApi() {
+function useManagerApi() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -157,4 +157,4 @@ function userManagerApi() {
     };
 }
 
-export default userManagerApi;
+export default useManagerApi;
