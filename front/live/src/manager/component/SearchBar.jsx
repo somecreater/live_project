@@ -50,7 +50,7 @@ function SearchBar({
     debounceMs = 300
 }) {
 
-    const options = SEARCH_CONFIG[resourceType].searchType;
+    const options = SEARCH_CONFIG[resourceType]?.searchType || [];
 
     const handleSearchTypeChange = (e) => {
         handleSearchChange('searchType', e.target.value);

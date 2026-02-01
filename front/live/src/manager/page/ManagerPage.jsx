@@ -1,22 +1,23 @@
 import { useEffect, useState } from "react";
 import { userStateStore } from "../../common/context/userStateStore";
 import { useNavigate } from "react-router-dom";
-import ApiService from "../../common/api/ApiService";
 import useManagerApi from "../hooks/useManagerApi";
 import ManagerTab from "../component/ManagerTab";
 import SearchBar from "../component/SearchBar";
 import ResourceTable from "../component/ResourceTable";
+import ResourceTablePagenation from "../component/ResourceTablePagenation";
 
 /**
  * 관리자 페이지 컴포넌트(Tab으로 전환)
  * @param {Object} props - 컴포넌트 props
  */
 function ManagerPage({ props }) {
+  const navigate = useNavigate();
+
   const { user } = userStateStore();
-  const { getList, deleteResource, sendMessage, loading, error } = useManagerApi();
+  const { getList, deleteResource, loading, error } = useManagerApi();
   const [activeTab, setActiveTab] = useState("USER");
   const [resourceType, setResourceType] = useState("USER");
-  const [sendMessageModalOpen, setSendMessageModalOpen] = useState(false);
   const [resourcePage, setResourcePage] = useState({
     page: 1,
     size: 10,
@@ -27,7 +28,7 @@ function ManagerPage({ props }) {
   const [ListRequest, setListRequest] = useState({
     page: 1,
     size: 10,
-    type: "all",
+    searchType: "all",
     keyword: "",
   });
 
@@ -37,7 +38,6 @@ function ManagerPage({ props }) {
     }
   }, [user.userType]);
 
-  const navigate = useNavigate();
 
   const handleResourceTabChange = (tab) => {
     setActiveTab(tab);
@@ -46,7 +46,7 @@ function ManagerPage({ props }) {
     setListRequest({
       page: 1,
       size: 10,
-      type: "all",
+      searchType: "all",
       keyword: "",
     });
     handleSearchSubmit();
@@ -61,7 +61,7 @@ function ManagerPage({ props }) {
     setListRequest({
       page: 1,
       size: 10,
-      type: "all",
+      searchType: "all",
       keyword: "",
     });
     handleSearchSubmit();
@@ -89,16 +89,12 @@ function ManagerPage({ props }) {
     }
   };
   const handleDelete = async (id) => {
-    const deleteResult = deleteResource(resourceType, id);
+    const deleteResult = await deleteResource(resourceType, id);
     if (deleteResult) {
       handleSearchSubmit();
     }
   };
-  //api 호출이 아닌 메시지 전송 모달 호출
-  const handleSendMessage = async (loginId) => {
-    setSendMessageModalOpen(true);
 
-  };
 
   return (
     <div className="manager-page">
@@ -111,7 +107,7 @@ function ManagerPage({ props }) {
       <div>
         <SearchBar
           resourceType={resourceType}
-          searchType={ListRequest.type}
+          searchType={ListRequest.searchType}
           keyword={ListRequest.keyword}
           handleSearchChange={handleSearchChange}
           onSearch={handleSearchSubmit}
@@ -123,7 +119,6 @@ function ManagerPage({ props }) {
           resourceType={resourceType}
           data={resourcePage.content}
           onDelete={handleDelete}
-          onSendMessage={handleSendMessage}
           loading={loading}
           error={error} />
       </div>
@@ -136,6 +131,7 @@ function ManagerPage({ props }) {
           handlePageChange={handlePageChange}
         />
       </div>
+
     </div>
   );
 }

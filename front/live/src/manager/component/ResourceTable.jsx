@@ -1,4 +1,6 @@
-
+import { useState } from 'react';
+import { Modal } from 'react-bootstrap';
+import ManagerMessageForm from '../form/ManagerMessageForm';
 
 const TABLE_CONFIG = {
     USER: {
@@ -65,16 +67,25 @@ const TABLE_CONFIG = {
         ],
     }
 }
+
 /**
  * 관리자 테이블 컴포넌트
  * @param {string} resourceType - 리소스 타입 'USER' | 'CHANNEL' | 'VIDEO' | 'POST'
  * @param {Array} data - 테이블 데이터
  * @param {Function} onDelete - 삭제 함수
- * @param {Function} onSendMessage - 메시지 폼 호출 함수
  * @param {boolean} loading - 로딩 상태
  * @param {boolean} error - 에러 상태
  */
-function ResourceTable({ resourceType, data, onDelete, onSendMessage, loading, error }) {
+function ResourceTable({ resourceType, data, onDelete, loading, error }) {
+    // 메시지 모달 상태 관리
+    const [sendMessageModalOpen, setSendMessageModalOpen] = useState(false);
+    const [targetUserId, setTargetUserId] = useState(null);
+
+    // 메시지 전송 버튼 클릭 시 모달 열기
+    const handleSendMessage = (loginId) => {
+        setTargetUserId(loginId);
+        setSendMessageModalOpen(true);
+    };
 
     return (
         <div>
@@ -100,9 +111,9 @@ function ResourceTable({ resourceType, data, onDelete, onSendMessage, loading, e
                                         <button onClick={() => onDelete(item.id)}>삭제</button>
                                     </td>
                                 )}
-                                {onSendMessage && resourceType === 'USER' && (
+                                {resourceType === 'USER' && (
                                     <td>
-                                        <button onClick={() => onSendMessage(item.loginId)}>메시지 전송</button>
+                                        <button onClick={() => handleSendMessage(item.loginId)}>메시지 전송</button>
                                     </td>
                                 )}
                             </tr>
@@ -110,6 +121,27 @@ function ResourceTable({ resourceType, data, onDelete, onSendMessage, loading, e
                     </tbody>
                 </table>
             )}
+
+            {/* 메시지 전송 모달 */}
+            <Modal
+                show={sendMessageModalOpen}
+                onHide={() => setSendMessageModalOpen(false)}
+            >
+                <Modal.Header closeButton>
+                    <Modal.Title>메시지 전송</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <ManagerMessageForm
+                        loading={loading}
+                        error={error}
+                        targetId={targetUserId}
+                        setSendMessageModalOpen={setSendMessageModalOpen}
+                    />
+                </Modal.Body>
+                <Modal.Footer>
+                    <button onClick={() => setSendMessageModalOpen(false)}>닫기</button>
+                </Modal.Footer>
+            </Modal>
         </div>
     );
 }

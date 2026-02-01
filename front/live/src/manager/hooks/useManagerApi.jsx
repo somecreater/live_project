@@ -37,7 +37,7 @@ function useManagerApi() {
     /**
        * 리소스 목록 조회
        * @param {string} resourceType - 'USER' | 'CHANNEL' | 'VIDEO' | 'POST'
-       * @param {object} request - { page, size, type, keyword }
+       * @param {object} request - { page, size, searchType, keyword }
        * @returns {Promise<object|null>} - 페이지네이션 데이터 또는 null
        */
     const getList = async (resourceType, request) => {
@@ -51,7 +51,12 @@ function useManagerApi() {
         setError(null);
 
         try {
-            const response = await config.getList(request);
+            const response = await config.getList({
+                page: request.page,
+                size: request.size,
+                type: request.searchType,
+                keyword: request.keyword
+            });
             const data = response.data;
 
             if (data.result) {
