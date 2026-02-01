@@ -110,7 +110,6 @@ function ResourceTable({ resourceType, data, onDelete, onSendMessage, loading, e
                     </tbody>
                 </table>
             )}
-            <ResourceTablePagenation />
         </div>
     );
 }

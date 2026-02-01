@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { userStateStore } from "../../common/context/userStateStore";
 import { useNavigate } from "react-router-dom";
 import ApiService from "../../common/api/ApiService";
-import userManagerApi from "../hooks/useManagerApi";
 import useManagerApi from "../hooks/useManagerApi";
+import ManagerTab from "../component/ManagerTab";
+import SearchBar from "../component/SearchBar";
+import ResourceTable from "../component/ResourceTable";
 
 /**
  * 관리자 페이지 컴포넌트(Tab으로 전환)
@@ -55,9 +57,26 @@ function ManagerPage({ props }) {
       [type]: value,
     });
   };
+  const handleSearchClear = () => {
+    setListRequest({
+      page: 1,
+      size: 10,
+      type: "all",
+      keyword: "",
+    });
+    handleSearchSubmit();
+  };
+  const handlePageChange = (page) => {
+    if (page < 1 || page > resourcePage.totalPage) return;
+    setListRequest({
+      ...ListRequest,
+      page: page,
+    });
+    handleSearchSubmit();
+  };
 
   const handleSearchSubmit = async () => {
-    const searchResult = getList(resourceType, ListRequest);
+    const searchResult = await getList(resourceType, ListRequest);
     if (searchResult) {
       setResourcePage({
         content: searchResult.content,
@@ -67,7 +86,6 @@ function ManagerPage({ props }) {
         totalElements: searchResult.totalElements,
       });
 
-      //resourceTable 업데이트
     }
   };
   const handleDelete = async (id) => {
@@ -83,8 +101,41 @@ function ManagerPage({ props }) {
   };
 
   return (
-    <div>
-
+    <div className="manager-page">
+      <div>
+        <ManagerTab
+          activeTab={activeTab}
+          handleResourceTabChange={handleResourceTabChange}
+        />
+      </div>
+      <div>
+        <SearchBar
+          resourceType={resourceType}
+          searchType={ListRequest.type}
+          keyword={ListRequest.keyword}
+          handleSearchChange={handleSearchChange}
+          onSearch={handleSearchSubmit}
+          onClear={handleSearchClear}
+          loading={loading} />
+      </div>
+      <div>
+        <ResourceTable
+          resourceType={resourceType}
+          data={resourcePage.content}
+          onDelete={handleDelete}
+          onSendMessage={handleSendMessage}
+          loading={loading}
+          error={error} />
+      </div>
+      <div>
+        <ResourceTablePagenation
+          page={resourcePage.page}
+          size={resourcePage.size}
+          totalPage={resourcePage.totalPage}
+          totalElements={resourcePage.totalElements}
+          handlePageChange={handlePageChange}
+        />
+      </div>
     </div>
   );
 }

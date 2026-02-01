@@ -1,7 +1,11 @@
 
 
 function ResourceTablePagenation({
-
+    page,
+    size,
+    totalPage,
+    totalElements,
+    handlePageChange,
 }) {
 
     return (
