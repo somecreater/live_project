@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { userStateStore } from "../../common/context/userStateStore";
 import { useNavigate } from "react-router-dom";
 import useManagerApi from "../hooks/useManagerApi";
@@ -19,14 +19,14 @@ function ManagerPage({ props }) {
   const [activeTab, setActiveTab] = useState("USER");
   const [resourceType, setResourceType] = useState("USER");
   const [resourcePage, setResourcePage] = useState({
-    page: 1,
+    page: 0,
     size: 10,
     totalPage: 0,
     totalElements: 0,
     content: []
   });
   const [ListRequest, setListRequest] = useState({
-    page: 1,
+    page: 0,
     size: 10,
     searchType: "all",
     keyword: "",
@@ -44,12 +44,11 @@ function ManagerPage({ props }) {
     setResourceType(tab);
 
     setListRequest({
-      page: 1,
+      page: 0,
       size: 10,
       searchType: "all",
       keyword: "",
     });
-    handleSearchSubmit();
   };
   const handleSearchChange = (type, value) => {
     setListRequest({
@@ -59,23 +58,21 @@ function ManagerPage({ props }) {
   };
   const handleSearchClear = () => {
     setListRequest({
-      page: 1,
+      page: 0,
       size: 10,
       searchType: "all",
       keyword: "",
     });
-    handleSearchSubmit();
   };
   const handlePageChange = (page) => {
-    if (page < 1 || page > resourcePage.totalPage) return;
+    if (page < 0 || page >= resourcePage.totalPage) return;
     setListRequest({
       ...ListRequest,
       page: page,
     });
-    handleSearchSubmit();
   };
 
-  const handleSearchSubmit = async () => {
+  const handleSearchSubmit = useCallback(async () => {
     const searchResult = await getList(resourceType, ListRequest);
     if (searchResult) {
       setResourcePage({
@@ -87,7 +84,12 @@ function ManagerPage({ props }) {
       });
 
     }
-  };
+  }, [getList, resourceType, ListRequest]);
+
+  useEffect(() => {
+    handleSearchSubmit();
+  }, [resourceType, ListRequest.page, handleSearchSubmit]);
+
   const handleDelete = async (id) => {
     const deleteResult = await deleteResource(resourceType, id);
     if (deleteResult) {
@@ -125,9 +127,7 @@ function ManagerPage({ props }) {
       <div>
         <ResourceTablePagenation
           page={resourcePage.page}
-          size={resourcePage.size}
           totalPage={resourcePage.totalPage}
-          totalElements={resourcePage.totalElements}
           handlePageChange={handlePageChange}
         />
       </div>
