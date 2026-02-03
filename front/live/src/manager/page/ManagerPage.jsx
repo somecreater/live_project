@@ -103,7 +103,7 @@ function ManagerPage({ props }) {
       <div>
         <ManagerTab
           activeTab={activeTab}
-          handleResourceTabChange={handleResourceTabChange}
+          setActiveTab={handleResourceTabChange}
         />
       </div>
       <div>

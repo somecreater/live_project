@@ -14,8 +14,6 @@ const TABLE_CONFIG = {
             { label: '전화번호', accessor: 'phone' },
             { label: '가입일', accessor: 'createdAt' },
             { label: '수정일', accessor: 'updatedAt' },
-            { label: '삭제', accessor: 'delete' },
-            { label: '메시지 전송', accessor: 'sendMessage' },
         ],
     },
     CHANNEL: {
@@ -27,7 +25,6 @@ const TABLE_CONFIG = {
             { label: '구독자 수', accessor: 'subscription_count' },
             { label: '가입일', accessor: 'createdAt' },
             { label: '수정일', accessor: 'updatedAt' },
-            { label: '삭제', accessor: 'delete' },
         ],
     },
     VIDEO: {
@@ -47,7 +44,6 @@ const TABLE_CONFIG = {
             { label: '채널 이름', accessor: 'channel_name' },
             { label: '작성일', accessor: 'createdAt' },
             { label: '수정일', accessor: 'updatedAt' },
-            { label: '삭제', accessor: 'delete' },
         ],
     },
     POST: {
@@ -63,7 +59,6 @@ const TABLE_CONFIG = {
             { label: '채널 이름', accessor: 'channel_name' },
             { label: '작성일', accessor: 'createdAt' },
             { label: '수정일', accessor: 'updatedAt' },
-            { label: '삭제', accessor: 'delete' },
         ],
     }
 }
@@ -98,6 +93,8 @@ function ResourceTable({ resourceType, data, onDelete, loading, error }) {
                             {TABLE_CONFIG[resourceType].header.map((header) => (
                                 <th key={header.accessor}>{header.label}</th>
                             ))}
+                            {onDelete && <th>삭제</th>}
+                            {resourceType === 'USER' && <th>메시지 전송</th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -132,8 +129,6 @@ function ResourceTable({ resourceType, data, onDelete, loading, error }) {
                 </Modal.Header>
                 <Modal.Body>
                     <ManagerMessageForm
-                        loading={loading}
-                        error={error}
                         targetId={targetUserId}
                         setSendMessageModalOpen={setSendMessageModalOpen}
                     />
