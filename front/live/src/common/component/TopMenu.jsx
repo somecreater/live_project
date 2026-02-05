@@ -47,6 +47,11 @@ function TopMenu({ props }) {
               <Nav.Link as={Link} to={item.link}>{item.title}</Nav.Link>
             </Nav.Item>
           ))}
+          {user?.role === 'MANAGER' && (
+            <Nav.Item>
+              <Nav.Link as={Link} to="/manager">관리자</Nav.Link>
+            </Nav.Item>
+          )}
         </Nav>
         <Nav className="ms-auto d-flex align-items-center" style={{ gap: '0.5rem' }}>
           <MessageCenter />
