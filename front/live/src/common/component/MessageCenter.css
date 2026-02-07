@@ -68,6 +68,11 @@
     font-size: 1.1rem;
 }
 
+.message-actions {
+    display: flex;
+    gap: 4px;
+}
+
 .message-header .btn-link {
     color: #b0b3b8;
     text-decoration: none;

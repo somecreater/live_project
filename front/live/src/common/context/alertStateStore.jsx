@@ -142,48 +142,52 @@ export const alertStateStore = create((set, get) => ({
         } catch (error) { }
     },
 
-    connect: () => {
-        webSocketStateStore.getState().connect((message) => {
+    onMessageReceived: (message) => {
+        try {
+            let parsedBody;
             try {
-                let parsedBody;
-                try {
-                    parsedBody = JSON.parse(message.body);
-                } catch (e) {
-                    parsedBody = message.body;
-                }
+                parsedBody = JSON.parse(message.body);
+            } catch (e) {
+                parsedBody = message.body;
+            }
 
-                const headers = message.headers || {};
-                if (headers['type'] != 'ALERT_EVENT') {
-                    return;
-                }
+            const headers = message.headers || {};
+            if (headers['type'] != 'ALERT_EVENT') {
+                return;
+            }
 
-                const alertType = headers['eventSubType'] || headers['eventType'] || (parsedBody && parsedBody.type) || 'NORMAL';
-                const sender = headers['sender'] || (parsedBody && (parsedBody.publisher || parsedBody.sender)) || 'System';
-                const alertId = headers['alertId'] || headers['message-id'] || (parsedBody && parsedBody.id) || Date.now();
-                const alertTime = headers['alertTime'] || (parsedBody && (parsedBody.timestamp || parsedBody.alertTime)) || new Date().toISOString();
+            const alertType = headers['eventSubType'] || headers['eventType'] || (parsedBody && parsedBody.type) || 'NORMAL';
+            const sender = headers['sender'] || (parsedBody && (parsedBody.publisher || parsedBody.sender)) || 'System';
+            const alertId = headers['alertId'] || headers['message-id'] || (parsedBody && parsedBody.id) || Date.now();
+            const alertTime = headers['alertTime'] || (parsedBody && (parsedBody.timestamp || parsedBody.alertTime)) || new Date().toISOString();
 
-                let content = '';
-                if (typeof parsedBody === 'string') {
-                    content = parsedBody;
-                } else if (parsedBody && typeof parsedBody === 'object') {
-                    content = parsedBody.content || parsedBody.message || message.body;
-                } else {
-                    content = message.body;
-                }
+            let content = '';
+            if (typeof parsedBody === 'string') {
+                content = parsedBody;
+            } else if (parsedBody && typeof parsedBody === 'object') {
+                content = parsedBody.content || parsedBody.message || message.body;
+            } else {
+                content = message.body;
+            }
 
-                get().addNotification({
-                    id: Number(alertId),
-                    type: alertType,
-                    publisher: sender,
-                    content: content,
-                    read: (parsedBody && parsedBody.read) || false,
-                    timestamp: alertTime
-                });
-            } catch (error) { }
-        });
+            get().addNotification({
+                id: Number(alertId),
+                type: alertType,
+                publisher: sender,
+                content: content,
+                read: (parsedBody && parsedBody.read) || false,
+                timestamp: alertTime
+            });
+        } catch (error) { }
+    },
+
+    connect: () => {
+        webSocketStateStore.getState().addMessageListener(get().onMessageReceived);
+        webSocketStateStore.getState().connect();
     },
 
     disconnect: () => {
+        webSocketStateStore.getState().removeMessageListener(get().onMessageReceived);
         webSocketStateStore.getState().disconnect();
         set({
             notifications: [],

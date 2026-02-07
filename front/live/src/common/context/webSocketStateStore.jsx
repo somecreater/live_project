@@ -6,6 +6,7 @@ import { API_END_POINT } from '../api/Api';
 let stompClient = null;
 let reconnectTimeout = null;
 let isReconnecting = false;
+let messageListeners = new Set();
 
 export const webSocketStateStore = create((set, get) => ({
     isConnected: false,
@@ -14,8 +15,16 @@ export const webSocketStateStore = create((set, get) => ({
     maxReconnectAttempts: 5,
     connectionError: null,
 
+    addMessageListener: (callback) => {
+        messageListeners.add(callback);
+    },
+
+    removeMessageListener: (callback) => {
+        messageListeners.delete(callback);
+    },
+
     //웹소켓 연결
-    connect: (onMessageReceived) => {
+    connect: () => {
         const state = get();
         if (state.isConnected || state.isConnecting) return;
 
@@ -47,7 +56,7 @@ export const webSocketStateStore = create((set, get) => ({
                     isReconnecting = false;
 
                     stompClient.subscribe(API_END_POINT.alert.alert_subscribe, (message) => {
-                        if (onMessageReceived) onMessageReceived(message);
+                        messageListeners.forEach(listener => listener(message));
                     });
                 },
                 debug: (str) => {
@@ -62,12 +71,12 @@ export const webSocketStateStore = create((set, get) => ({
                     });
                     if (frame.headers['message']?.includes('Authentication') ||
                         frame.headers['message']?.includes('Authorization')) return;
-                    get().scheduleReconnect(onMessageReceived);
+                    get().scheduleReconnect();
                 },
 
                 onWebSocketClose: (event) => {
                     set({ isConnected: false, isConnecting: false });
-                    if (event.code !== 1000) get().scheduleReconnect(onMessageReceived);
+                    if (event.code !== 1000) get().scheduleReconnect();
                 },
 
                 onDisconnect: () => {
@@ -78,11 +87,11 @@ export const webSocketStateStore = create((set, get) => ({
             stompClient.activate();
         } catch (error) {
             set({ isConnected: false, isConnecting: false, connectionError: error.message });
-            get().scheduleReconnect(onMessageReceived);
+            get().scheduleReconnect();
         }
     },
 
-    scheduleReconnect: (onMessageReceived) => {
+    scheduleReconnect: () => {
         const state = get();
         if (isReconnecting || state.reconnectAttempts >= state.maxReconnectAttempts) return;
 
@@ -93,7 +102,7 @@ export const webSocketStateStore = create((set, get) => ({
         reconnectTimeout = setTimeout(() => {
             set({ reconnectAttempts: state.reconnectAttempts + 1 });
             isReconnecting = false;
-            get().connect(onMessageReceived);
+            get().connect();
         }, delay);
     },
 
@@ -109,6 +118,8 @@ export const webSocketStateStore = create((set, get) => ({
             } catch (error) { }
             stompClient = null;
         }
+
+        messageListeners.clear();
 
         set({
             isConnected: false,

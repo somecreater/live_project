@@ -1,7 +1,7 @@
 import { Badge, Button, Dropdown } from "react-bootstrap";
 import { managerMessageStore } from "../context/managerMessageStore";
 import { userStateStore } from "../context/userStateStore";
-import { FaEnvelope, FaTrash, FaTrashAlt } from "react-icons/fa";
+import { FaEnvelope, FaTrash, FaTrashAlt, FaCheckDouble } from "react-icons/fa";
 import { useEffect } from "react";
 import "./MessageCenter.css";
 
@@ -10,6 +10,7 @@ const MessageCenter = () => {
     const currentPage = managerMessageStore((state) => state.currentPage);
     const totalPages = managerMessageStore((state) => state.totalPages);
     const isLoadingMore = managerMessageStore((state) => state.isLoadingMore);
+    const hasLoaded = managerMessageStore((state) => state.hasLoaded);
     const loadManagerMessages = managerMessageStore((state) => state.loadManagerMessages);
     const loadMoreManagerMessages = managerMessageStore((state) => state.loadMoreManagerMessages);
     const managerMessageRead = managerMessageStore((state) => state.managerMessageRead);
@@ -20,10 +21,10 @@ const MessageCenter = () => {
     const isAuthenticated = userStateStore((state) => state.isAuthenticated);
 
     useEffect(() => {
-        if (isAuthenticated) {
-            loadManagerMessages(0, 10, true);
+        if (isAuthenticated && !hasLoaded) {
+            loadManagerMessages(0, 10, false);
         }
-    }, [isAuthenticated, loadManagerMessages]);
+    }, [isAuthenticated, hasLoaded, loadManagerMessages]);
 
     const displayManagerMessages = isAuthenticated ? managermessages : [];
     const sortedManagerMessages = [...displayManagerMessages];
@@ -37,11 +38,6 @@ const MessageCenter = () => {
         <Dropdown
             align="end"
             className="message-dropdown"
-            onToggle={(isOpen) => {
-                if (isOpen && unreadManagerMessageCount > 0) {
-                    managerMessageReadAll();
-                }
-            }}
         >
             <Dropdown.Toggle as="div" className="message-toggle">
                 <div className="message-container">
@@ -57,14 +53,26 @@ const MessageCenter = () => {
             <Dropdown.Menu className="message-menu shadow-lg">
                 <div className="message-header">
                     <h6>메시지 목록</h6>
-                    <Button
-                        variant="link"
-                        size="sm"
-                        onClick={managerMessageDeleteAll}
-                        title="모두 지우기"
-                    >
-                        <FaTrash />
-                    </Button>
+                    <div className="message-actions">
+                        <Button
+                            variant="link"
+                            size="sm"
+                            onClick={managerMessageReadAll}
+                            title="모두 읽음"
+                            className="action-btn"
+                        >
+                            <FaCheckDouble />
+                        </Button>
+                        <Button
+                            variant="link"
+                            size="sm"
+                            onClick={managerMessageDeleteAll}
+                            title="모두 지우기"
+                            className="action-btn"
+                        >
+                            <FaTrash />
+                        </Button>
+                    </div>
                 </div>
 
 
@@ -75,7 +83,9 @@ const MessageCenter = () => {
                                 key={message.id}
                                 className={`message-item ${message.read ? 'read' : 'unread'}`}
                                 onClick={() => {
-                                    managerMessageRead(message.id);
+                                    if (!message.read) {
+                                        managerMessageRead(message.id);
+                                    }
                                 }}
                             >
                                 <div className="message-icon">

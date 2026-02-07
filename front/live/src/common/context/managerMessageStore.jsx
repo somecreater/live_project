@@ -12,6 +12,7 @@ export const managerMessageStore = create((set, get) => ({
     isConnecting: false,
     connectionError: null,
     hasLoaded: false,
+    isLoading: false,
     isLoadingMore: false,
 
     addManagerMessage: (message) => {
@@ -40,8 +41,10 @@ export const managerMessageStore = create((set, get) => ({
     },
 
     loadManagerMessages: async (pageArg = 0, sizeArg = 10, forceArg = false) => {
+        if (get().isLoading) return;
         if (!forceArg && get().hasLoaded && pageArg === 0) return;
 
+        set({ isLoading: true });
         try {
             const response = await ApiService.manager_message.get_list({ page: pageArg, size: sizeArg });
             const data = response.data;
@@ -79,6 +82,8 @@ export const managerMessageStore = create((set, get) => ({
             }
         } catch (error) {
             console.error("Failed to fetch manager messages:", error);
+        } finally {
+            set({ isLoading: false });
         }
     },
 
@@ -144,50 +149,52 @@ export const managerMessageStore = create((set, get) => ({
         }
     },
 
-    connect: () => {
-        webSocketStateStore.getState().connect(
-            (message) => {
-                try {
-                    let parsedBody;
-                    try {
-                        parsedBody = JSON.parse(message.body);
-                    } catch (e) {
-                        parsedBody = message.body;
-                    }
-
-                    const headers = message.headers || {};
-                    if (headers['eventType'] !== 'MANAGER_MESSAGE') {
-                        return;
-                    }
-
-                    let content_body = '';
-                    if (parsedBody && typeof parsedBody === 'object') {
-                        content_body = parsedBody.content || parsedBody.message || '';
-                    } else if (typeof parsedBody === 'string') {
-                        content_body = parsedBody;
-                    } else {
-                        content_body = headers['content'] || '';
-                    }
-
-                    const new_manager_message = {
-                        id: headers['alertId'] || Date.now(),
-                        title: headers['title'] || '관리자 알림',
-                        content: content_body,
-                        publisher: headers['publisher'] || 'SYSTEM',
-                        receiver: headers['targetId'],
-                        read: false,
-                        timestamp: headers['alertTime'] || new Date().toISOString(),
-                    };
-
-                    get().addManagerMessage(new_manager_message);
-                } catch (error) {
-                    console.error("Failed to add manager message:", error);
-                }
+    onMessageReceived: (message) => {
+        try {
+            let parsedBody;
+            try {
+                parsedBody = JSON.parse(message.body);
+            } catch (e) {
+                parsedBody = message.body;
             }
-        );
+
+            const headers = message.headers || {};
+            if (headers['eventType'] !== 'MANAGER_MESSAGE') {
+                return;
+            }
+
+            let content_body = '';
+            if (parsedBody && typeof parsedBody === 'object') {
+                content_body = parsedBody.content || parsedBody.message || '';
+            } else if (typeof parsedBody === 'string') {
+                content_body = parsedBody;
+            } else {
+                content_body = headers['content'] || '';
+            }
+
+            const new_manager_message = {
+                id: headers['alertId'] || Date.now(),
+                title: headers['title'] || '관리자 알림',
+                content: content_body,
+                publisher: headers['publisher'] || 'SYSTEM',
+                receiver: headers['targetId'],
+                read: false,
+                timestamp: headers['alertTime'] || new Date().toISOString(),
+            };
+
+            get().addManagerMessage(new_manager_message);
+        } catch (error) {
+            console.error("Failed to add manager message:", error);
+        }
+    },
+
+    connect: () => {
+        webSocketStateStore.getState().addMessageListener(get().onMessageReceived);
+        webSocketStateStore.getState().connect();
     },
 
     disconnect: () => {
+        webSocketStateStore.getState().removeMessageListener(get().onMessageReceived);
         webSocketStateStore.getState().disconnect();
         set({
             managermessages: [],
