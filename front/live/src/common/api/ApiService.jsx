@@ -7,11 +7,11 @@ import { API_END_POINT } from "./Api";
 const ApiService = {
   manager: {
     send_manager_message: (dto) => RefreshApi.post(API_END_POINT.manager.send_manager_message, dto),
-    get_user_list: (dto) => RefreshApi.get(API_END_POINT.manager.get_user_list, dto),
-    get_channel_list: (dto) => RefreshApi.get(API_END_POINT.manager.get_channel_list, dto),
-    get_message_list: (dto) => RefreshApi.get(API_END_POINT.manager.get_message_list, dto),
-    get_video_list: (dto) => RefreshApi.get(API_END_POINT.manager.get_video_list, dto),
-    get_post_list: (dto) => RefreshApi.get(API_END_POINT.manager.get_post_list, dto),
+    get_user_list: (dto) => RefreshApi.post(API_END_POINT.manager.get_user_list, dto),
+    get_channel_list: (dto) => RefreshApi.post(API_END_POINT.manager.get_channel_list, dto),
+    get_message_list: (dto) => RefreshApi.post(API_END_POINT.manager.get_message_list, dto),
+    get_video_list: (dto) => RefreshApi.post(API_END_POINT.manager.get_video_list, dto),
+    get_post_list: (dto) => RefreshApi.post(API_END_POINT.manager.get_post_list, dto),
     force_user_delete: (dto) => RefreshApi.post(API_END_POINT.manager.force_user_delete, dto),
     force_channel_delete: (dto) => RefreshApi.post(API_END_POINT.manager.force_channel_delete, dto),
     force_message_delete: (dto) => RefreshApi.post(API_END_POINT.manager.force_message_delete, dto),

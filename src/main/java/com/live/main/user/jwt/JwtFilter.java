@@ -14,10 +14,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -38,7 +40,8 @@ public class JwtFilter extends OncePerRequestFilter {
   //토큰 검증 미적용
   @Override
   public boolean shouldNotFilter(HttpServletRequest request){
-    return !request.getRequestURI().startsWith("/api/");
+      return !request.getRequestURI().startsWith("/api/")
+              && !request.getRequestURI().startsWith("/manager/");
   }
 
   //JWT 토큰 필터
@@ -108,14 +111,15 @@ public class JwtFilter extends OncePerRequestFilter {
       log.error("Error JWT {}",e.getMessage());
       return;
     }
-
+    log.info("check authentication : {}",
+        SecurityContextHolder.getContext().getAuthentication());
     filterChain.doFilter(request, response);
   }
 
   private void setAuthentication(String userLoginId, String auth) {
     CustomUserDetails customUserDetails = new CustomUserDetails(userLoginId, auth);
     Authentication authentication = new UsernamePasswordAuthenticationToken(
-        customUserDetails, null, customUserDetails.getAuthorities());
+        customUserDetails, null, List.of(new SimpleGrantedAuthority("ROLE_" + auth)));
     SecurityContextHolder.getContext().setAuthentication(authentication);
   }
 

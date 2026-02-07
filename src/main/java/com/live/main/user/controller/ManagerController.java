@@ -23,11 +23,11 @@ public class ManagerController {
 
   private final ManagerServiceInterface managerService;
 
-  @GetMapping("/user_list")
+  @PostMapping("/user_list")
   public ResponseEntity<?> getUserList(
           @AuthenticationPrincipal CustomUserDetails principal,
           @RequestBody SearchRequest request) {
-    log.info("[GET] /api/manager/user_list - {}", principal.getUsername());
+    log.info("[POST] /manager/user_list - {}", principal.getUsername());
     Map<String,Object> result=new HashMap<>();
     Page<UserDto> userList = managerService.GetUserList(request.getPage(), request.getSize(), request.getType(), request.getKeyword());
 
@@ -44,7 +44,7 @@ public class ManagerController {
   public ResponseEntity<?> forceDeleteUser(
           @AuthenticationPrincipal CustomUserDetails principal,
           @PathVariable Long userId) {
-    log.info("[POST] /api/manager/force_delete/{} - {}", userId, principal.getUsername());
+    log.info("[POST] /manager/force_delete/{} - {}", userId, principal.getUsername());
     Map<String,Object> result=new HashMap<>();
     managerService.ForceDeleteUser(userId);
     result.put("result", true);
@@ -55,7 +55,7 @@ public class ManagerController {
   public ResponseEntity<?> sendMessage(
     @AuthenticationPrincipal CustomUserDetails principal,
     @RequestBody ManagerMessageEvent messageEvent){
-    log.info("[POST] /api/manager/send_message - {}", principal.getUsername());
+    log.info("[POST] /manager/send_message - {}", principal.getUsername());
     Map<String,Object> result=new HashMap<>();
     managerService.SendManagerMessage(
       messageEvent.getTitle(), messageEvent.getContent(), principal.getUsername(), messageEvent.getTargetId());

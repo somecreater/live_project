@@ -47,7 +47,7 @@ function TopMenu({ props }) {
               <Nav.Link as={Link} to={item.link}>{item.title}</Nav.Link>
             </Nav.Item>
           ))}
-          {user?.role === 'MANAGER' && (
+          {user?.userType === 'MANAGER' && (
             <Nav.Item>
               <Nav.Link as={Link} to="/manager">관리자</Nav.Link>
             </Nav.Item>

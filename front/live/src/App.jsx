@@ -5,7 +5,7 @@ import LoginPage from './user/page/LoginPage';
 import SignPage from './user/page/SignPage';
 import MyPage from './user/page/MyPage';
 import MySubscriptionPage from './user/page/MySubscriptionPage';
-import ManagerPage from './user/page/ManagerPage';
+import ManagerPage from './manager/page/ManagerPage';
 import UpdateUserPage from './user/page/UpdateUserPage';
 import ChannelPage from './channel/page/ChannelPage';
 import MyChannelPage from './channel/page/MyChannelPage';
