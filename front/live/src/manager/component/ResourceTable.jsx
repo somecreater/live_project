@@ -76,6 +76,8 @@ function ResourceTable({ resourceType, data, onDelete, loading, error }) {
     const [sendMessageModalOpen, setSendMessageModalOpen] = useState(false);
     const [targetUserId, setTargetUserId] = useState(null);
 
+    console.log('📋 ResourceTable - resourceType:', resourceType, 'data:', data, 'loading:', loading, 'error:', error);
+
     // 메시지 전송 버튼 클릭 시 모달 열기
     const handleSendMessage = (loginId) => {
         setTargetUserId(loginId);
@@ -86,6 +88,7 @@ function ResourceTable({ resourceType, data, onDelete, loading, error }) {
         <div>
             {loading && <p>로딩 중...</p>}
             {error && <p>에러: {error}</p>}
+            {!loading && !error && (!data || data.length === 0) && <p>데이터가 없습니다.</p>}
             {data && data.length > 0 && (
                 <table>
                     <thead>

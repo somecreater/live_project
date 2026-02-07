@@ -37,7 +37,7 @@ public class ManagerController {
       result.put("result", true);
       result.put("user_list", userList);
     }
-    return ResponseEntity.ok(userList);
+    return ResponseEntity.ok(result);
   }
 
   @PostMapping("/force_delete/{userId}")

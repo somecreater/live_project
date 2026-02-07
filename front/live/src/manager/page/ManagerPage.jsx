@@ -83,12 +83,19 @@ function ManagerPage({ props }) {
         totalElements: searchResult.totalElements,
       });
 
+    } else {
+      console.log('❌ searchResult가 null/undefined');
     }
-  }, [getList, resourceType, ListRequest]);
+  }, [getList, resourceType, ListRequest.page, ListRequest.size, ListRequest.searchType, ListRequest.keyword]);
 
   useEffect(() => {
     handleSearchSubmit();
-  }, [resourceType, ListRequest.page, handleSearchSubmit]);
+  }, [handleSearchSubmit]);
+
+  // resourcePage 변경 추적
+  useEffect(() => {
+    console.log('📊 resourcePage 업데이트:', resourcePage);
+  }, [resourcePage]);
 
   const handleDelete = async (id) => {
     const deleteResult = await deleteResource(resourceType, id);

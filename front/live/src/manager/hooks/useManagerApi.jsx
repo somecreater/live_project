@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import ApiService from "../../common/api/ApiService";
 
 const API_CONFIG = {
@@ -40,7 +40,7 @@ function useManagerApi() {
        * @param {object} request - { page, size, searchType, keyword }
        * @returns {Promise<object|null>} - 페이지네이션 데이터 또는 null
        */
-    const getList = async (resourceType, request) => {
+    const getList = useCallback(async (resourceType, request) => {
         const config = API_CONFIG[resourceType];
         if (!config || !config.getList) {
             setError(`Invalid type: ${resourceType}`);
@@ -51,34 +51,51 @@ function useManagerApi() {
         setError(null);
 
         try {
-            const response = await config.getList({
+            const requestData = {
                 page: request.page,
                 size: request.size,
                 type: request.searchType,
                 keyword: request.keyword
-            });
+            };
+            const response = await config.getList(requestData);
             const data = response.data;
 
             if (data.result) {
-                const listData = data[config.listKey] || [];
-                return {
-                    content: listData.content || [],
-                    page: listData.number || 0,
-                    size: listData.size || 10,
-                    totalPage: listData.totalPages || 0,
-                    totalElements: listData.totalElements || 0,
-                };
+                const listData = data[config.listKey];
+
+                if (listData) {
+                    const result = {
+                        content: listData.content || [],
+                        page: listData.number || 0,
+                        size: listData.size || 10,
+                        totalPage: listData.totalPages || 0,
+                        totalElements: listData.totalElements || 0,
+                    };
+                    return result;
+                } else {
+                    // result는 true인데 리스트 데이터가 없는 경우
+                    console.log(`⚠️ ${config.listKey} 데이터가 없습니다.`);
+                    return {
+                        content: [],
+                        page: 0,
+                        size: 10,
+                        totalPage: 0,
+                        totalElements: 0
+                    };
+                }
             } else {
+                console.log('❌ API result가 false:', data.message);
                 setError(data.message || 'Failed to fetch list');
                 return null;
             }
         } catch (error) {
+            console.error('❌ API 에러:', error);
             setError(error.message);
             return null;
         } finally {
             setLoading(false);
         }
-    }
+    }, []);
 
     /**
        * 리소스 삭제
@@ -86,7 +103,7 @@ function useManagerApi() {
        * @param {string|number} id - 삭제할 리소스 ID
        * @returns {Promise<boolean>} - 성공 여부
        */
-    const deleteResource = async (type, id) => {
+    const deleteResource = useCallback(async (type, id) => {
         const config = API_CONFIG[type];
         if (!config || !config.delete) {
             setError(`Delete not supported for type: ${type}`);
@@ -112,14 +129,14 @@ function useManagerApi() {
         } finally {
             setLoading(false);
         }
-    }
+    }, []);
 
     /**
        * 관리자 메시지 전송
        * @param {object} messageData - { title, content, targetId }
        * @returns {Promise<boolean>} - 성공 여부
        */
-    const sendMessage = async (messageData) => {
+    const sendMessage = useCallback(async (messageData) => {
         const config = API_CONFIG.MESSAGE;
         if (!config || !config.send) {
             setError('Message send not supported');
@@ -152,7 +169,7 @@ function useManagerApi() {
         } finally {
             setLoading(false);
         }
-    }
+    }, []);
 
     return {
         getList,
