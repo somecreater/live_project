@@ -1,0 +1,113 @@
+const SEARCH_CONFIG = {
+    USER: {
+        searchType: [
+            { value: 'all', label: '전체' },
+            { value: 'loginId', label: '로그인 ID' },
+            { value: 'nickname', label: '닉네임' },
+            { value: 'email', label: '이메일' },
+        ],
+    },
+    CHANNEL: {
+        searchType: [
+            { value: 'all', label: '전체' },
+            { value: 'name', label: '채널 이름' },
+            { value: 'user_login_id', label: '소유자 로그인 ID' },
+        ],
+    },
+    VIDEO: {
+        searchType: [
+            { value: 'all', label: '전체' },
+            { value: 'title', label: '제목' },
+            { value: 'description', label: '설명' },
+            { value: 'channel_name', label: '채널 이름' },
+        ],
+    },
+    POST: {
+        searchType: [
+            { value: 'all', label: '전체' },
+            { value: 'title', label: '제목' },
+            { value: 'content', label: '내용' },
+            { value: 'channel_name', label: '채널 이름' },
+        ],
+    },
+}
+
+import { FaSearch } from 'react-icons/fa';
+
+/**
+ * resourceType에 따라 검색 옵션을 제공하는 컴포넌트
+ * @param {string} resourceType - 'USER' | 'CHANNEL' | 'VIDEO' | 'POST'
+ * @param {string} searchType - 검색 타입
+ * @param {string} keyword - 검색어
+ * @param {Function} handleSearchChange - 검색어 및 검색 타입 변경 함수
+ * @param {Function} onSearch - 검색 API 호출 함수
+ * @param {Function} onClear - 검색 값 초기화 함수
+ * @param {boolean} loading - 로딩 상태
+ * @param {number} debounceMs - 디바운스 시간
+ */
+function SearchBar({
+    resourceType,
+    searchType,
+    keyword,
+    handleSearchChange,
+    onSearch,
+    onClear,
+    loading,
+    debounceMs = 300
+}) {
+
+    const options = SEARCH_CONFIG[resourceType]?.searchType || [];
+
+    const handleSearchTypeChange = (e) => {
+        handleSearchChange('searchType', e.target.value);
+    }
+    const handleKeywordChange = (e) => {
+        handleSearchChange('keyword', e.target.value);
+    }
+
+    const submitSearchValue = (e) => {
+        e.preventDefault();
+        onSearch();
+    }
+
+    const clearSearchValue = () => {
+        onClear();
+    }
+
+    return (
+        <form onSubmit={submitSearchValue} className="manager-search-bar">
+            <select
+                className="manager-select"
+                value={searchType}
+                onChange={handleSearchTypeChange}
+            >
+                {options.map((option) => (
+                    <option key={option.value} value={option.value}>
+                        {option.label}
+                    </option>
+                ))}
+            </select>
+
+            <div className="manager-input-wrapper">
+                <FaSearch className="manager-input-icon" />
+                <input
+                    type="text"
+                    className="manager-input"
+                    value={keyword}
+                    onChange={handleKeywordChange}
+                    placeholder="검색어를 입력하세요..."
+                />
+            </div>
+
+            <button type="submit" className="btn-search" disabled={loading}>
+                {loading ? '검색 중...' : '검색'}
+            </button>
+            <button type="button" className="btn-clear" onClick={clearSearchValue}>
+                초기화
+            </button>
+        </form>
+    );
+}
+
+export default SearchBar;
+

@@ -1,0 +1,227 @@
+/* MessageCenter.css */
+
+.message-dropdown {
+    display: flex;
+    align-items: center;
+}
+
+.message-toggle {
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.message-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
+}
+
+.message-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.message-icon {
+    font-size: 1.3rem;
+    color: #ffffff;
+}
+
+.message-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    font-size: 0.65rem;
+    padding: 0.25em 0.5em;
+    border: 2px solid #dc3545;
+}
+
+.message-menu {
+    width: 360px;
+    max-height: 500px;
+    background-color: #242526;
+    border: 1px solid #3e4042;
+    border-radius: 8px;
+    padding: 0;
+    margin-top: 10px !important;
+    overflow: hidden;
+    color: #e4e6eb;
+}
+
+.message-header {
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #3e4042;
+}
+
+.message-header h6 {
+    margin: 0;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.message-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.message-header .btn-link {
+    color: #b0b3b8;
+    text-decoration: none;
+    padding: 4px;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.message-header .btn-link:hover {
+    background-color: #3a3b3c;
+    color: #e4e6eb;
+}
+
+.message-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.message-item {
+    padding: 12px 16px;
+    display: flex;
+    gap: 12px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    position: relative;
+    align-items: flex-start;
+}
+
+.message-item:hover {
+    background-color: #3a3b3c;
+}
+
+.message-item.unread {
+    background-color: rgba(45, 136, 255, 0.1);
+}
+
+.message-item.unread::after {
+    content: '';
+    position: absolute;
+    right: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 8px;
+    background-color: #2d88ff;
+    border-radius: 50%;
+}
+
+.message-item .message-icon {
+    width: 40px;
+    height: 40px;
+    background-color: #3a3b3c;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1rem;
+    color: #2d88ff;
+}
+
+.message-content-wrapper {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.message-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 2px;
+    color: #e4e6eb;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.message-body {
+    font-size: 0.85rem;
+    color: #b0b3b8;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.message-time {
+    font-size: 0.75rem;
+    color: #8a8d91;
+    margin-top: 4px;
+}
+
+.delete-item-btn {
+    opacity: 0;
+    background: none;
+    border: none;
+    color: #b0b3b8;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.2s;
+    align-self: center;
+}
+
+.message-item:hover .delete-item-btn {
+    opacity: 1;
+}
+
+.delete-item-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #f35369;
+}
+
+.message-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: #b0b3b8;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 12px;
+    opacity: 0.3;
+}
+
+.load-more-container {
+    border-top: 1px solid #3e4042;
+}
+
+.load-more-container .btn-link {
+    color: #2d88ff;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #3e4042;
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #4e4f50;
+}

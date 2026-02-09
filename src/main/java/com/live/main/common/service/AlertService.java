@@ -2,6 +2,7 @@ package com.live.main.common.service;
 
 import com.live.main.channel.service.Interface.ChannelServiceInterface;
 import com.live.main.common.database.dto.AlertEvent;
+import com.live.main.common.database.dto.ManagerMessageEvent;
 import com.live.main.common.database.repository.OnlineRepository;
 import com.live.main.common.service.Interface.AlertCustomServiceInterface;
 import com.live.main.common.service.Interface.AlertServiceInterface;
@@ -34,9 +35,12 @@ public class AlertService implements AlertServiceInterface {
   private final AlertCustomServiceInterface alertCustomService;
 
   private final KafkaTemplate<String, AlertEvent> kafkaTemplate;
+  private final KafkaTemplate<String, ManagerMessageEvent> managerMessageKafkaTemplate;
 
   @Value("${app.kafka.topic.notification.name}")
   private String NOTIFICATION_TOPIC_NAME;
+  @Value("${app.kafka.topic.admin_message.name}")
+  private String ADMIN_MESSAGE_TOPIC_NAME;
 
   @Async("IOTaskExecutor")
   @EventListener
@@ -53,8 +57,6 @@ public class AlertService implements AlertServiceInterface {
       alertEvent.getPublisher(),
       alertEvent.getContent());
   }
-
-
 
   @KafkaListener(
           topics = "notification-topic",
@@ -95,12 +97,13 @@ public class AlertService implements AlertServiceInterface {
 
         SimpMessageHeaderAccessor headerAccessor = SimpMessageHeaderAccessor.create();
         headerAccessor.setContentType(MimeTypeUtils.APPLICATION_JSON);
+        headerAccessor.setNativeHeader("type","ALERT_EVENT");
         headerAccessor.setNativeHeader("sender", alertEvent.getPublisher());
         headerAccessor.setNativeHeader("eventType",alertEvent.getType().getType());
         headerAccessor.setNativeHeader("eventSubType", alertEvent.getType().getSubtype());
         headerAccessor.setNativeHeader("priority", alertEvent.getType().getPriority());
-        headerAccessor.setHeader("alertTime", alertEvent.getCreatedAt());
-        headerAccessor.setHeader("alertId", id);
+        headerAccessor.setNativeHeader("alertTime", String.valueOf(alertEvent.getCreatedAt()));
+        headerAccessor.setNativeHeader("alertId", String.valueOf(id));
         MessageHeaders headers = headerAccessor.getMessageHeaders();
         messagingTemplate.convertAndSendToUser(
                 target,
@@ -118,15 +121,80 @@ public class AlertService implements AlertServiceInterface {
     }
   }
 
+  //관리자 메시지 전송 기능
+  @Async("IOTaskExecutor")
+  @EventListener
   @Override
-  public List<AlertEvent> sendAlertList(String target){
-    List<AlertEvent> alertEvents= alertCustomService.get(target);
-    if(alertEvents!=null){
-      return alertEvents;
-    }else{
-      return null;
+  public void produceAdminMessage(ManagerMessageEvent messageEvent){
+    managerMessageKafkaTemplate.send(
+            ADMIN_MESSAGE_TOPIC_NAME,
+            messageEvent.getPublisher(),
+            messageEvent
+    );
+    log.info("Kafka Manager Message Produced to Kafka - title: {},  content: {}, publisher: {}, targetId: {}",
+            messageEvent.getTitle(),
+            messageEvent.getContent(),
+            messageEvent.getPublisher(),
+            messageEvent.getTargetId());
+  }
+
+  @KafkaListener(
+          topics = "admin-message-topic",
+          groupId = "admin-message_group",
+          containerFactory = "managerMessageKafkaListenerContainerFactory"
+  )
+  @Override
+  public void consumerAdminMessageKafka(ManagerMessageEvent messageEvent, Acknowledgment ack){
+    try {
+      log.info("Kafka Manager Message Received by Kafka - title: {},  content: {}, publisher: {}, targetId: {}",
+              messageEvent.getTitle(),
+              messageEvent.getContent(),
+              messageEvent.getPublisher(),
+              messageEvent.getTargetId());
+
+      sendAdminAlert(messageEvent);
+      ack.acknowledge();
+    } catch (Exception e) {
+      log.error("Alert consume failed", e);
     }
   }
+
+  @Override
+  public void sendAdminAlert(ManagerMessageEvent messageEvent) {
+    Long id=alertCustomService.saveAdminMessage(messageEvent);
+
+    if(isOnline(messageEvent.getTargetId())){
+      log.info("WebSocket Manager Message Send [Online] - publisher: {}. target: {}, title: {},  content: {}",
+              messageEvent.getPublisher(),
+              messageEvent.getTargetId(),
+              messageEvent.getTitle(),
+              messageEvent.getContent());
+      log.info("[SEND] URL: /user/{}/queue/alerts", messageEvent.getTargetId() );
+      SimpMessageHeaderAccessor headerAccessor = SimpMessageHeaderAccessor.create();
+      headerAccessor.setContentType(MimeTypeUtils.APPLICATION_JSON);
+      headerAccessor.setNativeHeader("publisher", messageEvent.getPublisher());
+      headerAccessor.setNativeHeader("title",messageEvent.getTitle());
+      headerAccessor.setNativeHeader("content", messageEvent.getContent());
+      headerAccessor.setNativeHeader("eventType","MANAGER_MESSAGE");
+      headerAccessor.setHeader("alertTime", messageEvent.getCreatedAt());
+      headerAccessor.setHeader("alertId", id);
+      MessageHeaders headers = headerAccessor.getMessageHeaders();
+      messagingTemplate.convertAndSendToUser(
+              messageEvent.getTargetId(),
+              "/queue/alerts",
+              messageEvent.getContent(),
+              headers);
+
+    }else{
+      log.info("WebSocket Manager Message Send [Offline] - publisher: {}. target: {}, title: {},  content: {}",
+              messageEvent.getPublisher(),
+              messageEvent.getTargetId(),
+              messageEvent.getTitle(),
+              messageEvent.getContent());
+    }
+
+  }
+
 
   //나중에 API 호출로 전환
   @Override
