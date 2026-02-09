@@ -33,15 +33,23 @@ function ManagerPage({ props }) {
   });
 
   useEffect(() => {
-    if (user.userType !== "MANAGER") {
+    if (user && user.userType !== "MANAGER") {
       navigate("/");
     }
-  }, [user.userType]);
+  }, [user]);
 
 
   const handleResourceTabChange = (tab) => {
     setActiveTab(tab);
-    setResourceType(tab);
+    setResourceType(tab.toUpperCase());
+
+    setResourcePage({
+      page: 0,
+      size: 10,
+      totalPage: 0,
+      totalElements: 0,
+      content: []
+    });
 
     setListRequest({
       page: 0,
@@ -85,12 +93,19 @@ function ManagerPage({ props }) {
 
     } else {
       console.log('❌ searchResult가 null/undefined');
+      setResourcePage({
+        page: 0,
+        size: 10,
+        totalPage: 0,
+        totalElements: 0,
+        content: []
+      });
     }
-  }, [getList, resourceType, ListRequest.page, ListRequest.size, ListRequest.searchType, ListRequest.keyword]);
+  }, [getList, resourceType, ListRequest]);
 
   useEffect(() => {
     handleSearchSubmit();
-  }, [handleSearchSubmit]);
+  }, [resourceType, ListRequest.page]);
 
   // resourcePage 변경 추적
   useEffect(() => {

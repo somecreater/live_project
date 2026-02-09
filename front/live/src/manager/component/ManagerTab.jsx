@@ -10,10 +10,10 @@ function ManagerTab({
 }) {
     return (
         <div>
-            <button onClick={() => setActiveTab('user')}>User</button>
-            <button onClick={() => setActiveTab('channel')}>Channel</button>
-            <button onClick={() => setActiveTab('video')}>Video</button>
-            <button onClick={() => setActiveTab('post')}>Post</button>
+            <button onClick={() => setActiveTab('USER')}>User</button>
+            <button onClick={() => setActiveTab('CHANNEL')}>Channel</button>
+            <button onClick={() => setActiveTab('VIDEO')}>Video</button>
+            <button onClick={() => setActiveTab('POST')}>Post</button>
         </div>
     );
 }
