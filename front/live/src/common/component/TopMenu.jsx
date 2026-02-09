@@ -4,6 +4,7 @@ import { userStateStore } from "../context/userStateStore";
 import { useEffect } from "react";
 import UserDropDown from "./UserDropDown";
 import NotificationCenter from "./NotificationCenter";
+import MessageCenter from "./MessageCenter";
 
 const TopItem = [
   { title: "홈", link: "/" },
@@ -46,8 +47,14 @@ function TopMenu({ props }) {
               <Nav.Link as={Link} to={item.link}>{item.title}</Nav.Link>
             </Nav.Item>
           ))}
+          {user?.userType === 'MANAGER' && (
+            <Nav.Item>
+              <Nav.Link as={Link} to="/manager">관리자</Nav.Link>
+            </Nav.Item>
+          )}
         </Nav>
         <Nav className="ms-auto d-flex align-items-center" style={{ gap: '0.5rem' }}>
+          <MessageCenter />
           <NotificationCenter />
           <UserDropDown />
         </Nav>

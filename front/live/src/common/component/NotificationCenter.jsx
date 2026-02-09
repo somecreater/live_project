@@ -7,11 +7,14 @@ import './NotificationCenter.css';
 
 const NotificationCenter = () => {
     const notifications = alertStateStore((state) => state.notifications);
+    const totalPages = alertStateStore((state) => state.totalPages);
+    const currentPage = alertStateStore((state) => state.currentPage);
+    const isLoadingMore = alertStateStore((state) => state.isLoadingMore);
     const removeNotification = alertStateStore((state) => state.removeNotification);
     const clearNotifications = alertStateStore((state) => state.clearNotifications);
     const markNotificationsAsRead = alertStateStore((state) => state.markNotificationsAsRead);
-
     const fetchNotifications = alertStateStore((state) => state.fetchNotifications);
+    const fetchMoreNotifications = alertStateStore((state) => state.fetchMoreNotifications);
 
     // 로그인 상태 확인
     const isAuthenticated = userStateStore((state) => state.isAuthenticated);
@@ -19,12 +22,12 @@ const NotificationCenter = () => {
     useEffect(() => {
         // 로그인 시 바로 알림 정보를 가져오도록 수정
         if (isAuthenticated) {
-            fetchNotifications(true);
+            fetchNotifications(0, 10, true);
         }
     }, [isAuthenticated, fetchNotifications]);
 
     const displayNotifications = isAuthenticated ? notifications : [];
-    const sortedNotifications = [...displayNotifications].reverse();
+    const sortedNotifications = [...displayNotifications];
     const unreadCount = isAuthenticated ? displayNotifications.filter(n => !n.read).length : 0;
 
     // AlertType에 따른 아이콘 결정
@@ -119,6 +122,22 @@ const NotificationCenter = () => {
                         <div className="empty-notifications">
                             <FaBell className="empty-icon" />
                             <p>알림이 없습니다.</p>
+                        </div>
+                    )}
+                    {isAuthenticated && currentPage < totalPages - 1 && (
+                        <div className="load-more-container text-center py-2">
+                            <Button
+                                variant="link"
+                                size="sm"
+                                className="load-more-btn"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    fetchMoreNotifications();
+                                }}
+                                disabled={isLoadingMore}
+                            >
+                                {isLoadingMore ? '로딩 중...' : '더 보기'}
+                            </Button>
                         </div>
                     )}
                 </div>

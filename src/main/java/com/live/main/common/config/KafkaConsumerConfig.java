@@ -1,6 +1,7 @@
 package com.live.main.common.config;
 
 import com.live.main.common.database.dto.AlertEvent;
+import com.live.main.common.database.dto.ManagerMessageEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
@@ -18,6 +19,7 @@ public class KafkaConsumerConfig {
     @Value("${app.kafka.consumer.partitions}")
     private Integer CONSUMER_PARTITIONS;
 
+    // Alert Consumer Configuration
     @Bean
     public ConsumerFactory<String, AlertEvent> consumerFactory(
             KafkaProperties properties
@@ -41,4 +43,30 @@ public class KafkaConsumerConfig {
 
         return factory;
     }
+
+    // Manager Message Consumer Configuration
+    @Bean
+    public ConsumerFactory<String, ManagerMessageEvent> managerMessageConsumerFactory(
+            KafkaProperties properties
+    ) {
+        return new DefaultKafkaConsumerFactory<>(
+                properties.buildConsumerProperties()
+        );
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, ManagerMessageEvent>
+    managerMessageKafkaListenerContainerFactory(
+            ConsumerFactory<String, ManagerMessageEvent> consumerFactory
+    ) {
+        ConcurrentKafkaListenerContainerFactory<String, ManagerMessageEvent> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+
+        factory.setConsumerFactory(consumerFactory);
+        factory.setConcurrency(CONSUMER_PARTITIONS); // 파티션 수 이하
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
+
+        return factory;
+    }
+
 }

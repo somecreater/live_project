@@ -1,5 +1,6 @@
 import React, { useEffect, useCallback, useRef, useState } from 'react';
 import { alertStateStore } from '../context/alertStateStore';
+import { managerMessageStore } from '../context/managerMessageStore';
 import { userStateStore } from '../context/userStateStore';
 import './AlertSystem.css';
 import {
@@ -9,13 +10,14 @@ import {
 
 const AlertSystem = () => {
     const notifications = alertStateStore((state) => state.notifications);
-    const isConnected = alertStateStore((state) => state.isConnected);
-    const isConnecting = alertStateStore((state) => state.isConnecting);
-    const connectionError = alertStateStore((state) => state.connectionError);
-    const removeNotification = alertStateStore((state) => state.removeNotification);
     const connect = alertStateStore((state) => state.connect);
     const disconnect = alertStateStore((state) => state.disconnect);
     const refetchNotifications = alertStateStore((state) => state.refetchNotifications);
+
+    const connectManager = managerMessageStore((state) => state.connect);
+    const disconnectManager = managerMessageStore((state) => state.disconnect);
+    const loadManagerMessages = managerMessageStore((state) => state.loadManagerMessages);
+
     const isAuthenticated = userStateStore((state) => state.isAuthenticated);
 
     // 연결 상태 추적
@@ -32,13 +34,18 @@ const AlertSystem = () => {
             connectAttempted.current = true;
 
             // 서버에서 저장된 알림을 가져온 후 웹소켓 연결
-            refetchNotifications().then(() => {
+            Promise.all([
+                refetchNotifications(),
+                loadManagerMessages(0, 10, true)
+            ]).then(() => {
                 connect();
+                connectManager();
             });
         }
 
         if (!isAuthenticated && hasInitialized.current) {
             disconnect();
+            disconnectManager();
             hasInitialized.current = false;
             connectAttempted.current = false;
             // 상태 초기화
@@ -46,7 +53,7 @@ const AlertSystem = () => {
             setActiveToasts([]);
             mountTime.current = Date.now();
         }
-    }, [isAuthenticated, connect, disconnect, refetchNotifications]);
+    }, [isAuthenticated, connect, disconnect, refetchNotifications, connectManager, disconnectManager, loadManagerMessages]);
 
     // 신규 알림 감지하여 토스트에 추가
     useEffect(() => {
