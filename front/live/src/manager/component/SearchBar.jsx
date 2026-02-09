@@ -32,6 +32,8 @@ const SEARCH_CONFIG = {
     },
 }
 
+import { FaSearch } from 'react-icons/fa';
+
 /**
  * resourceType에 따라 검색 옵션을 제공하는 컴포넌트
  * @param {string} resourceType - 'USER' | 'CHANNEL' | 'VIDEO' | 'POST'
@@ -73,21 +75,39 @@ function SearchBar({
     }
 
     return (
-        <div className="flex items-center gap-2">
-            <select value={searchType} onChange={handleSearchTypeChange}>
+        <form onSubmit={submitSearchValue} className="manager-search-bar">
+            <select
+                className="manager-select"
+                value={searchType}
+                onChange={handleSearchTypeChange}
+            >
                 {options.map((option) => (
                     <option key={option.value} value={option.value}>
                         {option.label}
                     </option>
                 ))}
             </select>
-            <input type="text" value={keyword} onChange={handleKeywordChange} />
-            <button type="button" onClick={submitSearchValue}>검색</button>
-            <button type="button" onClick={clearSearchValue}>
+
+            <div className="manager-input-wrapper">
+                <FaSearch className="manager-input-icon" />
+                <input
+                    type="text"
+                    className="manager-input"
+                    value={keyword}
+                    onChange={handleKeywordChange}
+                    placeholder="검색어를 입력하세요..."
+                />
+            </div>
+
+            <button type="submit" className="btn-search" disabled={loading}>
+                {loading ? '검색 중...' : '검색'}
+            </button>
+            <button type="button" className="btn-clear" onClick={clearSearchValue}>
                 초기화
             </button>
-        </div>
+        </form>
     );
 }
 
 export default SearchBar;
+

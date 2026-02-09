@@ -35,10 +35,11 @@ function ManagerMessageForm({ targetId, setSendMessageModalOpen }) {
     return (
         <div className="manager-message-form">
             <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label htmlFor="message-title">제목:</label>
+                <div className="manager-form-group">
+                    <label className="manager-label" htmlFor="message-title">제목</label>
                     <input
                         id="message-title"
+                        className="manager-input"
                         type="text"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
@@ -48,10 +49,11 @@ function ManagerMessageForm({ targetId, setSendMessageModalOpen }) {
                     />
                 </div>
 
-                <div className="form-group">
-                    <label htmlFor="message-content">내용:</label>
+                <div className="manager-form-group">
+                    <label className="manager-label" htmlFor="message-content">내용</label>
                     <textarea
                         id="message-content"
+                        className="manager-input"
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
                         placeholder="메시지 내용을 입력하세요"
@@ -61,28 +63,27 @@ function ManagerMessageForm({ targetId, setSendMessageModalOpen }) {
                     />
                 </div>
 
-                <div className="form-group">
-                    <label htmlFor="message-targetId">대상 ID:</label>
-                    <span id="message-targetId" className="target-id">{targetId}</span>
+                <div className="manager-form-group">
+                    <label className="manager-label">수신자</label>
+                    <div className="manager-target-badge">{targetId}</div>
                 </div>
 
-                {/* 검증 에러 표시 */}
                 {validationError && (
-                    <div className="alert alert-warning" role="alert">
+                    <div className="manager-error-text">
                         {validationError}
                     </div>
                 )}
 
-                {/* API 에러 표시 */}
                 {error && (
-                    <div className="alert alert-danger" role="alert">
+                    <div className="manager-error-text">
                         전송 실패: {error}
                     </div>
                 )}
 
                 <button
                     type="submit"
-                    className="btn btn-primary"
+                    className="btn-search"
+                    style={{ width: '100%', marginTop: '1rem' }}
                     disabled={loading}
                 >
                     {loading ? '전송 중...' : '메시지 전송'}

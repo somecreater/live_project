@@ -1,4 +1,6 @@
 
+import { FaUser, FaTv, FaVideo, FaFileAlt } from 'react-icons/fa';
+
 /**
  * 단순 관리자 탭 UI
  * @param {string} activeTab - 현재 활성화된 탭
@@ -8,12 +10,25 @@ function ManagerTab({
     activeTab,
     setActiveTab,
 }) {
+    const tabs = [
+        { id: 'USER', label: 'User', icon: <FaUser /> },
+        { id: 'CHANNEL', label: 'Channel', icon: <FaTv /> },
+        { id: 'VIDEO', label: 'Video', icon: <FaVideo /> },
+        { id: 'POST', label: 'Post', icon: <FaFileAlt /> },
+    ];
+
     return (
-        <div>
-            <button onClick={() => setActiveTab('USER')}>User</button>
-            <button onClick={() => setActiveTab('CHANNEL')}>Channel</button>
-            <button onClick={() => setActiveTab('VIDEO')}>Video</button>
-            <button onClick={() => setActiveTab('POST')}>Post</button>
+        <div className="manager-tabs">
+            {tabs.map((tab) => (
+                <button
+                    key={tab.id}
+                    className={`manager-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+                    onClick={() => setActiveTab(tab.id)}
+                >
+                    {tab.icon}
+                    {tab.label}
+                </button>
+            ))}
         </div>
     );
 }

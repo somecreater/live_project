@@ -63,6 +63,8 @@ const TABLE_CONFIG = {
     }
 }
 
+import { FaTrash, FaEnvelope } from 'react-icons/fa';
+
 /**
  * 관리자 테이블 컴포넌트
  * @param {string} resourceType - 리소스 타입 'USER' | 'CHANNEL' | 'VIDEO' | 'POST'
@@ -84,48 +86,85 @@ function ResourceTable({ resourceType, data, onDelete, loading, error }) {
         setSendMessageModalOpen(true);
     };
 
+    if (loading) {
+        return (
+            <div className="manager-state-container">
+                <span className="loader"></span>
+                <p>데이터를 불러오는 중입니다...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="manager-state-container">
+                <p style={{ color: '#fa5252' }}>에러: {error}</p>
+            </div>
+        );
+    }
+
+    if (!data || data.length === 0) {
+        return (
+            <div className="manager-state-container">
+                <p>데이터가 없습니다.</p>
+            </div>
+        );
+    }
+
     return (
-        <div>
-            {loading && <p>로딩 중...</p>}
-            {error && <p>에러: {error}</p>}
-            {!loading && !error && (!data || data.length === 0) && <p>데이터가 없습니다.</p>}
-            {data && data.length > 0 && (
-                <table>
-                    <thead>
-                        <tr>
-                            {TABLE_CONFIG[resourceType].header.map((header) => (
-                                <th key={header.accessor}>{header.label}</th>
-                            ))}
-                            {onDelete && <th>삭제</th>}
-                            {resourceType === 'USER' && <th>메시지 전송</th>}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {data.map((item) => (
-                            <tr key={item.id}>
-                                {TABLE_CONFIG[resourceType].header.map((header) => (
-                                    <td key={header.accessor}>{item[header.accessor]}</td>
-                                ))}
-                                {onDelete && (
-                                    <td>
-                                        <button onClick={() => onDelete(item.id)}>삭제</button>
-                                    </td>
-                                )}
-                                {resourceType === 'USER' && (
-                                    <td>
-                                        <button onClick={() => handleSendMessage(item.loginId)}>메시지 전송</button>
-                                    </td>
-                                )}
-                            </tr>
+        <div className="manager-table-container">
+            <table className="manager-table">
+                <thead>
+                    <tr>
+                        {TABLE_CONFIG[resourceType].header.map((header) => (
+                            <th key={header.accessor}>{header.label}</th>
                         ))}
-                    </tbody>
-                </table>
-            )}
+                        {onDelete && <th style={{ textAlign: 'center' }}>삭제</th>}
+                        {resourceType === 'USER' && <th style={{ textAlign: 'center' }}>메시지</th>}
+                    </tr>
+                </thead>
+                <tbody>
+                    {data.map((item) => (
+                        <tr key={item.id}>
+                            {TABLE_CONFIG[resourceType].header.map((header) => (
+                                <td key={header.accessor}>
+                                    {header.accessor.includes('createdAt') || header.accessor.includes('updatedAt')
+                                        ? new Date(item[header.accessor]).toLocaleDateString()
+                                        : item[header.accessor]}
+                                </td>
+                            ))}
+                            {onDelete && (
+                                <td style={{ textAlign: 'center' }}>
+                                    <button
+                                        className="btn-action btn-delete"
+                                        onClick={() => onDelete(item.id)}
+                                        title="삭제"
+                                    >
+                                        <FaTrash />
+                                    </button>
+                                </td>
+                            )}
+                            {resourceType === 'USER' && (
+                                <td style={{ textAlign: 'center' }}>
+                                    <button
+                                        className="btn-action btn-message"
+                                        onClick={() => handleSendMessage(item.loginId)}
+                                        title="메시지 전송"
+                                    >
+                                        <FaEnvelope />
+                                    </button>
+                                </td>
+                            )}
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
 
             {/* 메시지 전송 모달 */}
             <Modal
                 show={sendMessageModalOpen}
                 onHide={() => setSendMessageModalOpen(false)}
+                centered
             >
                 <Modal.Header closeButton>
                     <Modal.Title>메시지 전송</Modal.Title>
@@ -137,7 +176,7 @@ function ResourceTable({ resourceType, data, onDelete, loading, error }) {
                     />
                 </Modal.Body>
                 <Modal.Footer>
-                    <button onClick={() => setSendMessageModalOpen(false)}>닫기</button>
+                    <button className="btn-clear" onClick={() => setSendMessageModalOpen(false)}>닫기</button>
                 </Modal.Footer>
             </Modal>
         </div>

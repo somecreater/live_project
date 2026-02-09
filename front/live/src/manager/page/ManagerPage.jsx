@@ -6,6 +6,7 @@ import ManagerTab from "../component/ManagerTab";
 import SearchBar from "../component/SearchBar";
 import ResourceTable from "../component/ResourceTable";
 import ResourceTablePagenation from "../component/ResourceTablePagenation";
+import '../Manager.css';
 
 /**
  * 관리자 페이지 컴포넌트(Tab으로 전환)
@@ -40,6 +41,8 @@ function ManagerPage({ props }) {
 
 
   const handleResourceTabChange = (tab) => {
+    if (activeTab === tab) return;
+
     setActiveTab(tab);
     setResourceType(tab.toUpperCase());
 
@@ -113,6 +116,7 @@ function ManagerPage({ props }) {
   }, [resourcePage]);
 
   const handleDelete = async (id) => {
+    if (!window.confirm('정말 삭제하시겠습니까?')) return;
     const deleteResult = await deleteResource(resourceType, id);
     if (deleteResult) {
       handleSearchSubmit();
@@ -121,39 +125,40 @@ function ManagerPage({ props }) {
 
 
   return (
-    <div className="manager-page">
-      <div>
+    <div className="manager-container">
+      <div className="manager-header">
+        <h1 className="manager-title">Admin Dashboard</h1>
         <ManagerTab
           activeTab={activeTab}
           setActiveTab={handleResourceTabChange}
         />
       </div>
-      <div>
-        <SearchBar
-          resourceType={resourceType}
-          searchType={ListRequest.searchType}
-          keyword={ListRequest.keyword}
-          handleSearchChange={handleSearchChange}
-          onSearch={handleSearchSubmit}
-          onClear={handleSearchClear}
-          loading={loading} />
-      </div>
-      <div>
-        <ResourceTable
-          resourceType={resourceType}
-          data={resourcePage.content}
-          onDelete={handleDelete}
-          loading={loading}
-          error={error} />
-      </div>
-      <div>
+
+      <SearchBar
+        resourceType={resourceType}
+        searchType={ListRequest.searchType}
+        keyword={ListRequest.keyword}
+        handleSearchChange={handleSearchChange}
+        onSearch={handleSearchSubmit}
+        onClear={handleSearchClear}
+        loading={loading}
+      />
+
+      <ResourceTable
+        resourceType={resourceType}
+        data={resourcePage.content}
+        onDelete={handleDelete}
+        loading={loading}
+        error={error}
+      />
+
+      <div className="manager-pagination-wrapper">
         <ResourceTablePagenation
           page={resourcePage.page}
           totalPage={resourcePage.totalPage}
           handlePageChange={handlePageChange}
         />
       </div>
-
     </div>
   );
 }
