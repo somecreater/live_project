@@ -30,9 +30,9 @@ public interface UserRepository extends JpaRepository<UsersEntity, Long> {
     @Query("update UsersEntity u set u.password = ?1 where u.email = ?2")
     int updatePasswordByEmail(String password, String email);
 
-  Page<UsersEntity> findByLoginIdLike(String loginId, Pageable pageable);
+  Page<UsersEntity> findByLoginIdContains(String loginId, Pageable pageable);
 
-  Page<UsersEntity> findByNicknameLike(String nickname, Pageable pageable);
+  Page<UsersEntity> findByNicknameContains(String nickname, Pageable pageable);
 
-  Page<UsersEntity> findByEmailLike(String email, Pageable pageable);
+  Page<UsersEntity> findByEmailContains(String email, Pageable pageable);
 }
