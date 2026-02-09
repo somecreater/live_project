@@ -1,6 +1,7 @@
 const SEARCH_CONFIG = {
     USER: {
         searchType: [
+            { value: 'all', label: '전체' },
             { value: 'loginId', label: '로그인 ID' },
             { value: 'nickname', label: '닉네임' },
             { value: 'email', label: '이메일' },
@@ -8,12 +9,14 @@ const SEARCH_CONFIG = {
     },
     CHANNEL: {
         searchType: [
+            { value: 'all', label: '전체' },
             { value: 'name', label: '채널 이름' },
             { value: 'user_login_id', label: '소유자 로그인 ID' },
         ],
     },
     VIDEO: {
         searchType: [
+            { value: 'all', label: '전체' },
             { value: 'title', label: '제목' },
             { value: 'description', label: '설명' },
             { value: 'channel_name', label: '채널 이름' },
@@ -21,6 +24,7 @@ const SEARCH_CONFIG = {
     },
     POST: {
         searchType: [
+            { value: 'all', label: '전체' },
             { value: 'title', label: '제목' },
             { value: 'content', label: '내용' },
             { value: 'channel_name', label: '채널 이름' },

@@ -38,13 +38,13 @@ public class ManagerService implements ManagerServiceInterface {
         userList= userRepository.findAll(pageRequest).map(userMapper::toDto);
         break;
       case "loginId":
-        userList = userRepository.findByLoginIdLike(keyword, pageRequest).map(userMapper::toDto);
+        userList = userRepository.findByLoginIdContains(keyword, pageRequest).map(userMapper::toDto);
         break;
       case "nickname":
-        userList = userRepository.findByNicknameLike(keyword, pageRequest).map(userMapper::toDto);
+        userList = userRepository.findByNicknameContains(keyword, pageRequest).map(userMapper::toDto);
         break;
       case "email":
-        userList = userRepository.findByEmailLike(keyword, pageRequest).map(userMapper::toDto);
+        userList = userRepository.findByEmailContains(keyword, pageRequest).map(userMapper::toDto);
         break;
       default:
         log.info("관리자 회원 목록 조회 시도 중 잘못된 검색 유형: {}", type);
