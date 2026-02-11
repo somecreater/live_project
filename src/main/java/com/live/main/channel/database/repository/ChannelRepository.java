@@ -21,4 +21,8 @@ public interface ChannelRepository extends JpaRepository<ChannelEntity, Long> {
     void deleteByName(String name);
 
     Optional<ChannelEntity> findByUsers_LoginId(String loginId);
+
+    Page<ChannelEntity> findByNameContains(String name, Pageable pageable);
+
+    Page<ChannelEntity> findByUsers_LoginIdContains(String loginId, Pageable pageable);
 }

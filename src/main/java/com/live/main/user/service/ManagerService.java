@@ -1,5 +1,11 @@
 package com.live.main.user.service;
 
+import com.live.main.channel.database.dto.ChannelDto;
+import com.live.main.channel.database.dto.PostDto;
+import com.live.main.channel.database.mapper.ChannelMapper;
+import com.live.main.channel.database.mapper.PostMapper;
+import com.live.main.channel.database.repository.ChannelRepository;
+import com.live.main.channel.database.repository.PostRepository;
 import com.live.main.common.database.dto.ManagerMessageEvent;
 import com.live.main.user.database.dto.UserDto;
 import com.live.main.user.database.entity.UserType;
@@ -15,6 +21,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -25,10 +32,15 @@ import java.time.LocalDateTime;
 public class ManagerService implements ManagerServiceInterface {
 
   private final UserRepository userRepository;
+  private final PostRepository postRepository;
+  private final ChannelRepository channelRepository;
   private final UserMapper userMapper;
+  private final PostMapper postMapper;
+  private final ChannelMapper channelMapper;
 
   private final ApplicationEventPublisher publisher;
 
+  @Transactional(readOnly = true)
   @Override
   public Page<UserDto> GetUserList(int page, int size, String type, String keyword) {
     PageRequest pageRequest= PageRequest.of(page,size, Sort.by(Sort.Direction.DESC,"createdAt"));
@@ -79,6 +91,51 @@ public class ManagerService implements ManagerServiceInterface {
       throw new IllegalArgumentException("관리자 계정은 강제 탈퇴할 수 없습니다.");
     }
 
+  }
+
+  @Transactional(readOnly = true)
+  @Override
+  public Page<PostDto> GetPostList(int page, int size, String type, String keyword){
+    PageRequest pageRequest= PageRequest.of(page,size, Sort.by(Sort.Direction.DESC,"createdAt"));
+    Page<PostDto> postList= null;
+    switch (type){
+      case "all":
+        postList= postRepository.findAll(pageRequest).map(postMapper::toDto);
+        break;
+      case "title":
+        postList = postRepository.findByTitleContains(keyword, pageRequest).map(postMapper::toDto);
+        break;
+      case "content":
+        postList = postRepository.findByContentContains(keyword, pageRequest).map(postMapper::toDto);
+        break;
+      case "channel_name":
+        postList = postRepository.findByChannelEntity_NameContains(keyword, pageRequest).map(postMapper::toDto);
+        break;
+      default:
+        log.info("관리자 게시글 목록 조회 시도 중 잘못된 검색 유형: {}", type);
+    }
+    return postList;
+  }
+
+  @Transactional(readOnly = true)
+  @Override
+  public Page<ChannelDto> GetChannelList(int page, int size, String type, String keyword){
+    PageRequest pageRequest= PageRequest.of(page,size, Sort.by(Sort.Direction.DESC,"createdAt"));
+    Page<ChannelDto> channelList= null;
+    switch(type){
+      case "all":
+        channelList= channelRepository.findAll(pageRequest).map(channelMapper::toDto);
+        break;
+      case "name":
+        channelList = channelRepository.findByNameContains(keyword, pageRequest).map(channelMapper::toDto);
+        break;
+      case "user_login_id":
+        channelList = channelRepository.findByUsers_LoginIdContains(keyword, pageRequest).map(channelMapper::toDto);
+        break;
+      default:
+        log.info("관리자 채널 목록 조회 시도 중 잘못된 검색 유형: {}", type);
+    }
+    return channelList;
   }
 
   @Override

@@ -43,4 +43,10 @@ public interface PostRepository extends JpaRepository<PostEntity, Long> {
     void deleteByChannelEntity_Id(Long id);
 
     long deleteByChannelEntity_Name(String name);
+
+    Page<PostEntity> findByTitleContains(String title, Pageable pageable);
+
+    Page<PostEntity> findByContentContains(String content, Pageable pageable);
+
+    Page<PostEntity> findByChannelEntity_NameContains(String name, Pageable pageable);
 }

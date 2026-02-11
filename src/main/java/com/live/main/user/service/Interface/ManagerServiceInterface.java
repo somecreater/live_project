@@ -1,6 +1,7 @@
 package com.live.main.user.service.Interface;
 
-import com.live.main.common.database.dto.ManagerMessageEvent;
+import com.live.main.channel.database.dto.ChannelDto;
+import com.live.main.channel.database.dto.PostDto;
 import com.live.main.user.database.dto.UserDto;
 import org.springframework.data.domain.Page;
 
@@ -12,6 +13,12 @@ public interface ManagerServiceInterface {
 
   /**회원 강제 탈퇴 처리 */
   public void ForceDeleteUser(Long userId);
+
+  /**게시글 목록 가져오기*/
+  public Page<PostDto> GetPostList(int page, int size, String type, String keyword);
+
+  /**채널 목록 가져오기*/
+  public Page<ChannelDto> GetChannelList(int page, int size, String type, String keyword);
 
   /**신고된 컨텐츠 검토 및 처리 */
   public boolean ReviewReportedContent(Long contentId, String contentType, String action);
