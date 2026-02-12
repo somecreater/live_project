@@ -1,5 +1,7 @@
 package com.live.main.user.controller;
 
+import com.live.main.channel.database.dto.ChannelDto;
+import com.live.main.channel.database.dto.PostDto;
 import com.live.main.common.database.dto.ManagerMessageEvent;
 import com.live.main.user.database.dto.CustomUserDetails;
 import com.live.main.user.database.dto.UserDto;
@@ -36,6 +38,40 @@ public class ManagerController {
     }else{
       result.put("result", true);
       result.put("user_list", userList);
+    }
+    return ResponseEntity.ok(result);
+  }
+
+  @PostMapping("/channel_list")
+  public ResponseEntity<?> getChannelList(
+          @AuthenticationPrincipal CustomUserDetails principal,
+          @RequestBody SearchRequest request){
+    log.info("[POST] /manager/channel_list - {}", principal.getUsername());
+    Map<String,Object> result=new HashMap<>();
+    Page<ChannelDto> channelList = managerService.GetChannelList(request.getPage(), request.getSize(), request.getType(), request.getKeyword());
+
+    if(channelList == null){
+      result.put("result", false);
+    }else {
+      result.put("result", true);
+      result.put("channel_list", channelList);
+    }
+    return ResponseEntity.ok(result);
+  }
+
+  @PostMapping("/post_list")
+  public ResponseEntity<?> getPostList(
+          @AuthenticationPrincipal CustomUserDetails principal,
+          @RequestBody SearchRequest request){
+    log.info("[POST] /manager/post_list - {}", principal.getUsername());
+    Map<String,Object> result=new HashMap<>();
+    Page<PostDto> postList = managerService.GetPostList(request.getPage(), request.getSize(), request.getType(), request.getKeyword());
+
+    if(postList == null){
+      result.put("result", false);
+    }else {
+      result.put("result", true);
+      result.put("post_list", postList);
     }
     return ResponseEntity.ok(result);
   }
