@@ -3,7 +3,10 @@ package com.live.main.channel.database.repository;
 import com.live.main.channel.database.entity.PostEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 
@@ -44,9 +47,22 @@ public interface PostRepository extends JpaRepository<PostEntity, Long> {
 
     long deleteByChannelEntity_Name(String name);
 
-    Page<PostEntity> findByTitleContains(String title, Pageable pageable);
+    @EntityGraph(attributePaths = {"channel"})
+    @Query("SELECT p FROM PostEntity p")
+    Page<PostEntity> findAll(Pageable pageable);
 
-    Page<PostEntity> findByContentContains(String content, Pageable pageable);
+    @EntityGraph(attributePaths = {"channel"})
+    @Query("SELECT p FROM PostEntity p WHERE" +
+           " p.title LIKE CONCAT('%', :title, '%')" )
+    Page<PostEntity> findByTitleContains(@Param("title") String title, Pageable pageable);
 
-    Page<PostEntity> findByChannelEntity_NameContains(String name, Pageable pageable);
+    @EntityGraph(attributePaths = {"channel"})
+    @Query("SELECT p FROM PostEntity p WHERE" +
+           " p.content LIKE CONCAT('%', :content, '%')" )
+    Page<PostEntity> findByContentContains(@Param("content") String content, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"channel"})
+    @Query("SELECT p FROM PostEntity p WHERE" +
+           " p.channelEntity.name LIKE CONCAT('%', :name, '%')" )
+    Page<PostEntity> findByChannelEntity_NameContains(@Param("name") String name, Pageable pageable);
 }
