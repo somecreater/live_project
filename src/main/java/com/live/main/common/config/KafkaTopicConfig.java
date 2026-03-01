@@ -11,6 +11,7 @@ import org.springframework.kafka.config.TopicBuilder;
 @EnableKafka
 public class KafkaTopicConfig {
 
+    // Notification Topic Configurations
     @Value("${app.kafka.topic.notification.name}")
     private String NOTIFICATION_TOPIC_NAME;
     @Value("${app.kafka.topic.notification.partitions}")
@@ -29,6 +30,28 @@ public class KafkaTopicConfig {
               .replicas(NOTIFICATION_REPLICAS)
               .config("retention.ms", RETENTION_MS)
               .config("cleanup.policy", CLEANUP_POLICY)
+              .build();
+    }
+
+    // Manager Message Topic Configurations
+    @Value("${app.kafka.topic.admin-message.name}")
+    private String ADMIN_MESSAGE_TOPIC_NAME;
+    @Value("${app.kafka.topic.admin-message.partitions}")
+    private Integer ADMIN_MESSAGE_PARTITIONS;
+    @Value("${app.kafka.topic.admin-message.replicas}")
+    private Integer ADMIN_MESSAGE_REPLICAS;
+    @Value("${app.kafka.topic.admin-message.retention-ms}")
+    private String ADMIN_MESSAGE_RETENTION_MS;
+    @Value("${app.kafka.topic.admin-message.cleanup-policy}")
+    private String ADMIN_MESSAGE_CLEANUP_POLICY;
+
+    @Bean
+    public NewTopic adminMessageTopic() {
+      return TopicBuilder.name(ADMIN_MESSAGE_TOPIC_NAME)
+              .partitions(ADMIN_MESSAGE_PARTITIONS)
+              .replicas(ADMIN_MESSAGE_REPLICAS)
+              .config("retention.ms", ADMIN_MESSAGE_RETENTION_MS)
+              .config("cleanup.policy", ADMIN_MESSAGE_CLEANUP_POLICY)
               .build();
     }
 }

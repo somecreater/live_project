@@ -2,7 +2,6 @@ package com.live.main.user.database.repository;
 
 import com.live.main.common.service.RedisService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.concurrent.TimeUnit;

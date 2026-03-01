@@ -5,6 +5,26 @@ export const API_BASE_URL_3 = import.meta.env.VITE_API_BASE_URL_3 || 'http://loc
 export const ALERT_BASE_URL = import.meta.env.VITE_ALERT_BASE_URL || 'http://localhost:8083';
 
 export const API_END_POINT = {
+  manager: {
+    send_manager_message: `${API_BASE_URL}/manager/send_message`,
+    get_user_list: `${API_BASE_URL}/manager/user_list`,
+    get_channel_list: `${API_BASE_URL}/manager/channel_list`,
+    get_message_list: `${API_BASE_URL}/manager/message_list`,
+    get_video_list: `${API_BASE_URL}/manager/video_list`,
+    get_post_list: `${API_BASE_URL}/manager/post_list`,
+    force_user_delete: `${API_BASE_URL}/manager/force_user_delete`,
+    force_channel_delete: `${API_BASE_URL}/manager/force_channel_delete`,
+    force_message_delete: `${API_BASE_URL}/manager/force_message_delete`,
+    force_video_delete: `${API_BASE_URL}/manager/force_video_delete`,
+    force_post_delete: `${API_BASE_URL}/manager/force_post_delete`,
+  },
+  manager_message: {
+    get_list: `${API_BASE_URL}/api/manager_message/get_message`,
+    read_message: `${API_BASE_URL}/api/manager_message/read`,
+    read_message_all: `${API_BASE_URL}/api/manager_message/readAll`,
+    delete_message: `${API_BASE_URL}/api/manager_message/delete`,
+    delete_message_all: `${API_BASE_URL}/api/manager_message/deleteByUser`
+  },
   alert: {
     alert_connect: `${API_BASE_URL}/notify`,
     alert_subscribe: `/user/queue/alerts`,

@@ -83,14 +83,15 @@ public class SecurityConfig{
             security.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests((security)
             ->security.requestMatchers(
+                "/error",
                 "/oauth2/**",
                 "/public/**",
                 "/api/user/login",
                 "/api/user/register",
                 "/notify/**",
                 "/topic/alerts/**").permitAll()
+                .requestMatchers("/manager/**").hasRole("MANAGER")
             .requestMatchers("/api/**").authenticated()
-            .requestMatchers("/manager/**").hasRole("MANAGER")
         ).formLogin(AbstractHttpConfigurer::disable)
         .httpBasic(AbstractHttpConfigurer::disable);
 
