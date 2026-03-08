@@ -5,7 +5,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 /**동영상 기능(2025-12-13)*/
 public interface VideoServiceInterface {
-  /**동영상 업로드 url 제공 기능*/
+  /**동영상 업로드 요청 처리(미리 서명된 URL만 제공)*/
   public String VideoUploadUrl(String channel_name, String user_login_id, VideoDto videoDto);
   /**동영상 썸네일 업로드 기능*/
   public boolean ThumbnailUpload(String channel_name, VideoDto videoDto, MultipartFile file);

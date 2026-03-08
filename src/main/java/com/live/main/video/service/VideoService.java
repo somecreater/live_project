@@ -4,7 +4,6 @@ import com.live.main.common.database.dto.ErrorCode;
 import com.live.main.common.exception.CustomException;
 import com.live.main.video.database.dto.VideoDto;
 import com.live.main.video.service.Interface.VideoServiceInterface;
-import io.awspring.cloud.s3.S3Template;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,19 +17,19 @@ import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignReques
 
 import java.time.Duration;
 
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class VideoService implements VideoServiceInterface {
 
-  private final S3Template s3Template;
   private final S3Presigner s3Presigner;
 
-  @Value("${spring.cloud.aws.s3.bucket}")
+  @Value("${app.r2.video-bucket-name}")
   private String bucket_name;
-  @Value("${app.aws.bucket-name-original-video}")
+  @Value("${app.r2.original-video-bucket-name}")
   private String original_video_folder;
-  @Value("${app.aws.bucket-name-transcoding-video}")
+  @Value("${app.r2.transcoding-video-bucket-name}")
   private String transcoding_video_folder;
   @Value("${app.file.video_limit_size}")
   private Long video_limit_size;
@@ -46,15 +45,30 @@ public class VideoService implements VideoServiceInterface {
     }
 
     if(videoDto.getSize()>video_limit_size
-    || videoDto.getFile_type().equals("video/mp4")
-    || videoDto.getFile_type().equals("video/mov")){
+            || videoDto.getFile_type().equals("video/mp4")
+            || videoDto.getFile_type().equals("video/mov")){
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
 
-    String key= original_video_folder+channel_name+"/"+user_login_id+"_"+videoDto.getTitle();
+    String objectKey = original_video_folder + "/" + channel_name + "/" + videoDto.getTitle();
+    String contentType = videoDto.getFile_type();
 
-    return "";
+    PutObjectRequest objectRequest = PutObjectRequest.builder()
+            .bucket(bucket_name)
+            .key(objectKey)
+            .contentType(contentType)
+            .build();
+
+    PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
+            .signatureDuration(Duration.ofMinutes(15))
+            .putObjectRequest(objectRequest) // URL valid for 15 minutes
+            .build();
+
+    PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(presignRequest);
+    return presignedRequest.url().toString();
   }
+
+
 
   @Override
   @Transactional
