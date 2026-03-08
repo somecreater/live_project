@@ -50,7 +50,7 @@ public class VideoService implements VideoServiceInterface {
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
 
-    String objectKey = original_video_folder + "/" + channel_name + "/" + videoDto.getTitle();
+    String objectKey = original_video_folder + channel_name + "/" + videoDto.getTitle();
     String contentType = videoDto.getFile_type();
 
     PutObjectRequest objectRequest = PutObjectRequest.builder()
