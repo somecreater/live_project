@@ -3,6 +3,9 @@ package com.live.main.video.service;
 import com.live.main.common.database.dto.ErrorCode;
 import com.live.main.common.exception.CustomException;
 import com.live.main.video.database.dto.VideoDto;
+import com.live.main.video.database.entity.VideoEntity;
+import com.live.main.video.database.mapper.VideoMapper;
+import com.live.main.video.database.repository.VideoRepository;
 import com.live.main.video.service.Interface.VideoServiceInterface;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +37,9 @@ public class VideoService implements VideoServiceInterface {
   @Value("${app.file.video_limit_size}")
   private Long video_limit_size;
 
+  private final VideoMapper videoMapper;
+  private final VideoRepository videoRepository;
+
   @Override
   @Transactional
   public String VideoUploadUrl(String channel_name, String user_login_id, VideoDto videoDto) {
@@ -50,22 +56,33 @@ public class VideoService implements VideoServiceInterface {
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
 
-    String objectKey = original_video_folder + channel_name + "/" + videoDto.getTitle();
-    String contentType = videoDto.getFile_type();
+    try {
+      String objectKey = original_video_folder + channel_name + "/" + videoDto.getTitle();
+      String contentType = videoDto.getFile_type();
 
-    PutObjectRequest objectRequest = PutObjectRequest.builder()
-            .bucket(bucket_name)
-            .key(objectKey)
-            .contentType(contentType)
-            .build();
+      PutObjectRequest objectRequest = PutObjectRequest.builder()
+              .bucket(bucket_name)
+              .key(objectKey)
+              .contentType(contentType)
+              .build();
 
-    PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
-            .signatureDuration(Duration.ofMinutes(15))
-            .putObjectRequest(objectRequest) // URL valid for 15 minutes
-            .build();
+      PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
+              .signatureDuration(Duration.ofMinutes(15))
+              .putObjectRequest(objectRequest) // URL valid for 15 minutes
+              .build();
 
-    PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(presignRequest);
-    return presignedRequest.url().toString();
+      PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(presignRequest);
+      VideoEntity entity = videoMapper.toEntity(videoDto);
+
+      videoRepository.save(entity);
+
+      return presignedRequest.url().toString();
+
+    }catch (Exception e){
+      log.error("Error generating presigned URL: {}", e.getMessage());
+      throw new CustomException(ErrorCode.SERVER_ERROR);
+    }
+
   }
 
 

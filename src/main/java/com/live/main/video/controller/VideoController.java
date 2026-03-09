@@ -1,6 +1,8 @@
 package com.live.main.video.controller;
 
 
+import com.live.main.channel.database.dto.ChannelDto;
+import com.live.main.channel.service.Interface.ChannelServiceInterface;
 import com.live.main.user.database.dto.CustomUserDetails;
 import com.live.main.video.database.dto.VideoDto;
 import com.live.main.video.service.Interface.VideoServiceInterface;
@@ -23,6 +25,7 @@ import java.util.Map;
 public class VideoController {
 
   private final VideoServiceInterface videoService;
+  private final ChannelServiceInterface channelService;
 
   @PostMapping("/upload-url")
   public ResponseEntity<?> getVideoUploadUrl(
@@ -30,6 +33,20 @@ public class VideoController {
           @RequestBody VideoDto videoDto) {
     Map<String ,Object> result = new HashMap<>();
 
+    ChannelDto channelDto = channelService.getChannelInfoUser(principal.getUserid());
+    if(channelDto.getName() == null
+            || channelDto.getName().isBlank()
+            || !channelDto.getName().equals(videoDto.getChannel_name())){
+        result.put("result", false);
+    }
+
+    String uploadUrl = videoService.VideoUploadUrl(channelDto.getName(), principal.getUserid(), videoDto);
+    if(uploadUrl == null || uploadUrl.isBlank()){
+        result.put("result", false);
+    } else {
+        result.put("result", true);
+        result.put("uploadUrl", uploadUrl);
+    }
     return ResponseEntity.ok(result);
   }
 
