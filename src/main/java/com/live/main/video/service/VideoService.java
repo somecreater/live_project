@@ -3,6 +3,7 @@ package com.live.main.video.service;
 import com.live.main.common.database.dto.ErrorCode;
 import com.live.main.common.exception.CustomException;
 import com.live.main.video.database.dto.VideoDto;
+import com.live.main.video.database.entity.Status;
 import com.live.main.video.database.entity.VideoEntity;
 import com.live.main.video.database.mapper.VideoMapper;
 import com.live.main.video.database.repository.VideoRepository;
@@ -73,6 +74,7 @@ public class VideoService implements VideoServiceInterface {
 
       PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(presignRequest);
       VideoEntity entity = videoMapper.toEntity(videoDto);
+      entity.setStatus(Status.PRIVATE);
 
       videoRepository.save(entity);
 

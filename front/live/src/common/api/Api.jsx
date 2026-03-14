@@ -91,5 +91,10 @@ export const API_END_POINT = {
     write: `${API_BASE_URL}/api/post/write`,
     update: `${API_BASE_URL}/api/post/update`,
     delete: `${API_BASE_URL}/api/post/delete`
+  },
+  video: {
+    upload_url: `${API_BASE_URL}/api/video/upload-url`,
+    list: `${API_BASE_URL}/api/video/list`,
+    delete: `${API_BASE_URL}/api/video/delete`
   }
 };
