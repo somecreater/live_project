@@ -50,6 +50,12 @@ public class VideoEntity extends timeEntity {
   @Column
   private int view_count;
 
+  @Column
+  private String hls_url;
+
+  @Column
+  private String thumbnail_url;
+
   @ManyToOne
   @JoinColumn(nullable = true, name = "channel_id")
   private ChannelEntity channelEntity;
