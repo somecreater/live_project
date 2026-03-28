@@ -11,8 +11,11 @@ public interface VideoServiceInterface {
   public boolean ThumbnailUpload(String channel_name, VideoDto videoDto, MultipartFile file);
   /**동영상 재생 url 제공 기능*/
   public String VideoPlayUrl(String channel_name, String video_title);
+
   /**동영상 삭제 기능*/
   public boolean VideoDelete(String channel_name, String video_title);
   /**동영상 삭제 기능(채널 이름)*/
   public boolean VideoDeleteOnChannel(String channel_name);
+  /**미업로드 상태의 동영상 정보 삭제 기능*/
+  public void DeleteUnuploadedVideoInfo();
 }
