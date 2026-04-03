@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Spinner, Alert, Button, Modal, Nav, Tab } from 'react-bootstrap';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FaHome, FaNewspaper, FaVideo, FaInfoCircle, FaList, FaUsers } from 'react-icons/fa';
 import Cover from '../component/Cover';
 import ChannelHome from '../component/ChannelHome';
@@ -11,6 +11,9 @@ import SubscriptionList from '../component/SubscriptionList';
 import './ChannelDetailPage.css';
 
 function MyChannelPage() {
+
+    const navigate = useNavigate();
+
     const [searchParams, setSearchParams] = useSearchParams();
     const [channel, setChannel] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -190,6 +193,9 @@ function MyChannelPage() {
                                 <h4>동영상</h4>
                                 <p className="text-muted">아직 업로드된 동영상이 없습니다.</p>
                             </div>
+                            <Button variant="primary" onClick={() => navigate('/video/upload')}>
+                                동영상 업로드
+                            </Button>
                         </Tab.Pane>
 
                         {/* 재생목록 탭 */}

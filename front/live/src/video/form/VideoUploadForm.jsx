@@ -4,7 +4,8 @@ import { useState } from "react";
 /**
  * VideoUploadForm 컴포넌트 - 동영상 업로드 폼
  * 먼저 동영상 정보를 임시로 DB에 저장하고, 미리 서명된 URL을 사용하여 Cloudflare에 직접 업로드
- * @param {function} onVideoUploadUrl - 동영상 정보 업로드 성공 시 호출될 콜백 함수
+ * @param {function} onVideoUploadUrl - 동영상 정보 업로드 API 호출 함수
+ * @param {function} onSuccess - 동영상 정보 업로드 성공 시 호출될 콜백 함수
  */
 function VideoUploadForm({ onVideoUploadUrl, onSuccess }) {
 
@@ -18,9 +19,6 @@ function VideoUploadForm({ onVideoUploadUrl, onSuccess }) {
         allow_comments: true,
         duration_seconds: 0
     });
-    const [presignedUrl, setPresignedUrl] = useState("");
-    const [isUploading, setIsUploading] = useState(false);
-    const [uploadProgress, setUploadProgress] = useState(0);
     const [error, setError] = useState(null);
 
     const handleInputChange = (e) => {
@@ -30,25 +28,23 @@ function VideoUploadForm({ onVideoUploadUrl, onSuccess }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setIsUploading(true);
         setError(null);
         const data = await onVideoUploadUrl(video);
         if (data.result) {
-            setPresignedUrl(data.presigned_url);
-            setVideo(data.video);
+            onSuccess(data);
         } else {
             console.error("업로드 오류:", data);
             setError(data.message);
         }
-        setIsUploading(false);
     };
 
     return (
         <Form onSubmit={handleSubmit}>
             <p style={{ color: "red" }}>
-                특정 사이즈 이상의 동영상은 업로드 할 수 없습니다.(URL은 제공되지만 도중 업로드 실패)<br />
+                특정 사이즈 이상의 동영상은 업로드 할 수 없습니다.(업로드 폼은 제공되지만 도중 업로드 실패)<br />
                 동영상 길이는 10분 이내로 제한됩니다.
             </p>
+            {error && <p style={{ color: "red" }}>{error}</p>}
             <Form.Group className="mb-3" controlId="formBasicTitle">
                 <Form.Label>제목</Form.Label>
                 <Form.Control type="text" value={video.title} onChange={handleInputChange} placeholder="제목을 입력해주세요" />

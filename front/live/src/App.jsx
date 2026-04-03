@@ -14,6 +14,7 @@ import ChannelDetailPage from './channel/page/ChannelDetailPage';
 import { BrowserRouter } from 'react-router-dom'
 import AppLayout from './AppLayout';
 import "./App.css"
+import VideoUploadPage from './video/page/VideoUploadPage';
 
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
             <Route path="/channel" element={<ChannelPage />} />
             <Route path="/channel/:id" element={<ChannelDetailPage />} />
             <Route path="/channel/my_channel" element={<MyChannelPage />} />
+            <Route path="/video/upload" element={<VideoUploadPage />} />
 
             <Route path="/manager" element={<ManagerPage />} />
           </Routes>
