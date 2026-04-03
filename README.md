@@ -1,6 +1,12 @@
 # Live Project
 
 실시간 스트리밍 및 라이브 방송 플랫폼을 위한 풀스택 애플리케이션입니다.
+(아직 계획 및 개발 단계로 여러 변경사항이 있을 수도 있습니다!!!!)
+
+아래의 Notion에서 실시간으로 업데이트 중입니다.
+https://insidious-agustinia-e42.notion.site/237a80d43c45804da8b8ef82980dc85a?source=copy_link
+
+
 
 ## 🚀 프로젝트 개요
 
@@ -29,6 +35,7 @@
 ### Infra & DevOps & Monitoring
 - **Github Action** - CI/CD 파이프라인
 - **Github** - 코드 버전 관리
+- **AWS Elastic IP** - IP4v 활용
 - **AWS Route 53** - DNS 서버 운영
 - **AWS EC2** - API 서버 운영
 - **AWS RDS** - 데이터베이스 운영
@@ -42,8 +49,7 @@
 
 ### Streaming Infrastructure
 - **FFmpeg** - 비디오 인코딩 및 실시간 스트리밍
-- **VMware** - 가상화 환경에서 인코딩 처리
-- **AWS CloudFront** - 글로벌 CDN 배포
+- **CloudFlare R2** - 글로벌 CDN 배포
 - **hls.js** - HLS 플레이어 라이브러리
 
 ## 📁 프로젝트 구조(추후 변경 가능성이 있습니다!)
@@ -73,7 +79,6 @@ demo/
 - MySQL 8.0+
 - Redis 6.0+
 - FFmpeg 4.0+
-- VMware/VirtualBox (가상화 환경)
 - AWS (S3, CloudFront 등)
 
 ### 백엔드 실행
@@ -256,7 +261,7 @@ export default function VideoPlayer({ url }) {
 
 ### 실시간 스트리밍
 - **HLS 기반 실시간 비디오 스트리밍** (10-30초 지연시간)
-- **RTSP/RTMP 스트림 수신 및 HLS 변환** (VMware FFmpeg)
+- **RTSP/RTMP 스트림 수신 및 HLS 변환** (VMware(AWS EC2) FFmpeg)
 - **AWS S3 + CloudFront 글로벌 배포**
 - **실시간 채팅** (WebSocket 기반)
 - **방송 관리** (시작/종료/일시정지)
@@ -275,10 +280,10 @@ export default function VideoPlayer({ url }) {
 ### 파일 관리
 - 로컬 파일 시스템, AWS S3를 통한 파일 업로드
 - 이미지/비디오 처리
-- AWS S3를 통한 비디오 파일 저장
+- Cloud를 통한 비디오 파일 저장
 
 ### VOD 스트리밍 (온디맨드)
-- VMware에서 FFmpeg를 통한 HLS 인코딩
+- VMware(AWS EC2)에서 FFmpeg를 통한 HLS 인코딩
 - AWS S3 + CloudFront 기반 글로벌 배포
 - hls.js를 통한 React 플레이어 연동
 - 다중 해상도 지원 (1080p, 720p, 480p)
@@ -291,16 +296,14 @@ export default function VideoPlayer({ url }) {
 - CORS 설정
 - XSS/CSRF 방어
 - AWS IAM을 통한 S3 접근 제어
-- CloudFront Signed URL/Cookie를 통한 비디오 접근 제어
 
 ## 📈 성능 최적화
 
 - Redis를 통한 세션 및 캐시 관리
 - 데이터베이스 연결 풀링
 - 비동기 처리
-- VMware 가상머신 리소스 최적화 (CPU, RAM, Storage)
+- VMware 가상머신 리소스 최적화 (CPU, RAM, Storage)(AWS EC2를 사용할 수도 있습니다)
 - CloudFront 캐싱 정책 최적화
-- S3 → CloudFront 오리진 리전 내 전송으로 대역폭 비용 절약
 - HLS 세그먼트 크기 및 지속시간 최적화
 - Docker 컨테이너 리소스 최적화
 
