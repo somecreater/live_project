@@ -35,8 +35,7 @@ public class VideoController {
 
     ChannelDto channelDto = channelService.getChannelInfoUser(principal.getUserid());
     if(channelDto.getName() == null
-            || channelDto.getName().isBlank()
-            || !channelDto.getName().equals(videoDto.getChannel_name())){
+            || channelDto.getName().isBlank()){
         result.put("result", false);
     }
 

@@ -49,13 +49,11 @@ public class VideoService implements VideoServiceInterface {
     if(channel_name.isBlank() || user_login_id.isBlank()){
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
-    if(videoDto.getTitle().isBlank() || videoDto.getChannel_name().isBlank()){
+    if(videoDto.getTitle().isBlank()){
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
 
-    if(videoDto.getSize()>video_limit_size
-            || videoDto.getFile_type().equals("video/mp4")
-            || videoDto.getFile_type().equals("video/mov")){
+    if(videoDto.getFile_type().equals("video/mp4") || videoDto.getFile_type().equals("video/mov")){
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
 
@@ -75,6 +73,7 @@ public class VideoService implements VideoServiceInterface {
               .build();
 
       PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(presignRequest);
+      videoDto.setChannel_name(channel_name);
       VideoEntity entity = videoMapper.toEntity(videoDto);
       entity.setStatus(Status.PRIVATE);
 
