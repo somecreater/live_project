@@ -1,0 +1,168 @@
+/* Video Upload Modal Premium Styling */
+.video-upload-modal .modal-content {
+    border-radius: 20px;
+    background: #121212;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+
+.video-upload-modal .modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.video-upload-modal .modal-title {
+    font-weight: 700;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    letter-spacing: -0.02em;
+}
+
+.video-upload-modal .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.video-upload-modal .btn-close:hover {
+    opacity: 1;
+}
+
+.video-upload-modal .modal-body {
+    padding: 40px 32px;
+}
+
+.video-upload-modal .drop-zone {
+    background: rgba(255, 255, 255, 0.03);
+    border: 2px dashed rgba(255, 255, 255, 0.15);
+    border-radius: 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+.video-upload-modal .drop-zone:hover {
+    background: rgba(59, 130, 246, 0.05);
+    border-color: #3b82f6;
+    transform: translateY(-2px);
+}
+
+.video-upload-modal .file-info {
+    width: 100%;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    animation: slideUp 0.4s ease-out;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.video-upload-modal .file-icon {
+    font-size: 28px;
+    color: #60a5fa;
+}
+
+.video-upload-modal .file-details h5 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #f3f4f6;
+}
+
+.video-upload-modal .file-details span {
+    font-size: 0.85rem;
+    color: #9ca3af;
+}
+
+.video-upload-modal .progress-container {
+    width: 100%;
+    margin: 20px 0;
+}
+
+.video-upload-modal .progress {
+    height: 10px;
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+}
+
+.video-upload-modal .progress-bar {
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6, #d946ef);
+    background-size: 200% 100%;
+    animation: gradientMove 2s linear infinite;
+}
+
+@keyframes gradientMove {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+}
+
+.video-upload-modal .status-text {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 600;
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+    color: #e5e7eb;
+}
+
+.video-upload-modal .success-animation {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.video-upload-modal .check-icon {
+    font-size: 72px;
+    color: #10b981;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 0 15px rgba(16, 185, 129, 0.3));
+    animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes scaleIn {
+    from { transform: scale(0); }
+    to { transform: scale(1); }
+}
+
+.video-upload-modal .modal-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 20px 32px;
+    background: rgba(255, 255, 255, 0.01);
+}
+
+.video-upload-modal .btn-primary {
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    border: none;
+    padding: 12px 28px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.3s;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.video-upload-modal .btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+    filter: brightness(1.1);
+}
+
+.video-upload-modal .btn-secondary {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #d1d5db;
+    padding: 12px 24px;
+    border-radius: 12px;
+}
+
+.video-upload-modal .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+}

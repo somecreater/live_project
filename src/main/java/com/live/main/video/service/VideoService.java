@@ -54,6 +54,7 @@ public class VideoService implements VideoServiceInterface {
     }
 
     if(videoDto.getFile_type().equals("video/mp4") || videoDto.getFile_type().equals("video/mov")){
+      log.info(videoDto.getFile_type());
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
 

@@ -47,18 +47,18 @@ function VideoUploadForm({ onVideoUploadUrl, onSuccess }) {
             {error && <p style={{ color: "red" }}>{error}</p>}
             <Form.Group className="mb-3" controlId="formBasicTitle">
                 <Form.Label>제목</Form.Label>
-                <Form.Control type="text" value={video.title} onChange={handleInputChange} placeholder="제목을 입력해주세요" />
+                <Form.Control type="text" name="title" value={video.title} onChange={handleInputChange} placeholder="제목을 입력해주세요" />
             </Form.Group>
 
             <Form.Group className="mb-3" controlId="formBasicDescription">
                 <Form.Label>설명</Form.Label>
-                <Form.Control type="text" value={video.description} onChange={handleInputChange} placeholder="설명을 입력해주세요" />
+                <Form.Control type="text" name="description" value={video.description} onChange={handleInputChange} placeholder="설명을 입력해주세요" />
             </Form.Group>
 
             <Form.Group className="mb-3" controlId="formBasicFileType">
                 <Form.Label>파일 타입</Form.Label>
-                <Form.Select aria-label="Default select example">
-                    <option>파일 타입을 선택해주세요</option>
+                <Form.Select name="file_type" value={video.file_type} onChange={handleInputChange} aria-label="Default select example">
+                    <option value="">파일 타입을 선택해주세요</option>
                     <option value="mp4">mp4</option>
                     <option value="mov">mov</option>
                 </Form.Select>

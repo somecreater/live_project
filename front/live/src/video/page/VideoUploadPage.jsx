@@ -3,6 +3,7 @@ import ApiService from "../../common/api/ApiService";
 import VideoUploadForm from "../form/VideoUploadForm";
 import { useState } from "react";
 import { Button } from "react-bootstrap";
+import VideoUploadModal from "../form/VideoUploadModal";
 
 /**
  * 동영상 업로드 페이지
@@ -30,6 +31,15 @@ function VideoUploadPage() {
             <Button variant="primary" onClick={() => navigate('/channel/my_channel')}>
                 채널로 돌아가기
             </Button>
+            <VideoUploadModal
+                show={isUploading}
+                onHide={() => setIsUploading(false)}
+                onVideoUploadUrl={presignedUrl}
+                onSuccess={() => {
+                    alert("동영상이 성공적으로 업로드되었습니다.");
+                    navigate('/channel/my_channel');
+                }}
+            />
         </div>
     );
 }
