@@ -8,8 +8,8 @@ import com.live.main.video.database.entity.VideoEntity;
 import com.live.main.video.database.mapper.VideoMapper;
 import com.live.main.video.database.repository.VideoRepository;
 import com.live.main.video.service.Interface.VideoServiceInterface;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -25,7 +25,6 @@ import java.time.LocalDateTime;
 
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class VideoService implements VideoServiceInterface {
 
@@ -43,6 +42,14 @@ public class VideoService implements VideoServiceInterface {
   private final VideoMapper videoMapper;
   private final VideoRepository videoRepository;
 
+  public VideoService(
+          @Qualifier("r2Presigner") S3Presigner s3Presigner,
+          VideoMapper videoMapper,
+          VideoRepository videoRepository){
+    this.s3Presigner = s3Presigner;
+    this.videoMapper = videoMapper;
+    this.videoRepository = videoRepository;
+  }
   @Override
   @Transactional
   public String VideoUploadUrl(String channel_name, String user_login_id, VideoDto videoDto) {
@@ -60,8 +67,9 @@ public class VideoService implements VideoServiceInterface {
 
     try {
       String objectKey = original_video_folder + channel_name + "/" + videoDto.getTitle();
-      String contentType = videoDto.getFile_type();
+      String contentType = normalizeContentType(videoDto.getFile_type());
 
+      log.info("비디오 객체 타입: {}", contentType);
       PutObjectRequest objectRequest = PutObjectRequest.builder()
               .bucket(bucket_name)
               .key(objectKey)
@@ -89,7 +97,20 @@ public class VideoService implements VideoServiceInterface {
 
   }
 
+  @Override
+  public String normalizeContentType(String fileType){
+    if (fileType == null || fileType.isBlank()) {
+      return "application/octet-stream";
+    }
 
+    return switch (fileType.toLowerCase()) {
+      case "mp4" -> "video/mp4";
+      case "mov" -> "video/quicktime";
+      case "video/mp4" -> "video/mp4";
+      case "video/quicktime" -> "video/quicktime";
+      default -> fileType;
+    };
+  }
 
   @Override
   @Transactional

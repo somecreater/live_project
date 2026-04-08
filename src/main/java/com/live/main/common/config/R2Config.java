@@ -7,8 +7,8 @@ import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Configuration;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 import java.net.URI;
 
@@ -25,23 +25,21 @@ public class R2Config {
     @Value("${app.r2.endpoint}")
     private String endpoint;
 
-    @Bean
-    public S3Client s3Client() {
+    @Bean("r2Presigner")
+    public S3Presigner r2Presigner() {
 
-        AwsBasicCredentials credentials =
-                AwsBasicCredentials.create(accessKey, secretKey);
-
-        log.info("R2 Client initialized with endpoint: {}", endpoint);
-
-        return S3Client.builder()
+        return S3Presigner.builder()
                 .endpointOverride(URI.create(endpoint))
+                .region(Region.of("auto"))
                 .credentialsProvider(
-                        StaticCredentialsProvider.create(credentials)
+                        StaticCredentialsProvider.create(
+                                AwsBasicCredentials.create(accessKey, secretKey)
+                        )
                 )
-                .region(Region.AP_NORTHEAST_2)
                 .serviceConfiguration(
                         S3Configuration.builder()
                                 .pathStyleAccessEnabled(true)
+                                .chunkedEncodingEnabled(false)
                                 .build()
                 )
                 .build();
