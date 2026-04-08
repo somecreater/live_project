@@ -27,6 +27,7 @@ public class VideoMapper {
     entity.setView_count(videoDto.getView_count());
     entity.setHls_url(videoDto.getHls_url());
     entity.setThumbnail_url(videoDto.getThumbnail_url());
+    entity.setPresigned_url(videoDto.getPresigned_url());
     if(videoDto.getChannel_id() != null){
       entity.setChannelEntity(channelRepository.findById(
         videoDto.getChannel_id()
@@ -57,6 +58,7 @@ public class VideoMapper {
     dto.setView_count(entity.getView_count());
     dto.setHls_url(entity.getHls_url());
     dto.setThumbnail_url(entity.getThumbnail_url());
+    dto.setPresigned_url(entity.getPresigned_url());
     if(entity.getChannelEntity() != null){
       dto.setChannel_id(entity.getChannelEntity().getId());
       dto.setChannel_name(entity.getChannelEntity().getName());

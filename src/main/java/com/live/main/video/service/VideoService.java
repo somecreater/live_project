@@ -9,6 +9,7 @@ import com.live.main.video.database.mapper.VideoMapper;
 import com.live.main.video.database.repository.VideoRepository;
 import com.live.main.video.service.Interface.VideoServiceInterface;
 import lombok.extern.slf4j.Slf4j;
+import org.antlr.v4.runtime.misc.FlexibleHashMap;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -22,6 +23,8 @@ import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignReques
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 
 @Service
@@ -52,7 +55,9 @@ public class VideoService implements VideoServiceInterface {
   }
   @Override
   @Transactional
-  public String VideoUploadUrl(String channel_name, String user_login_id, VideoDto videoDto) {
+  public Map<String, Object> VideoUploadUrl(String channel_name, String user_login_id, VideoDto videoDto) {
+    Map<String, Object> result= new HashMap<>();
+
     if(channel_name.isBlank() || user_login_id.isBlank()){
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
@@ -66,7 +71,14 @@ public class VideoService implements VideoServiceInterface {
     }
 
     try {
-      String objectKey = original_video_folder + channel_name + "/" + videoDto.getTitle();
+      videoDto.setChannel_name(channel_name);
+      VideoEntity entity = videoMapper.toEntity(videoDto);
+      entity.setStatus(Status.PRIVATE);
+
+      VideoEntity savedEntity = videoRepository.save(entity);
+
+      String objectKey = original_video_folder + channel_name + "/" +
+              savedEntity.getId() + "_" + videoDto.getTitle();
       String contentType = normalizeContentType(videoDto.getFile_type());
 
       log.info("비디오 객체 타입: {}", contentType);
@@ -82,13 +94,13 @@ public class VideoService implements VideoServiceInterface {
               .build();
 
       PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(presignRequest);
-      videoDto.setChannel_name(channel_name);
-      VideoEntity entity = videoMapper.toEntity(videoDto);
-      entity.setStatus(Status.PRIVATE);
+      savedEntity.setPresigned_url(presignedRequest.url().toString());
+      videoRepository.save(savedEntity);
 
-      videoRepository.save(entity);
+      result.put("url", presignedRequest.url().toString());
+      result.put("video_id", savedEntity.getId());
 
-      return presignedRequest.url().toString();
+      return result;
 
     }catch (Exception e){
       log.error("Error generating presigned URL: {}", e.getMessage());
@@ -111,6 +123,8 @@ public class VideoService implements VideoServiceInterface {
       default -> fileType;
     };
   }
+
+
 
   @Override
   @Transactional

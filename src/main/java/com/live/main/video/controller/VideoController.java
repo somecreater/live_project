@@ -39,12 +39,16 @@ public class VideoController {
         result.put("result", false);
     }
 
-    String uploadUrl = videoService.VideoUploadUrl(channelDto.getName(), principal.getUserid(), videoDto);
-    if(uploadUrl == null || uploadUrl.isBlank()){
+    Map<String, Object> sub_result= videoService.VideoUploadUrl(channelDto.getName(), principal.getUserid(), videoDto);
+    Object urlObj = sub_result.get("url");
+    Object videoIdObj = sub_result.get("video_id");
+
+    if(urlObj == null || videoIdObj == null){
         result.put("result", false);
     } else {
         result.put("result", true);
-        result.put("uploadUrl", uploadUrl);
+        result.put("uploadUrl", urlObj.toString());
+        result.put("video_id", ((Number) videoIdObj).longValue());
     }
     return ResponseEntity.ok(result);
   }

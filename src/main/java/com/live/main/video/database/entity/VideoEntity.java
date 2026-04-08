@@ -56,6 +56,9 @@ public class VideoEntity extends timeEntity {
   @Column
   private String thumbnail_url;
 
+  @Column
+  private String presigned_url;
+
   @ManyToOne
   @JoinColumn(nullable = true, name = "channel_id")
   private ChannelEntity channelEntity;

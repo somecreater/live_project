@@ -12,7 +12,10 @@ import VideoUploadModal from "../form/VideoUploadModal";
 function VideoUploadPage() {
     const navigate = useNavigate();
     const [isUploading, setIsUploading] = useState(false);
+
     const [presignedUrl, setPresignedUrl] = useState("");
+    const [presignedVideoId, setPresignedVideoId] = useState("");
+
     const handleVideoUploadUrl = async (video) => {
         const response = await ApiService.video.upload_url(video);
         return response.data;
@@ -20,8 +23,15 @@ function VideoUploadPage() {
 
     const handleSuccess = (data) => {
         setPresignedUrl(data.uploadUrl);
+        setPresignedVideoId(data.video_id);
         setIsUploading(true);
         alert("동영상 정보가 성공적으로 업로드되었습니다.");
+    };
+
+    const handleSuccessUpload = () => {
+
+        alert("동영상이 성공적으로 업로드되었습니다.");
+        navigate('/channel/my_channel');
     };
 
     return (
@@ -35,10 +45,7 @@ function VideoUploadPage() {
                 show={isUploading}
                 onHide={() => setIsUploading(false)}
                 onVideoUploadUrl={presignedUrl}
-                onSuccess={() => {
-                    alert("동영상이 성공적으로 업로드되었습니다.");
-                    navigate('/channel/my_channel');
-                }}
+                onSuccess={handleSuccessUpload}
             />
         </div>
     );
