@@ -32,6 +32,7 @@ function VideoUploadPage() {
 
         alert("동영상이 성공적으로 업로드되었습니다.");
         navigate('/channel/my_channel');
+        //추후 업로드 성공시 호출할 API 필요
     };
 
     return (

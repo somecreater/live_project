@@ -16,7 +16,10 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
@@ -25,12 +28,13 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-
+import java.util.Objects;
 
 @Service
 @Slf4j
 public class VideoService implements VideoServiceInterface {
 
+  private final S3Client s3Client;
   private final S3Presigner s3Presigner;
 
   @Value("${app.r2.video-bucket-name}")
@@ -46,9 +50,11 @@ public class VideoService implements VideoServiceInterface {
   private final VideoRepository videoRepository;
 
   public VideoService(
+          S3Client s3Client,
           @Qualifier("r2Presigner") S3Presigner s3Presigner,
           VideoMapper videoMapper,
           VideoRepository videoRepository){
+    this.s3Client = s3Client;
     this.s3Presigner = s3Presigner;
     this.videoMapper = videoMapper;
     this.videoRepository = videoRepository;
@@ -124,7 +130,65 @@ public class VideoService implements VideoServiceInterface {
     };
   }
 
+  @Override
+  @Transactional
+  public void videoValidation(String channel_name, Long video_id){
+    String object_id=null;
 
+    if(channel_name == null || channel_name.isBlank() || video_id == null) {
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    VideoEntity videoEntity = videoRepository.findById(video_id)
+            .orElseThrow(() -> new CustomException(ErrorCode.BAD_REQUEST));
+    if(videoEntity.getChannelEntity() == null){
+      object_id = original_video_folder + channel_name + "/" +
+              video_id + "_" + videoEntity.getTitle();
+
+      deleteObject(object_id);
+      videoRepository.deleteById(video_id);
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+
+    }
+    String savedChannelName = videoEntity.getChannelEntity().getName();
+
+    if (!Objects.equals(savedChannelName, channel_name)) {
+      String requestObjectKey = original_video_folder + channel_name + "/" +
+              video_id + "_" + videoEntity.getTitle();
+      deleteObject(requestObjectKey);
+
+      String dbObjectKey = original_video_folder + savedChannelName + "/" +
+              video_id + "_" + videoEntity.getTitle();
+      deleteObject(dbObjectKey);
+
+      videoRepository.delete(videoEntity);
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+  }
+
+  @Override
+  public void deleteObject(String objectKey){
+    try {
+      DeleteObjectRequest request = DeleteObjectRequest.builder()
+              .bucket(bucket_name)
+              .key(objectKey)
+              .build();
+      s3Client.deleteObject(request);
+      log.info("R2 객체 삭제 완료: {}", objectKey);
+
+    } catch (S3Exception e) {
+      String errorMessage = e.awsErrorDetails() != null
+              ? e.awsErrorDetails().errorMessage()
+              : e.getMessage();
+
+      log.error("R2 객체 삭제 실패 - key: {}, message: {}", objectKey, errorMessage, e);
+      throw new RuntimeException("R2 객체 삭제 실패", e);
+    } catch (Exception e) {
+      log.error("R2 객체 삭제 중 예외 발생 - key: {}", objectKey, e);
+      throw new RuntimeException("R2 객체 삭제 중 예외 발생", e);
+    }
+  }
 
   @Override
   @Transactional

@@ -11,6 +11,10 @@ public interface VideoServiceInterface {
   public Map<String, Object> VideoUploadUrl(String channel_name, String user_login_id, VideoDto videoDto);
   /**동영상 파일 형식 정보 확인 및 변환*/
   public String normalizeContentType(String fileType);
+  /**동영상 파일 정보, 파일 검증*/
+  public void videoValidation(String channel_name, Long video_id);
+  /**R2 내 저장된 파일 삭제*/
+  public void deleteObject(String object_key);
 
   /**동영상 썸네일 업로드 기능*/
   public boolean ThumbnailUpload(String channel_name, VideoDto videoDto, MultipartFile file);
