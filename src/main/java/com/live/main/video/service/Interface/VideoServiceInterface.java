@@ -13,6 +13,8 @@ public interface VideoServiceInterface {
   public String normalizeContentType(String fileType);
   /**동영상 파일 정보, 파일 검증*/
   public void videoValidation(String channel_name, Long video_id);
+  /**동영상 파일 내용 검사*/
+  public boolean isValidMp4OrMov(byte[] bytes);
   /**R2 내 저장된 파일 삭제*/
   public void deleteObject(String object_key);
 

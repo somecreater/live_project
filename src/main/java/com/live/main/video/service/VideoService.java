@@ -16,10 +16,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.S3Exception;
+import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
@@ -71,12 +70,13 @@ public class VideoService implements VideoServiceInterface {
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
 
-    if(videoDto.getFile_type().equals("video/mp4") || videoDto.getFile_type().equals("video/mov")){
+    if(!videoDto.getFile_type().equals("video/mp4") && !videoDto.getFile_type().equals("video/mov")){
       log.info(videoDto.getFile_type());
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
 
     try {
+
       videoDto.setChannel_name(channel_name);
       VideoEntity entity = videoMapper.toEntity(videoDto);
       entity.setStatus(Status.PRIVATE);
@@ -105,6 +105,7 @@ public class VideoService implements VideoServiceInterface {
 
       result.put("url", presignedRequest.url().toString());
       result.put("video_id", savedEntity.getId());
+
 
       return result;
 
@@ -139,6 +140,7 @@ public class VideoService implements VideoServiceInterface {
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
 
+    //DB 내 동영상 정보 검증(검증 실패시 DB, 버킷 내 행, 파일 삭제)
     VideoEntity videoEntity = videoRepository.findById(video_id)
             .orElseThrow(() -> new CustomException(ErrorCode.BAD_REQUEST));
     if(videoEntity.getChannelEntity() == null){
@@ -146,7 +148,7 @@ public class VideoService implements VideoServiceInterface {
               video_id + "_" + videoEntity.getTitle();
 
       deleteObject(object_id);
-      videoRepository.deleteById(video_id);
+      videoRepository.delete(videoEntity);
       throw new CustomException(ErrorCode.BAD_REQUEST);
 
     }
@@ -164,7 +166,89 @@ public class VideoService implements VideoServiceInterface {
       videoRepository.delete(videoEntity);
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
+    object_id = original_video_folder + channel_name + "/" + video_id + "_" + videoEntity.getTitle();
+    log.info("동영상 1차 검증 완료 - video_id: {}, key: {}", video_id, object_id);
 
+    try {
+
+      HeadObjectRequest request = HeadObjectRequest.builder()
+              .bucket(bucket_name)
+              .key(object_id)
+              .build();
+      HeadObjectResponse response= s3Client.headObject(request);
+
+      //파일 크기 검증
+      if(response.contentLength() == null || response.contentLength() <= 0){
+        deleteObject(object_id);
+        videoRepository.delete(videoEntity);
+        throw new CustomException(ErrorCode.BAD_REQUEST);
+      }
+      if(response.contentLength() < 1024){
+        deleteObject(object_id);
+        videoRepository.delete(videoEntity);
+        throw new CustomException(ErrorCode.BAD_REQUEST);
+      }
+
+      //파일 내용 검사
+      GetObjectRequest request = GetObjectRequest.builder()
+              .bucket(bucketName)
+              .key(objectKey)
+              .range("bytes=" + 0 + "-" + 4095)
+              .build();
+
+      ResponseBytes<GetObjectResponse> responseBytes = s3Client.getObjectAsBytes(request);
+      byte[] headerBytes= responseBytes.asByteArray();
+      if(!isValidMp4OrMov(headerBytes)){
+        deleteObject(object_id);
+        videoRepository.delete(videoEntity);
+        throw new CustomException(ErrorCode.BAD_REQUEST);
+      }
+
+      log.info("동영상 2차 검증 완료 - video_id: {}, key: {}", video_id, object_id);
+      //Kafka에 검증 완료 메시지 넣는 로직 추가 예정
+
+    } catch (NoSuchKeyException e) {
+      log.error("R2 객체 없음 - key: {}", object_id, e);
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    } catch (S3Exception e){
+      String errorMessage = e.awsErrorDetails() != null
+              ? e.awsErrorDetails().errorMessage()
+              : e.getMessage();
+      log.error("R2 파일 검증 실패 - key: {}, message: {}", object_id, errorMessage, e);
+      throw new RuntimeException("R2 파일 검증 실패", e);
+    }
+  }
+
+  @Override
+  public boolean isValidMp4OrMov(byte[] bytes){
+    if (bytes == null || bytes.length < 12) {
+      return false;
+    }
+
+    int max= Math..min(bytes.length - 8, 256);
+    for (int i = 0; i < max; i++){
+      if((bytes[i] == 'f'
+              && bytes[i + 1] == 't'
+              && bytes[i + 2] == 'y'
+              && bytes[i + 3] == 'p'){
+
+        if (i + 8 <= bytes.length) {
+          String brand = new String(bytes, i + 4, 4, StandardCharsets.US_ASCII).trim();
+
+          return brand.equals("isom")
+                  || brand.equals("iso2")
+                  || brand.equals("mp41")
+                  || brand.equals("mp42")
+                  || brand.equals("avc1")
+                  || brand.equals("M4V ")
+                  || brand.equals("MSNV")
+                  || brand.equals("qt  ");
+        }
+        return true;
+      }
+    }
+
+    return false;
   }
 
   @Override
