@@ -56,7 +56,7 @@ public class VideoEntity extends timeEntity {
   @Column
   private String thumbnail_url;
 
-  @Column
+  @Column(length = 2048)
   private String presigned_url;
 
   @ManyToOne

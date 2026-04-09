@@ -50,7 +50,7 @@ public class VideoService implements VideoServiceInterface {
   private final VideoRepository videoRepository;
 
   public VideoService(
-          S3Client s3Client,
+          @Qualifier("r2Client") S3Client s3Client,
           @Qualifier("r2Presigner") S3Presigner s3Presigner,
           VideoMapper videoMapper,
           VideoRepository videoRepository){
@@ -71,7 +71,7 @@ public class VideoService implements VideoServiceInterface {
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
 
-    if(!videoDto.getFile_type().equals("video/mp4") && !videoDto.getFile_type().equals("video/mov")){
+    if(!videoDto.getFile_type().equals("mp4") && !videoDto.getFile_type().equals("mov")){
       log.info(videoDto.getFile_type());
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
