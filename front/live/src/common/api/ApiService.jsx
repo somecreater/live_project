@@ -101,6 +101,12 @@ const ApiService = {
     write: (dto) => RefreshApi.post(API_END_POINT.post.write, dto),
     update: (dto) => RefreshApi.post(API_END_POINT.post.update, dto),
     delete: (dto) => RefreshApi.post(API_END_POINT.post.delete, dto)
+  },
+  video: {
+    upload_url: (dto) => RefreshApi.post(API_END_POINT.video.upload_url, dto),
+    upload_complete: (id) => RefreshApi.post(`${API_END_POINT.video.upload_complete}?video_id=${id}`),
+    list: (dto) => RefreshApi.post(API_END_POINT.video.list, dto),
+    delete: (dto) => RefreshApi.post(API_END_POINT.video.delete, dto)
   }
 };
 

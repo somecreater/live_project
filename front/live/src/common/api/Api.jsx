@@ -2,7 +2,7 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localho
 export const API_BASE_URL_2 = import.meta.env.VITE_API_BASE_URL_2 || 'http://localhost:8081';
 export const API_BASE_URL_3 = import.meta.env.VITE_API_BASE_URL_3 || 'http://localhost:8082';
 
-export const ALERT_BASE_URL = import.meta.env.VITE_ALERT_BASE_URL || 'http://localhost:8083';
+export const ALERT_BASE_URL = import.meta.env.VITE_ALERT_BASE_URL || 'http://localhost:8090';
 
 export const API_END_POINT = {
   manager: {
@@ -91,5 +91,11 @@ export const API_END_POINT = {
     write: `${API_BASE_URL}/api/post/write`,
     update: `${API_BASE_URL}/api/post/update`,
     delete: `${API_BASE_URL}/api/post/delete`
+  },
+  video: {
+    upload_url: `${API_BASE_URL}/api/video/upload-url`,
+    upload_complete: `${API_BASE_URL}/api/video/upload-complete`,
+    list: `${API_BASE_URL}/api/video/list`,
+    delete: `${API_BASE_URL}/api/video/delete`
   }
 };

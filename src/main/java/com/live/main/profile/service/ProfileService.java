@@ -16,7 +16,6 @@ import io.awspring.cloud.s3.ObjectMetadata;
 import io.awspring.cloud.s3.S3Exception;
 import io.awspring.cloud.s3.S3Resource;
 import io.awspring.cloud.s3.S3Template;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
@@ -35,7 +34,6 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Slf4j
-@RequiredArgsConstructor
 @Service
 public class ProfileService implements ProfileServiceInterface {
 
@@ -47,6 +45,7 @@ public class ProfileService implements ProfileServiceInterface {
   private String profileFolderName;
   @Value("${app.file.profile_limit-size}")
   private Long profileLimitSize;
+
   private final CommonServiceInterface commonService;
   private final UserServiceInterface userServiceInterface;
   private final UserMapper userMapper;
@@ -54,6 +53,25 @@ public class ProfileService implements ProfileServiceInterface {
   private final ProfileCacheRepository profileCacheRepository;
   private final ProfileImageMapper profileImageMapper;
 
+  public ProfileService(
+          S3Template s3Template,
+          S3Presigner s3Presigner,
+          CommonServiceInterface commonService,
+          UserServiceInterface userServiceInterface,
+          UserMapper userMapper,
+          ProfileImageRepository profileImageRepository,
+          ProfileCacheRepository profileCacheRepository,
+          ProfileImageMapper profileImageMapper
+  ) {
+    this.s3Template = s3Template;
+    this.s3Presigner = s3Presigner;
+    this.commonService = commonService;
+    this.userServiceInterface = userServiceInterface;
+    this.userMapper = userMapper;
+    this.profileImageRepository = profileImageRepository;
+    this.profileCacheRepository = profileCacheRepository;
+    this.profileImageMapper = profileImageMapper;
+  }
   @Override
   @Transactional
   public ProfileImageDto profile_upload(MultipartFile file, String userLoginId){

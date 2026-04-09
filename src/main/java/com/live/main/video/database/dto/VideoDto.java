@@ -19,6 +19,9 @@ public class VideoDto {
   private int like;
   private int unlike;
   private int view_count;
+  private String hls_url;
+  private String thumbnail_url;
+  private String presigned_url;
   private Long channel_id;
   private String channel_name;
   private LocalDateTime createdAt;
