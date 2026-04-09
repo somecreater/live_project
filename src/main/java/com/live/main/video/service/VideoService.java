@@ -23,6 +23,7 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -190,13 +191,13 @@ public class VideoService implements VideoServiceInterface {
       }
 
       //파일 내용 검사
-      GetObjectRequest request = GetObjectRequest.builder()
-              .bucket(bucketName)
-              .key(objectKey)
+      GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+              .bucket(bucket_name)
+              .key(object_id)
               .range("bytes=" + 0 + "-" + 4095)
               .build();
 
-      ResponseBytes<GetObjectResponse> responseBytes = s3Client.getObjectAsBytes(request);
+      ResponseBytes<GetObjectResponse> responseBytes = s3Client.getObjectAsBytes(getObjectRequest);
       byte[] headerBytes= responseBytes.asByteArray();
       if(!isValidMp4OrMov(headerBytes)){
         deleteObject(object_id);
@@ -225,12 +226,12 @@ public class VideoService implements VideoServiceInterface {
       return false;
     }
 
-    int max= Math..min(bytes.length - 8, 256);
+    int max= Math.min(bytes.length - 8, 256);
     for (int i = 0; i < max; i++){
       if((bytes[i] == 'f'
               && bytes[i + 1] == 't'
               && bytes[i + 2] == 'y'
-              && bytes[i + 3] == 'p'){
+              && bytes[i + 3] == 'p')){
 
         if (i + 8 <= bytes.length) {
           String brand = new String(bytes, i + 4, 4, StandardCharsets.US_ASCII).trim();
