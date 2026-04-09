@@ -94,6 +94,7 @@ export const API_END_POINT = {
   },
   video: {
     upload_url: `${API_BASE_URL}/api/video/upload-url`,
+    upload_complete: `${API_BASE_URL}/api/video/upload-complete`,
     list: `${API_BASE_URL}/api/video/list`,
     delete: `${API_BASE_URL}/api/video/delete`
   }

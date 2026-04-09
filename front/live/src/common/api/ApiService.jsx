@@ -104,6 +104,7 @@ const ApiService = {
   },
   video: {
     upload_url: (dto) => RefreshApi.post(API_END_POINT.video.upload_url, dto),
+    upload_complete: (id) => RefreshApi.post(`${API_END_POINT.video.upload_complete}?video_id=${id}`),
     list: (dto) => RefreshApi.post(API_END_POINT.video.list, dto),
     delete: (dto) => RefreshApi.post(API_END_POINT.video.delete, dto)
   }

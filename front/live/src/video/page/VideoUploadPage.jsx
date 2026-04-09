@@ -28,11 +28,16 @@ function VideoUploadPage() {
         alert("동영상 정보가 성공적으로 업로드되었습니다.");
     };
 
-    const handleSuccessUpload = () => {
-
-        alert("동영상이 성공적으로 업로드되었습니다.");
-        navigate('/channel/my_channel');
-        //추후 업로드 성공시 호출할 API 필요
+    const handleSuccessUpload = async () => {
+        try {
+            console.log(presignedVideoId);
+            await ApiService.video.upload_complete(Number(presignedVideoId));
+            alert("동영상이 성공적으로 업로드되었습니다.");
+            navigate('/channel/my_channel');
+        } catch (error) {
+            console.error("동영상 업로드 실패:", error);
+            alert("동영상 업로드에 실패했습니다.");
+        }
     };
 
     return (
