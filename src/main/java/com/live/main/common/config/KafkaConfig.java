@@ -2,6 +2,7 @@ package com.live.main.common.config;
 
 import com.live.main.common.database.dto.AlertEvent;
 import com.live.main.common.database.dto.ManagerMessageEvent;
+import com.live.main.common.database.dto.VideoValidationEvent;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -45,4 +46,21 @@ public class KafkaConfig {
         return new KafkaTemplate<>(producerFactory);
     }
 
+
+    @Bean
+    public ProducerFactory<String, VideoValidationEvent> videoValidationEventProducerFactory(
+            KafkaProperties properties
+    ){
+        return new DefaultKafkaProducerFactory<>(
+                properties.buildProducerProperties()
+        );
+    }
+
+    @Bean
+    public KafkaTemplate<String, VideoValidationEvent> videoValidationEventKafkaTemplate(
+            ProducerFactory<String, VideoValidationEvent> producerFactory
+    ){
+        return new KafkaTemplate<>(producerFactory);
+
+    }
 }

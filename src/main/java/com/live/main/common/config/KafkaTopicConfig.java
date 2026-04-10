@@ -54,4 +54,27 @@ public class KafkaTopicConfig {
               .config("cleanup.policy", ADMIN_MESSAGE_CLEANUP_POLICY)
               .build();
     }
+
+    // Manager Message Topic Configurations
+    @Value("${app.kafka.topic.video-complete.name}")
+    private String VIDEO_COMPLETE_TOPIC_NAME;
+    @Value("${app.kafka.topic.video-complete.partitions}")
+    private Integer VIDEO_COMPLETE_PARTITIONS;
+    @Value("${app.kafka.topic.video-complete.replicas}")
+    private Integer VIDEO_COMPLETE_REPLICAS;
+    @Value("${app.kafka.topic.video-complete.retention-ms}")
+    private String VIDEO_COMPLETE_RETENTION_MS;
+    @Value("${app.kafka.topic.video-complete.cleanup-policy}")
+    private String VIDEO_COMPLETE_CLEANUP_POLICY;
+
+
+    @Bean
+    public NewTopic completeVideoTopic() {
+        return TopicBuilder.name(VIDEO_COMPLETE_TOPIC_NAME)
+                .partitions(VIDEO_COMPLETE_PARTITIONS)
+                .replicas(VIDEO_COMPLETE_REPLICAS)
+                .config("retention.ms", VIDEO_COMPLETE_RETENTION_MS)
+                .config("cleanup.policy", VIDEO_COMPLETE_CLEANUP_POLICY)
+                .build();
+    }
 }

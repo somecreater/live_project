@@ -2,6 +2,7 @@ package com.live.main.common.config;
 
 import com.live.main.common.database.dto.AlertEvent;
 import com.live.main.common.database.dto.ManagerMessageEvent;
+import com.live.main.common.database.dto.VideoValidationEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
@@ -69,4 +70,27 @@ public class KafkaConsumerConfig {
         return factory;
     }
 
+    @Bean
+    public ConsumerFactory<String, VideoValidationEvent> videoValidationConsumerFactory(
+            KafkaProperties properties
+    ) {
+        return new DefaultKafkaConsumerFactory<>(
+                properties.buildConsumerProperties()
+        );
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, VideoValidationEvent>
+    videoValidationKafkaListenerContainerFactory(
+            ConsumerFactory<String, VideoValidationEvent> consumerFactory
+    ) {
+        ConcurrentKafkaListenerContainerFactory<String, VideoValidationEvent> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+
+        factory.setConsumerFactory(consumerFactory);
+        factory.setConcurrency(CONSUMER_PARTITIONS); // 파티션 수 이하
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
+
+        return factory;
+    }
 }
