@@ -65,8 +65,9 @@ public class VideoController {
       @RequestParam("video_id") Long video_id){
     Map<String ,Object> result = new HashMap<>();
     ChannelDto channelDto = channelService.getChannelInfoUser(principal.getUserid());
-    videoService.videoValidation(channelDto.getName(),video_id);
-
+    if(videoService.videoValidation(channelDto.getName(), video_id)) {
+      result.put("result", true);
+    }
     return ResponseEntity.ok(result);
   }
 }

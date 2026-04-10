@@ -1,6 +1,7 @@
 package com.live.main.video.service;
 
 import com.live.main.common.database.dto.ErrorCode;
+import com.live.main.common.database.dto.VideoValidationEvent;
 import com.live.main.common.exception.CustomException;
 import com.live.main.video.database.dto.VideoDto;
 import com.live.main.video.database.entity.Status;
@@ -9,9 +10,12 @@ import com.live.main.video.database.mapper.VideoMapper;
 import com.live.main.video.database.repository.VideoRepository;
 import com.live.main.video.service.Interface.VideoServiceInterface;
 import lombok.extern.slf4j.Slf4j;
-import org.antlr.v4.runtime.misc.FlexibleHashMap;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,15 +53,24 @@ public class VideoService implements VideoServiceInterface {
   private final VideoMapper videoMapper;
   private final VideoRepository videoRepository;
 
+  @Value("${app.kafka.topic.video-complete.name}")
+  private String VIDEO_VALIDATION_TOPIC_NAME;
+  private final ApplicationEventPublisher publisher;
+  private final KafkaTemplate<String, VideoValidationEvent> kafkaTemplate;
+
   public VideoService(
           @Qualifier("r2Client") S3Client s3Client,
           @Qualifier("r2Presigner") S3Presigner s3Presigner,
           VideoMapper videoMapper,
-          VideoRepository videoRepository){
+          VideoRepository videoRepository,
+          ApplicationEventPublisher publisher,
+          KafkaTemplate<String, VideoValidationEvent> kafkaTemplate){
     this.s3Client = s3Client;
     this.s3Presigner = s3Presigner;
     this.videoMapper = videoMapper;
     this.videoRepository = videoRepository;
+    this.publisher = publisher;
+    this.kafkaTemplate = kafkaTemplate;
   }
   @Override
   @Transactional
@@ -134,7 +147,7 @@ public class VideoService implements VideoServiceInterface {
 
   @Override
   @Transactional
-  public void videoValidation(String channel_name, Long video_id){
+  public boolean videoValidation(String channel_name, Long video_id){
     String object_id=null;
 
     if(channel_name == null || channel_name.isBlank() || video_id == null) {
@@ -206,7 +219,9 @@ public class VideoService implements VideoServiceInterface {
       }
 
       log.info("동영상 2차 검증 완료 - video_id: {}, key: {}", video_id, object_id);
-      //Kafka에 검증 완료 메시지 넣는 로직 추가 예정
+      publisher.publishEvent(new VideoValidationEvent(video_id, object_id));
+
+      return true;
 
     } catch (NoSuchKeyException e) {
       log.error("R2 객체 없음 - key: {}", object_id, e);
@@ -218,6 +233,21 @@ public class VideoService implements VideoServiceInterface {
       log.error("R2 파일 검증 실패 - key: {}, message: {}", object_id, errorMessage, e);
       throw new RuntimeException("R2 파일 검증 실패", e);
     }
+  }
+
+  @Async("IOTaskExecutor")
+  @EventListener
+  @Override
+  public void publishVideoValidationCompleted(VideoValidationEvent event){
+    kafkaTemplate.send(
+      VIDEO_VALIDATION_TOPIC_NAME,
+      event.getObject_key(),
+      event
+    );
+
+    log.info("Kafka Video Validation Message Produced to Kafka - Object KEY: {}, Video ID: {}",
+            event.getObject_key(),
+            event.getVideo_id());
   }
 
   @Override

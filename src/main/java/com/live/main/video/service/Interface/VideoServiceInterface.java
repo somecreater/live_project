@@ -1,5 +1,6 @@
 package com.live.main.video.service.Interface;
 
+import com.live.main.common.database.dto.VideoValidationEvent;
 import com.live.main.video.database.dto.VideoDto;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -12,7 +13,9 @@ public interface VideoServiceInterface {
   /**동영상 파일 형식 정보 확인 및 변환*/
   public String normalizeContentType(String fileType);
   /**동영상 파일 정보, 파일 검증*/
-  public void videoValidation(String channel_name, Long video_id);
+  public boolean videoValidation(String channel_name, Long video_id);
+  /**Kafka에 검증 완료 메시지 삽입*/
+  public void publishVideoValidationCompleted(VideoValidationEvent event);
   /**동영상 파일 내용 검사*/
   public boolean isValidMp4OrMov(byte[] bytes);
   /**R2 내 저장된 파일 삭제*/
