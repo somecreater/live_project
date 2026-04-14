@@ -9,6 +9,10 @@
 https://insidious-agustinia-e42.notion.site/237a80d43c45804da8b8ef82980dc85a?source=copy_link
 
 
+미디어 처리 전용 Spring Boot Project
+
+https://github.com/somecreater/live_project_media_server
+
 
 ## 🚀 프로젝트 개요
 
