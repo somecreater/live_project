@@ -3,7 +3,7 @@ package com.live.main.video.service;
 import com.live.main.common.database.dto.ErrorCode;
 import com.live.main.common.database.dto.VideoValidationEvent;
 import com.live.main.common.exception.CustomException;
-import com.live.main.video.database.dto.VideoDto;
+import com.live.main.video.database.dto.*;
 import com.live.main.video.database.entity.Status;
 import com.live.main.video.database.entity.VideoEntity;
 import com.live.main.video.database.mapper.VideoMapper;
@@ -30,9 +30,7 @@ import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignReques
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -49,6 +47,8 @@ public class VideoService implements VideoServiceInterface {
   private String transcoding_video_folder;
   @Value("${app.file.video_limit_size}")
   private Long video_limit_size;
+  @Value("${app.file.multi_part_size}")
+  private Long multi_part_size;
 
   private final VideoMapper videoMapper;
   private final VideoRepository videoRepository;
@@ -72,6 +72,7 @@ public class VideoService implements VideoServiceInterface {
     this.publisher = publisher;
     this.kafkaTemplate = kafkaTemplate;
   }
+
   @Override
   @Transactional
   public Map<String, Object> VideoUploadUrl(String channel_name, String user_login_id, VideoDto videoDto) {
@@ -127,6 +128,104 @@ public class VideoService implements VideoServiceInterface {
       log.error("Error generating presigned URL: {}", e.getMessage());
       throw new CustomException(ErrorCode.SERVER_ERROR);
     }
+
+  }
+
+  @Override
+  public MultipartUploadRequest createMultipartUploadSession(String channel_name, VideoDto videoDto){
+    if(channel_name.isBlank() || videoDto.getTitle().isBlank()){
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    if(!videoDto.getFile_type().equals("mp4") && !videoDto.getFile_type().equals("mov")){
+      log.info(videoDto.getFile_type());
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+    try {
+
+      videoDto.setChannel_name(channel_name);
+      VideoEntity entity = videoMapper.toEntity(videoDto);
+      entity.setStatus(Status.PRIVATE);
+
+      VideoEntity savedEntity = videoRepository.save(entity);
+
+      String objectKey = original_video_folder + channel_name + "/" +
+              savedEntity.getId() + "_" + videoDto.getTitle();
+      String contentType = normalizeContentType(videoDto.getFile_type());
+
+      log.info("비디오 객체 타입: {}", contentType);
+
+      CreateMultipartUploadRequest createRequest = CreateMultipartUploadRequest.builder()
+              .bucket(bucket_name)
+              .key(objectKey)
+              .contentType(contentType)
+              .build();
+      CreateMultipartUploadResponse createResponse = s3Client.createMultipartUpload(createRequest);
+      int totalPartCount = (int) Math.ceil((double) videoDto.getSize() / multi_part_size);
+
+      return new MultipartUploadRequest(
+              savedEntity.getId(),
+              objectKey,
+              createResponse.uploadId(),
+              multi_part_size,
+              totalPartCount
+      );
+    } catch (Exception e) {
+      log.error(e.getMessage());
+      throw new CustomException(ErrorCode.SERVER_ERROR);
+    }
+  }
+
+  @Override
+  public List<PartPresignedUrlResponse> presignUploadParts(PresignPartsRequest presignPartsRequest){
+    if(presignPartsRequest.getUploadId().isBlank()
+    || presignPartsRequest.getVideoId() == null
+    || presignPartsRequest.getKey().isBlank()){
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    //임시, 추후 구현 예정
+    validatePartNumbers(presignPartsRequest.getPartNumbers(), 0);
+    try{
+
+
+    }catch (Exception e){
+
+    }
+    return null;
+  }
+
+  @Override
+  public void validatePartNumbers(List<Integer> partNumbers, int totalPartCount){
+    if(partNumbers == null || partNumbers.isEmpty()){
+      log.error("part 목록이 유효하지 않습니다");
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+    if(partNumbers.size() > 100){
+      log.error("part 목록이 너무 큽니다.");
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    Set<Integer> unique = new HashSet<>();
+    for (Integer partNumber : partNumbers) {
+      if (partNumber == null || partNumber < 1 || partNumber > totalPartCount) {
+        log.error("유효하지 않은 part 번호입니다.");
+        throw new CustomException(ErrorCode.BAD_REQUEST);
+      }
+      if (!unique.add(partNumber)) {
+        log.error("중복된 part 번호 입니다.");
+        throw new CustomException(ErrorCode.BAD_REQUEST);
+      }
+    }
+  }
+
+  @Override
+  public void completeMultipartUpload(CompleteUploadRequest request){
+
+  }
+
+  @Override
+  public void abortUpload(AbortUploadRequest request){
 
   }
 
