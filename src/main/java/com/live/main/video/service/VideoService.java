@@ -5,8 +5,11 @@ import com.live.main.common.database.dto.VideoValidationEvent;
 import com.live.main.common.exception.CustomException;
 import com.live.main.video.database.dto.*;
 import com.live.main.video.database.entity.Status;
+import com.live.main.video.database.entity.UploadSessionEntity;
+import com.live.main.video.database.entity.UploadSessionStatus;
 import com.live.main.video.database.entity.VideoEntity;
 import com.live.main.video.database.mapper.VideoMapper;
+import com.live.main.video.database.repository.UploadSessionRepository;
 import com.live.main.video.database.repository.VideoRepository;
 import com.live.main.video.service.Interface.VideoServiceInterface;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +56,8 @@ public class VideoService implements VideoServiceInterface {
   private final VideoMapper videoMapper;
   private final VideoRepository videoRepository;
 
+  private final UploadSessionRepository uploadSessionRepository;
+
   @Value("${app.kafka.topic.video-complete.name}")
   private String VIDEO_VALIDATION_TOPIC_NAME;
   private final ApplicationEventPublisher publisher;
@@ -63,12 +68,14 @@ public class VideoService implements VideoServiceInterface {
           @Qualifier("r2Presigner") S3Presigner s3Presigner,
           VideoMapper videoMapper,
           VideoRepository videoRepository,
+          UploadSessionRepository uploadSessionRepository,
           ApplicationEventPublisher publisher,
           KafkaTemplate<String, VideoValidationEvent> kafkaTemplate){
     this.s3Client = s3Client;
     this.s3Presigner = s3Presigner;
     this.videoMapper = videoMapper;
     this.videoRepository = videoRepository;
+    this.uploadSessionRepository = uploadSessionRepository;
     this.publisher = publisher;
     this.kafkaTemplate = kafkaTemplate;
   }
@@ -132,6 +139,7 @@ public class VideoService implements VideoServiceInterface {
   }
 
   @Override
+  @Transactional
   public MultipartUploadRequest createMultipartUploadSession(String channel_name, VideoDto videoDto){
     if(channel_name.isBlank() || videoDto.getTitle().isBlank()){
       throw new CustomException(ErrorCode.BAD_REQUEST);
@@ -163,6 +171,16 @@ public class VideoService implements VideoServiceInterface {
       CreateMultipartUploadResponse createResponse = s3Client.createMultipartUpload(createRequest);
       int totalPartCount = (int) Math.ceil((double) videoDto.getSize() / multi_part_size);
 
+      UploadSessionEntity session = new UploadSessionEntity();
+      session.setUploadId(createResponse.uploadId());
+      session.setVideoId(savedEntity.getId());
+      session.setObjectKey(objectKey);
+      session.setStatus(UploadSessionStatus.INITIATED);
+      session.setTotalPartCount(totalPartCount);
+      session.setCompletedPartCount(0);
+      session.setPartSize(multi_part_size);
+      uploadSessionRepository.save(session);
+      
       return new MultipartUploadRequest(
               savedEntity.getId(),
               objectKey,
@@ -177,6 +195,7 @@ public class VideoService implements VideoServiceInterface {
   }
 
   @Override
+  @Transactional
   public List<PartPresignedUrlResponse> presignUploadParts(PresignPartsRequest presignPartsRequest){
     if(presignPartsRequest.getUploadId().isBlank()
     || presignPartsRequest.getVideoId() == null
@@ -184,8 +203,18 @@ public class VideoService implements VideoServiceInterface {
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
 
+    UploadSessionEntity uploadSession = uploadSessionRepository.findByUploadIdAndVideoId(
+      presignPartsRequest.getUploadId(), presignPartsRequest.getVideoId());
+
+    if(uploadSession.getStatus() == UploadSessionStatus.COMPLETED ||
+            uploadSession.getStatus() == UploadSessionStatus.ABORTED){
+      log.error("this upload session is already closed");
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
     //임시, 추후 구현 예정
-    validatePartNumbers(presignPartsRequest.getPartNumbers(), 0);
+    validatePartNumbers(presignPartsRequest.getPartNumbers(), uploadSession.getTotalPartCount());
+
     try{
 
 
