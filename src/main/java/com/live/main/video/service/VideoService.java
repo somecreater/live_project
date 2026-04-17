@@ -28,7 +28,9 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedUploadPartRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.UploadPartPresignRequest;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -212,16 +214,41 @@ public class VideoService implements VideoServiceInterface {
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
 
-    //임시, 추후 구현 예정
     validatePartNumbers(presignPartsRequest.getPartNumbers(), uploadSession.getTotalPartCount());
 
     try{
+      List<PartPresignedUrlResponse> partPresignedUrlResponses = new ArrayList<>();
+      String key= presignPartsRequest.getKey();
+      String uploadId=presignPartsRequest.getUploadId();
+      for(int part_number: presignPartsRequest.getPartNumbers()){
+        UploadPartRequest uploadPartRequest= UploadPartRequest.builder()
+                .bucket(bucket_name)
+                .key(key)
+                .uploadId(uploadId)
+                .partNumber(part_number)
+                .build();
 
+        UploadPartPresignRequest presignRequest = UploadPartPresignRequest.builder()
+                .signatureDuration(Duration.ofMinutes(30))
+                .uploadPartRequest(uploadPartRequest)
+                .build();
+
+        PresignedUploadPartRequest presigned = s3Presigner.presignUploadPart(presignRequest);
+
+        partPresignedUrlResponses.add(new PartPresignedUrlResponse(part_number, presigned.url().toString()));
+      }
+
+      uploadSession.setStatus(UploadSessionStatus.UPLOADING);
+      uploadSessionRepository.save(uploadSession);
+
+      return partPresignedUrlResponses;
 
     }catch (Exception e){
+      log.error("미리 서명된 Multipart Upload url 생성 실패 Error Message: {}", e.getMessage());
+      log.error("{}, {}, {}, {}", e.getCause(), e.getStackTrace(), e.getLocalizedMessage(), e.getSuppressed());
+      throw e;
 
     }
-    return null;
   }
 
   @Override
@@ -251,11 +278,145 @@ public class VideoService implements VideoServiceInterface {
   @Override
   public void completeMultipartUpload(CompleteUploadRequest request){
 
+    if (request == null
+            || request.getUploadId() == null || request.getUploadId().isBlank()
+            || request.getVideoId() == null
+            || request.getKey() == null || request.getKey().isBlank()
+            || request.getParts() == null || request.getParts().isEmpty()) {
+      log.error("completeMultipartUpload bad request");
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    UploadSessionEntity sessionEntity = uploadSessionRepository.findByUploadIdAndVideoId(
+      request.getUploadId(), request.getVideoId());
+
+    if (sessionEntity == null) {
+      log.error("upload session not found. uploadId={}, videoId={}",
+              request.getUploadId(), request.getVideoId());
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    if (!Objects.equals(sessionEntity.getObjectKey(), request.getKey())) {
+      log.error("object key mismatch. requestKey={}, savedKey={}",
+              request.getKey(), sessionEntity.getObjectKey());
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    if (sessionEntity.getStatus() == UploadSessionStatus.COMPLETED) {
+      log.error("upload already completed. uploadId={}, videoId={}",
+              request.getUploadId(), request.getVideoId());
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+    if (sessionEntity.getStatus() == UploadSessionStatus.ABORTED) {
+      log.error("upload already aborted. uploadId={}, videoId={}",
+              request.getUploadId(), request.getVideoId());
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    try{
+
+      validateCompleteParts(request.getParts(), sessionEntity.getTotalPartCount());
+
+      List<CompletedPart> completedParts = request.getParts().stream()
+              .map(part -> {
+
+                if (part.getPartNumber() == null || part.getPartNumber() <= 0
+                        || part.getEtag() == null || part.getEtag().isBlank()) {
+                  log.error("invalid completed part. partNumber={}, etag={}",
+                          part.getPartNumber(), part.getEtag());
+                  throw new CustomException(ErrorCode.BAD_REQUEST);
+                }
+
+                return CompletedPart.builder()
+                      .partNumber(part.getPartNumber())
+                      .eTag(part.getEtag())
+                      .build();
+              })
+              .sorted(Comparator.comparingInt(CompletedPart::partNumber))
+              .toList();
+
+      CompleteMultipartUploadRequest completeRequest= CompleteMultipartUploadRequest.builder()
+              .bucket(bucket_name)
+              .key(request.getKey())
+              .uploadId(request.getUploadId())
+              .multipartUpload(
+                      CompletedMultipartUpload.builder()
+                              .parts(completedParts)
+                              .build()
+              )
+              .build();
+
+      s3Client.completeMultipartUpload(completeRequest);
+
+      sessionEntity.setCompletedPartCount(request.getParts().size());
+      sessionEntity.setCompletedAt(LocalDateTime.now());
+      sessionEntity.setStatus(UploadSessionStatus.COMPLETED);
+
+      uploadSessionRepository.save(sessionEntity);
+
+      log.info("multipart upload completed. uploadId={}, videoId={}, partCount={}",
+              sessionEntity.getUploadId(),
+              sessionEntity.getVideoId(),
+              completedParts.size());
+
+    } catch (CustomException e) {
+      throw e;
+    } catch (Exception e) {
+      log.error("failed to complete multipart upload. uploadId={}, videoId={}",
+              request.getUploadId(), request.getVideoId(), e);
+      throw new CustomException(ErrorCode.SERVER_ERROR);
+    }
+
+  }
+
+  @Override
+  public void validateCompleteParts(List<CompletePartRequest> parts, int totalPartCount){
+    if (parts == null || parts.isEmpty()) {
+      log.error("partNumbers is required");
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+    if (parts.size() > 100) {
+      log.error("too many part numbers requested");
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    Set<Integer> unique = new HashSet<>();
+    for (CompletePartRequest part : parts) {
+      if(part.getPartNumber() == null || part.getPartNumber() < 1 || part.getPartNumber() > totalPartCount) {
+        log.error("invalid part number: " + part.getPartNumber());
+        throw new CustomException(ErrorCode.BAD_REQUEST);
+      }
+      if (part.getEtag() == null || part.getEtag().isBlank()) {
+        log.error("etag is required");
+        throw new CustomException(ErrorCode.BAD_REQUEST);
+      }
+      if (!unique.add(part.getPartNumber())) {
+        log.error("duplicate complete part number");
+        throw new CustomException(ErrorCode.BAD_REQUEST);
+      }
+    }
   }
 
   @Override
   public void abortUpload(AbortUploadRequest request){
+    UploadSessionEntity session = uploadSessionRepository
+            .findByUploadIdAndVideoId(request.getUploadId(),request.getVideoId());
+    if(session == null || session.getStatus() == UploadSessionStatus.COMPLETED){
+      log.error("completed upload cannot be aborted");
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
 
+    AbortMultipartUploadRequest abortRequest = AbortMultipartUploadRequest.builder()
+            .bucket(bucket_name)
+            .key(request.getKey())
+            .uploadId(request.getUploadId())
+            .build();
+
+    s3Client.abortMultipartUpload(abortRequest);
+
+    session.setStatus(UploadSessionStatus.ABORTED);
+    session.setAbortedAt(LocalDateTime.now());
+    uploadSessionRepository.save(session);
   }
 
   @Override

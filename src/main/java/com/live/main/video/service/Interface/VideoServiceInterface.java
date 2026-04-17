@@ -18,6 +18,8 @@ public interface VideoServiceInterface {
   public List<PartPresignedUrlResponse> presignUploadParts(PresignPartsRequest presignPartsRequest);
   /**multipart 업로드시 part 넘버 검증*/
   public void validatePartNumbers(List<Integer> partNumbers, int totalPartCount);
+  /**완료 요청의 part 목록 검증*/
+  public void validateCompleteParts(List<CompletePartRequest> parts, int totalPartCount);
   /**multipart 업로드 완료 요청*/
   public void completeMultipartUpload(CompleteUploadRequest request);
   /**multipart 업로드 중단 요청(취소, 실패시)*/
