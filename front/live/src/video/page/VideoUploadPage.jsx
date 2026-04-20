@@ -31,7 +31,7 @@ function VideoUploadPage() {
     const handleSuccessUpload = async () => {
         try {
             console.log(presignedVideoId);
-            await ApiService.video.upload_complete(Number(presignedVideoId));
+            await ApiService.video.upload_validate(Number(presignedVideoId));
             alert("동영상이 성공적으로 업로드되었습니다.");
             navigate('/channel/my_channel');
         } catch (error) {
