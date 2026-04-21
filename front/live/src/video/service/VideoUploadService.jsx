@@ -34,9 +34,7 @@ class VideoUploadService {
              * DB에 저장된 동영상에 대한 아이디와 업로드 가능한 PUT Presigned URL을 반환합니다.
              */
             const response = await ApiService.video.upload_url({
-                ...videoData,
-                size: file.size,
-                file_type: file.name.split('.').pop()
+                ...videoData
             });
 
             const { uploadUrl, video_id } = response.data;
@@ -73,7 +71,12 @@ class VideoUploadService {
      * 멀티파트 업로드 (Large Files)
      * 대용량 파일을 청크 단위로 나누어 병렬/순차적으로 업로드합니다.
      */
-    static async uploadMultipart(file, videoId, onProgress) {
+    static async uploadMultipart(file, videoData, onProgress) {
+        const PRESIGN_BATCH_SIZE = 10;       // URL 10개씩 요청
+        const CONCURRENCY = 4;               // 동시 업로드 4개
+        const MAX_RETRIES = 3;
+        const RETRY_BASE_DELAY_MS = 1000;
+
         try {
             console.log("Multipart upload started for file size:", file.size);
 
