@@ -1,16 +1,16 @@
 import { Button, Modal, ProgressBar, Form } from "react-bootstrap";
 import { useState, useRef, useEffect } from "react";
-import axios from "axios";
 import { FaFileVideo, FaCheckCircle, FaExclamationCircle } from "react-icons/fa";
 import "./VideoUploadModal.css";
+import VideoUploadService from "../service/VideoUploadService";
 
 /**
  * @param {boolean} show - 모달 표시 여부
  * @param {function} onHide - 모달 닫기
- * @param {string} onVideoUploadUrl - 동영상 업로드 URL
- * @param {function} onSuccess - 동영상 업로드 성공 (동영상 아이디나 처리후 콜백)
+ * @param {Object} videoData - 이전 폼에서 입력받은 동영상 메타데이터
+ * @param {function} onSuccess - 동영상 업로드 성공 시 호출될 콜백 (videoId 전달)
  */
-function VideoUploadModal({ show, onHide, onVideoUploadUrl, onSuccess }) {
+function VideoUploadModal({ show, onHide, videoData, onSuccess }) {
     const [file, setFile] = useState(null);
     const [progress, setProgress] = useState(0);
     const [status, setStatus] = useState("idle");
@@ -42,23 +42,15 @@ function VideoUploadModal({ show, onHide, onVideoUploadUrl, onSuccess }) {
             setStatus("uploading");
             setProgress(0);
 
-            // Cloudflare/S3 Presigned URL PUT upload
-            const response = await axios.put(onVideoUploadUrl, file, {
-                headers: {
-                    "Content-Type": file.type || "video/mp4",
-                },
-                onUploadProgress: (progressEvent) => {
-                    const percentCompleted = Math.round(
-                        (progressEvent.loaded * 100) / progressEvent.total
-                    );
-                    setProgress(percentCompleted);
-                },
+            // VideoUploadService를 사용하여 파일 크기에 따른 업로드 처리
+            const response = await VideoUploadService.upload(file, videoData, (percent) => {
+                setProgress(percent);
             });
 
             if (response.status === 200 || response.status === 201) {
                 setStatus("success");
                 if (onSuccess) {
-                    onSuccess();
+                    onSuccess(response.video_id);
                 }
             } else {
                 throw new Error("업로드 실패: 서버 응답 오류");
@@ -166,7 +158,7 @@ function VideoUploadModal({ show, onHide, onVideoUploadUrl, onSuccess }) {
                         </Button>
                         <Button
                             variant="primary"
-                            disabled={!file || !onVideoUploadUrl}
+                            disabled={!file || !videoData}
                             onClick={handleStartUpload}
                         >
                             업로드 시작

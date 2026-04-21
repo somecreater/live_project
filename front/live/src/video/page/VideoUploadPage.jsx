@@ -12,45 +12,36 @@ import VideoUploadModal from "../form/VideoUploadModal";
 function VideoUploadPage() {
     const navigate = useNavigate();
     const [isUploading, setIsUploading] = useState(false);
+    const [videoData, setVideoData] = useState(null);
 
-    const [presignedUrl, setPresignedUrl] = useState("");
-    const [presignedVideoId, setPresignedVideoId] = useState("");
-
-    const handleVideoUploadUrl = async (video) => {
-        const response = await ApiService.video.upload_url(video);
-        return response.data;
-    };
-
-    const handleSuccess = (data) => {
-        setPresignedUrl(data.uploadUrl);
-        setPresignedVideoId(data.video_id);
+    const handleSuccess = (video) => {
+        setVideoData(video);
         setIsUploading(true);
-        alert("동영상 정보가 성공적으로 업로드되었습니다.");
+        alert("동영상 정보를 확인했습니다. 업로드 파일을 선택해주세요.");
     };
 
-    const handleSuccessUpload = async () => {
+    const handleSuccessUpload = async (videoId) => {
         try {
-            console.log(presignedVideoId);
-            await ApiService.video.upload_validate(Number(presignedVideoId));
+            await ApiService.video.upload_validate(Number(videoId));
             alert("동영상이 성공적으로 업로드되었습니다.");
             navigate('/channel/my_channel');
         } catch (error) {
-            console.error("동영상 업로드 실패:", error);
-            alert("동영상 업로드에 실패했습니다.");
+            console.error("동영상 업로드 검증 실패:", error);
+            alert("동영상 업로드 검증에 실패했습니다.");
         }
     };
 
     return (
         <div>
             <h1>Video Upload Page</h1>
-            <VideoUploadForm onVideoUploadUrl={handleVideoUploadUrl} onSuccess={handleSuccess} />
+            <VideoUploadForm onSuccess={handleSuccess} />
             <Button variant="primary" onClick={() => navigate('/channel/my_channel')}>
                 채널로 돌아가기
             </Button>
             <VideoUploadModal
                 show={isUploading}
                 onHide={() => setIsUploading(false)}
-                onVideoUploadUrl={presignedUrl}
+                videoData={videoData}
                 onSuccess={handleSuccessUpload}
             />
         </div>
