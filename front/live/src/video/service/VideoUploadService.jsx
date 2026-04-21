@@ -8,7 +8,6 @@ import ApiService from "../../common/api/ApiService";
 class VideoUploadService {
     // 100MB 기준 (추후 조정 가능)
     static MULTIPART_THRESHOLD = 100 * 1024 * 1024;
-
     /**
      * 동영상 업로드 시작
      * @param {File} file - 업로드할 파일
@@ -72,16 +71,47 @@ class VideoUploadService {
      * 대용량 파일을 청크 단위로 나누어 병렬/순차적으로 업로드합니다.
      */
     static async uploadMultipart(file, videoData, onProgress) {
+        const CHUNK_SIZE = 50 * 1024 * 1024;
         const PRESIGN_BATCH_SIZE = 10;       // URL 10개씩 요청
         const CONCURRENCY = 4;               // 동시 업로드 4개
         const MAX_RETRIES = 3;
         const RETRY_BASE_DELAY_MS = 1000;
+        let uploadId = null;
+
+        const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
         try {
             console.log("Multipart upload started for file size:", file.size);
 
-            // TODO: 아래는 구현 가이드라인입니다.
+            // 멀티파트 업로드에 필요한 상태 객체들 (지역 변수)
+            let multipartUploadRequest = {
+                videoId: "",
+                key: "",
+                uploadId: "",
+                partSize: 0,
+                totalPartCount: 0
+            };
 
+            let presignPartsRequest = {
+                videoId: "",
+                key: "",
+                uploadId: "",
+                partNumbers: []
+            };
+
+            let partPresignedUrlResponse = [];
+
+            let completeUploadRequest = {
+                videoId: "",
+                key: "",
+                uploadId: "",
+                parts: []
+            };
+
+            const initResponse = await ApiService.video.multipart_upload_url_request({
+                ...videoData
+            });
+            multipartUploadRequest = initResponse.data.multipart_upload_request;
             /* 1. 멀티파트 업로드 초기화 (서버로부터 uploadId 발급)
                const initResponse = await ApiService.video.multipart_upload_url_request({ 
                    id: videoId,
