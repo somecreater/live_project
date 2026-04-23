@@ -26,6 +26,22 @@ function VideoUploadForm({ onSuccess }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        setError(null);
+
+        if (!video.title) {
+            setError("제목을 입력해주세요.");
+            return;
+        }
+
+        if (!video.description) {
+            setError("설명을 입력해주세요.");
+            return;
+        }
+
+        if (!video.file_type) {
+            setError("파일 타입을 선택해주세요.");
+            return;
+        }
         onSuccess(video);
     };
 
