@@ -143,6 +143,11 @@ public class VideoService implements VideoServiceInterface {
   @Override
   @Transactional
   public MultipartUploadRequest createMultipartUploadSession(String channel_name, VideoDto videoDto){
+
+    Long videoId=null;
+    String objectKey=null;
+    String uploadId=null;
+
     if(channel_name.isBlank() || videoDto.getTitle().isBlank()){
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
@@ -158,9 +163,9 @@ public class VideoService implements VideoServiceInterface {
       entity.setStatus(Status.PRIVATE);
 
       VideoEntity savedEntity = videoRepository.save(entity);
-
-      String objectKey = original_video_folder + channel_name + "/" +
-              savedEntity.getId() + "_" + videoDto.getTitle();
+      videoId = savedEntity.getId();
+      objectKey = original_video_folder + channel_name + "/" +
+              videoId + "_" + videoDto.getTitle();
       String contentType = normalizeContentType(videoDto.getFile_type());
 
       log.info("비디오 객체 타입: {}", contentType);
@@ -172,10 +177,11 @@ public class VideoService implements VideoServiceInterface {
               .build();
       CreateMultipartUploadResponse createResponse = s3Client.createMultipartUpload(createRequest);
       int totalPartCount = (int) Math.ceil((double) videoDto.getSize() / multi_part_size);
+      uploadId=createResponse.uploadId();
 
       UploadSessionEntity session = new UploadSessionEntity();
-      session.setUploadId(createResponse.uploadId());
-      session.setVideoId(savedEntity.getId());
+      session.setUploadId(uploadId);
+      session.setVideoId(videoId);
       session.setObjectKey(objectKey);
       session.setStatus(UploadSessionStatus.INITIATED);
       session.setTotalPartCount(totalPartCount);
@@ -192,6 +198,7 @@ public class VideoService implements VideoServiceInterface {
       );
     } catch (Exception e) {
       log.error(e.getMessage());
+      abortUpload(new AbortUploadRequest(videoId, objectKey, uploadId));
       throw new CustomException(ErrorCode.SERVER_ERROR);
     }
   }
@@ -199,11 +206,16 @@ public class VideoService implements VideoServiceInterface {
   @Override
   @Transactional
   public List<PartPresignedUrlResponse> presignUploadParts(PresignPartsRequest presignPartsRequest){
+    Long videoId=null;
+    String objectKey=null;
+    String uploadId=null;
+
     if(presignPartsRequest.getUploadId().isBlank()
     || presignPartsRequest.getVideoId() == null
     || presignPartsRequest.getKey().isBlank()){
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
+    videoId= presignPartsRequest.getVideoId();
 
     UploadSessionEntity uploadSession = uploadSessionRepository.findByUploadIdAndVideoId(
       presignPartsRequest.getUploadId(), presignPartsRequest.getVideoId());
@@ -218,12 +230,12 @@ public class VideoService implements VideoServiceInterface {
 
     try{
       List<PartPresignedUrlResponse> partPresignedUrlResponses = new ArrayList<>();
-      String key= presignPartsRequest.getKey();
-      String uploadId=presignPartsRequest.getUploadId();
+      objectKey= presignPartsRequest.getKey();
+      uploadId=presignPartsRequest.getUploadId();
       for(int part_number: presignPartsRequest.getPartNumbers()){
         UploadPartRequest uploadPartRequest= UploadPartRequest.builder()
                 .bucket(bucket_name)
-                .key(key)
+                .key(objectKey)
                 .uploadId(uploadId)
                 .partNumber(part_number)
                 .build();
@@ -246,6 +258,7 @@ public class VideoService implements VideoServiceInterface {
     }catch (Exception e){
       log.error("미리 서명된 Multipart Upload url 생성 실패 Error Message: {}", e.getMessage());
       log.error("{}, {}, {}, {}", e.getCause(), e.getStackTrace(), e.getLocalizedMessage(), e.getSuppressed());
+      abortUpload(new AbortUploadRequest(videoId, objectKey, uploadId));
       throw e;
 
     }

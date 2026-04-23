@@ -17,7 +17,7 @@ public class UploadSessionEntity extends timeEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(name = "upload_id")
+  @Column(name = "upload_id", length = 512)
   private String uploadId;
 
   @Column(name = "video_id")

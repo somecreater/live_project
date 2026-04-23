@@ -53,11 +53,10 @@ function VideoUploadModal({ show, onHide, videoData, onSuccess }) {
                 console.log("videoId:", progress.videoId);
                 console.log("uploadId:", progress.uploadId);
             });
-
-            if (response.status === 200 || response.status === 201) {
+            if (response.result) {
                 setStatus("success");
                 if (onSuccess) {
-                    onSuccess(response.video_id);
+                    onSuccess(response.completeUploadRequest.videoId);
                 }
             } else {
                 throw new Error("업로드 실패: 서버 응답 오류");

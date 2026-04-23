@@ -272,7 +272,7 @@ class VideoUploadService {
                 uploadId: "",
                 parts: []
             };
-
+            videoData.size = file.size;
             const initResponse = await ApiService.video.multipart_upload_url_request({
                 ...videoData
             });
@@ -287,6 +287,11 @@ class VideoUploadService {
                 || !multipartUploadRequest.uploadId
                 || !multipartUploadRequest.partSize
                 || !multipartUploadRequest.totalPartCount) {
+                console.log(multipartUploadRequest.videoId);
+                console.log(multipartUploadRequest.key);
+                console.log(multipartUploadRequest.uploadId);
+                console.log(multipartUploadRequest.partSize);
+                console.log(multipartUploadRequest.totalPartCount);
                 throw new Error("multipart_upload_request 응답이 올바르지 않습니다.");
             }
 
