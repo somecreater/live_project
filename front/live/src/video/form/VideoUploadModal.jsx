@@ -43,8 +43,15 @@ function VideoUploadModal({ show, onHide, videoData, onSuccess }) {
             setProgress(0);
 
             // VideoUploadService를 사용하여 파일 크기에 따른 업로드 처리
-            const response = await VideoUploadService.upload(file, videoData, (percent) => {
-                setProgress(percent);
+            const response = await VideoUploadService.upload(file, videoData, (progress) => {
+                if (!progress) return;
+
+                setProgress(progress.percent ?? 0);
+
+                console.log("업로드 진행률:", progress.percent);
+                console.log("업로드 바이트:", progress.uploadedBytes, "/", progress.totalBytes);
+                console.log("videoId:", progress.videoId);
+                console.log("uploadId:", progress.uploadId);
             });
 
             if (response.status === 200 || response.status === 201) {
