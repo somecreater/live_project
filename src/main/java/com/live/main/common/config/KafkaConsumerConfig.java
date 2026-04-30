@@ -2,6 +2,7 @@ package com.live.main.common.config;
 
 import com.live.main.common.database.dto.AlertEvent;
 import com.live.main.common.database.dto.ManagerMessageEvent;
+import com.live.main.common.database.dto.VideoEncodingEvent;
 import com.live.main.common.database.dto.VideoValidationEvent;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -103,6 +104,7 @@ public class KafkaConsumerConfig {
         return factory;
     }
 
+    // Video Validation Consumer Configuration
     @Bean
     public ConsumerFactory<String, VideoValidationEvent> videoValidationConsumerFactory(
             KafkaProperties properties
@@ -140,4 +142,44 @@ public class KafkaConsumerConfig {
 
         return factory;
     }
+
+    // Video Encoding Consumer Configuration
+    @Bean
+    public ConsumerFactory<String, VideoEncodingEvent> EncodingConsumerFactory(
+            KafkaProperties properties){
+        Map<String, Object> props = new HashMap<>(properties.buildConsumerProperties());
+        props.remove("spring.json.trusted.packages");
+        props.remove("spring.json.use.type.headers");
+        props.remove("spring.json.value.default.type");
+        props.remove("spring.json.key.default.type");
+
+        JsonDeserializer<VideoEncodingEvent> valueDeserializer =
+                new JsonDeserializer<>(VideoEncodingEvent.class);
+
+        valueDeserializer.setUseTypeHeaders(false);
+        valueDeserializer.addTrustedPackages("*");
+
+        return new DefaultKafkaConsumerFactory<>(
+                props,
+                new StringDeserializer(),
+                valueDeserializer
+        );
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, VideoEncodingEvent>
+    videoEncodingKafkaListenerContainerFactory(
+            ConsumerFactory<String, VideoEncodingEvent> consumerFactory
+    ){
+        ConcurrentKafkaListenerContainerFactory<String, VideoEncodingEvent> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+
+        factory.setConsumerFactory(consumerFactory);
+        factory.setConcurrency(CONSUMER_PARTITIONS); // 파티션 수 이하
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
+
+        return factory;
+
+    }
+
 }

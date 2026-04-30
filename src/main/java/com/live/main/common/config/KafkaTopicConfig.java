@@ -55,7 +55,7 @@ public class KafkaTopicConfig {
               .build();
     }
 
-    // Manager Message Topic Configurations
+    // Video Validation Topic Configurations
     @Value("${app.kafka.topic.video-complete.name}")
     private String VIDEO_COMPLETE_TOPIC_NAME;
     @Value("${app.kafka.topic.video-complete.partitions}")
@@ -77,4 +77,26 @@ public class KafkaTopicConfig {
                 .config("cleanup.policy", VIDEO_COMPLETE_CLEANUP_POLICY)
                 .build();
     }
+
+    // Video Encoding Topic Configurations
+    @Value("${app.kafka.topic.video-encoding.name}")
+    private String VIDEO_ENCODING_TOPIC_NAME;
+    @Value("${app.kafka.topic.video-encoding.partitions}")
+    private Integer VIDEO_ENCODING_PARTITIONS;
+    @Value("${app.kafka.topic.video-encoding.replicas}")
+    private Integer VIDEO_ENCODING_REPLICAS;
+    @Value("${app.kafka.topic.video-encoding.retention-ms}")
+    private String VIDEO_ENCODING_RETENTION_MS;
+    @Value("${app.kafka.topic.video-encoding.cleanup-policy}")
+    private String VIDEO_ENCODING_CLEANUP_POLICY;
+
+    @Bean NewTopic videoEncodingTopic(){
+        return TopicBuilder.name(VIDEO_ENCODING_TOPIC_NAME)
+                .partitions(VIDEO_ENCODING_PARTITIONS)
+                .replicas(VIDEO_ENCODING_REPLICAS)
+                .config("retention.ms", VIDEO_ENCODING_RETENTION_MS)
+                .config("cleanup.policy", VIDEO_ENCODING_CLEANUP_POLICY)
+                .build();
+    }
+
 }

@@ -2,6 +2,7 @@ package com.live.main.common.config;
 
 import com.live.main.common.database.dto.AlertEvent;
 import com.live.main.common.database.dto.ManagerMessageEvent;
+import com.live.main.common.database.dto.VideoEncodingEvent;
 import com.live.main.common.database.dto.VideoValidationEvent;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
@@ -14,6 +15,8 @@ import org.springframework.kafka.core.ProducerFactory;
 @EnableKafka
 @Configuration
 public class KafkaConfig {
+
+    //Alert Producer Configuration
     @Bean
     public ProducerFactory<String, AlertEvent> producerFactory(
             KafkaProperties properties
@@ -30,6 +33,7 @@ public class KafkaConfig {
         return new KafkaTemplate<>(producerFactory);
     }
 
+    //Manager Message Producer Configuration
     @Bean
     public ProducerFactory<String, ManagerMessageEvent> managerMessageProducerFactory(
             KafkaProperties properties
@@ -46,7 +50,7 @@ public class KafkaConfig {
         return new KafkaTemplate<>(producerFactory);
     }
 
-
+    //Video Validation Producer Configuration
     @Bean
     public ProducerFactory<String, VideoValidationEvent> videoValidationEventProducerFactory(
             KafkaProperties properties
@@ -62,5 +66,22 @@ public class KafkaConfig {
     ){
         return new KafkaTemplate<>(producerFactory);
 
+    }
+
+    //Video Encoding Producer Configuration
+    @Bean
+    public ProducerFactory<String, VideoEncodingEvent> EncodingProducerFactory(
+            KafkaProperties properties
+    ){
+        return new DefaultKafkaProducerFactory<>(
+                properties.buildProducerProperties()
+        );
+    }
+
+    @Bean
+    public KafkaTemplate<String, VideoEncodingEvent> EncodingKafkaTemplate(
+            ProducerFactory<String, VideoEncodingEvent> producerFactory
+    ){
+        return new KafkaTemplate<>(producerFactory);
     }
 }
