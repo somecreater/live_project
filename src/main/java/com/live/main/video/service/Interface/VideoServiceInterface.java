@@ -1,7 +1,9 @@
 package com.live.main.video.service.Interface;
 
+import com.live.main.common.database.dto.VideoEncodingEvent;
 import com.live.main.common.database.dto.VideoValidationEvent;
 import com.live.main.video.database.dto.*;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -31,6 +33,8 @@ public interface VideoServiceInterface {
   public boolean videoValidation(String channel_name, Long video_id);
   /**Kafka에 검증 완료 메시지 삽입*/
   public void publishVideoValidationCompleted(VideoValidationEvent event);
+  /**Kafka에서 인코딩 완료 메시지 수신*/
+  public void consumerEncodingComplete(VideoEncodingEvent encodeEvent, Acknowledgment ack);
   /**동영상 파일 내용 검사*/
   public boolean isValidMp4OrMov(byte[] bytes);
   /**R2 내 저장된 파일 삭제*/

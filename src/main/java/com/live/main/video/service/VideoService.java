@@ -1,6 +1,7 @@
 package com.live.main.video.service;
 
 import com.live.main.common.database.dto.ErrorCode;
+import com.live.main.common.database.dto.VideoEncodingEvent;
 import com.live.main.common.database.dto.VideoValidationEvent;
 import com.live.main.common.exception.CustomException;
 import com.live.main.video.database.dto.*;
@@ -17,7 +18,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -550,6 +553,24 @@ public class VideoService implements VideoServiceInterface {
     log.info("Kafka Video Validation Message Produced to Kafka - Object KEY: {}, Video ID: {}",
             event.getObject_key(),
             event.getVideo_id());
+  }
+
+  @KafkaListener(
+          topics = "video-encoding-topic",
+          groupId = "video-encoding_group",
+          containerFactory = "videoEncodingKafkaListenerContainerFactory"
+  )
+  @Override
+  public void consumerEncodingComplete(VideoEncodingEvent encodeEvent, Acknowledgment ack){
+    try{
+      log.info("Kafka Video Encoding Message Received by Kafka - Video Id: {}, Object Key: {}",
+        encodeEvent.getVideoId(),
+        encodeEvent.getObjectKey());
+
+      ack.acknowledge();
+    } catch (Exception e) {
+      log.error("Video Encoding message consume failed", e);
+    }
   }
 
   @Override
