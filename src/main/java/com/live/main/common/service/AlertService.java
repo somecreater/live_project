@@ -236,7 +236,9 @@ public class AlertService implements AlertServiceInterface {
 
     switch (type){
       case "CHANNEL":{
-        targetList=channelService.getsubscriptionUserList(publisher);
+        String owner= channelService.getChannelInfoByName(publisher).getUser_login_id();
+        targetList=new ArrayList<>(channelService.getsubscriptionUserList(publisher));
+        targetList.add(owner);
         break;
       }
       case "USER":{
