@@ -2,7 +2,9 @@ package com.live.main.common.service;
 
 import com.live.main.channel.service.Interface.ChannelServiceInterface;
 import com.live.main.common.database.dto.AlertEvent;
+import com.live.main.common.database.dto.AlertType;
 import com.live.main.common.database.dto.ManagerMessageEvent;
+import com.live.main.common.database.dto.VideoEncodingEvent;
 import com.live.main.common.database.repository.OnlineRepository;
 import com.live.main.common.service.Interface.AlertCustomServiceInterface;
 import com.live.main.common.service.Interface.AlertServiceInterface;
@@ -20,6 +22,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MimeTypeUtils;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -72,6 +75,36 @@ public class AlertService implements AlertServiceInterface {
               alertEvent.getPublisher(),
               alertEvent.getContent());
 
+      sendAlert(alertEvent);
+      ack.acknowledge();
+    } catch (Exception e) {
+      log.error("Alert consume failed", e);
+    }
+  }
+
+  @KafkaListener(
+          topics = "video-encoding-topic",
+          groupId = "video-encoding_group_alert",
+          containerFactory = "videoEncodingKafkaListenerContainerFactory"
+  )
+  @Override
+  public void consumerVideoKafka(VideoEncodingEvent videoEncodingEvent, Acknowledgment ack){
+    try {
+      String objectKey= videoEncodingEvent.getObjectKey();
+      String[] parts = objectKey.split("/", 3);
+      String filePart = parts[2];
+
+      int underscoreIndex = filePart.indexOf("_");
+      String title = filePart.substring(underscoreIndex + 1);
+
+      AlertEvent alertEvent= new AlertEvent(
+        null,
+        AlertType.VIDEO_UPLOAD,
+        videoEncodingEvent.getChannelName(),
+        title,
+        false,
+        LocalDateTime.now()
+      );
       sendAlert(alertEvent);
       ack.acknowledge();
     } catch (Exception e) {
@@ -199,7 +232,7 @@ public class AlertService implements AlertServiceInterface {
   //나중에 API 호출로 전환
   @Override
   public List<String> searchSendAlert(String type, String publisher){
-    List<String> targetList=null;
+    List<String> targetList=new ArrayList<>();
 
     switch (type){
       case "CHANNEL":{
@@ -207,7 +240,6 @@ public class AlertService implements AlertServiceInterface {
         break;
       }
       case "USER":{
-        targetList= new ArrayList<>();
         targetList.add(publisher);
         break;
       }

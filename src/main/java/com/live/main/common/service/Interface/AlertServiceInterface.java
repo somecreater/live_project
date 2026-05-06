@@ -2,6 +2,7 @@ package com.live.main.common.service.Interface;
 
 import com.live.main.common.database.dto.AlertEvent;
 import com.live.main.common.database.dto.ManagerMessageEvent;
+import com.live.main.common.database.dto.VideoEncodingEvent;
 import org.springframework.kafka.support.Acknowledgment;
 
 import java.util.List;
@@ -18,6 +19,8 @@ public interface AlertServiceInterface {
   */
   /**Kafka Consumer의 알림 메시지 소비 기능*/
   public void consumerKafka(AlertEvent alertEvent, Acknowledgment ack);
+  /**Kafka Consumer의 동영상 인코딩 완료 메시지 소비 기능*/
+  public void consumerVideoKafka(VideoEncodingEvent videoEncodingEvent, Acknowledgment ack);
   /**알림 전송 기능*/
   public void sendAlert(AlertEvent alertEvent);
   /**알림 전송 대상 파악 기능*/
