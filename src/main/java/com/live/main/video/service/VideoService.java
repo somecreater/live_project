@@ -292,6 +292,7 @@ public class VideoService implements VideoServiceInterface {
   }
 
   @Override
+  @Transactional
   public void completeMultipartUpload(CompleteUploadRequest request){
 
     if (request == null
@@ -386,6 +387,7 @@ public class VideoService implements VideoServiceInterface {
   }
 
   @Override
+  @Transactional
   public void validateCompleteParts(List<CompletePartRequest> parts, int totalPartCount){
     if (parts == null || parts.isEmpty()) {
       log.error("partNumbers is required");
@@ -561,15 +563,26 @@ public class VideoService implements VideoServiceInterface {
           containerFactory = "videoEncodingKafkaListenerContainerFactory"
   )
   @Override
+  @Transactional
   public void consumerEncodingComplete(VideoEncodingEvent encodeEvent, Acknowledgment ack){
     try{
-      log.info("Kafka Video Encoding Message Received by Kafka - Video Id: {}, Object Key: {}",
+      log.info("Kafka Video Encoding Message Received by Kafka - Video Id: {}, Object Key: {}, Result Key: {}",
         encodeEvent.getVideoId(),
-        encodeEvent.getObjectKey());
+        encodeEvent.getObjectKey(),
+        encodeEvent.getResultKey());
+
+      VideoEntity entity= videoRepository.findById(encodeEvent.getVideoId()).orElse(null);
+      if(entity == null){
+        throw new Exception();
+      }
+      entity.setStatus(Status.NORMAL);
+      entity.setHls_url(encodeEvent.getResultKey());
+      videoRepository.save(entity);
 
       ack.acknowledge();
     } catch (Exception e) {
       log.error("Video Encoding message consume failed", e);
+      throw new CustomException(ErrorCode.BAD_REQUEST);
     }
   }
 
