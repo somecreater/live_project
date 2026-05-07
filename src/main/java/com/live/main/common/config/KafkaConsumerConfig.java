@@ -2,6 +2,9 @@ package com.live.main.common.config;
 
 import com.live.main.common.database.dto.AlertEvent;
 import com.live.main.common.database.dto.ManagerMessageEvent;
+import com.live.main.common.database.dto.VideoEncodingEvent;
+import com.live.main.common.database.dto.VideoValidationEvent;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
@@ -11,6 +14,10 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.kafka.support.serializer.JsonDeserializer;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 @EnableKafka
@@ -24,8 +31,22 @@ public class KafkaConsumerConfig {
     public ConsumerFactory<String, AlertEvent> consumerFactory(
             KafkaProperties properties
     ) {
+        Map<String, Object> props = new HashMap<>(properties.buildConsumerProperties());
+        props.remove("spring.json.trusted.packages");
+        props.remove("spring.json.use.type.headers");
+        props.remove("spring.json.value.default.type");
+        props.remove("spring.json.key.default.type");
+
+        JsonDeserializer<AlertEvent> valueDeserializer =
+                new JsonDeserializer<>(AlertEvent.class);
+
+        valueDeserializer.setUseTypeHeaders(false);
+        valueDeserializer.addTrustedPackages("*");
+
         return new DefaultKafkaConsumerFactory<>(
-                properties.buildConsumerProperties()
+                props,
+                new StringDeserializer(),
+                valueDeserializer
         );
     }
 
@@ -49,8 +70,22 @@ public class KafkaConsumerConfig {
     public ConsumerFactory<String, ManagerMessageEvent> managerMessageConsumerFactory(
             KafkaProperties properties
     ) {
+        Map<String, Object> props = new HashMap<>(properties.buildConsumerProperties());
+        props.remove("spring.json.trusted.packages");
+        props.remove("spring.json.use.type.headers");
+        props.remove("spring.json.value.default.type");
+        props.remove("spring.json.key.default.type");
+
+        JsonDeserializer<ManagerMessageEvent> valueDeserializer =
+                new JsonDeserializer<>(ManagerMessageEvent.class);
+
+        valueDeserializer.setUseTypeHeaders(false);
+        valueDeserializer.addTrustedPackages("*");
+
         return new DefaultKafkaConsumerFactory<>(
-                properties.buildConsumerProperties()
+                props,
+                new StringDeserializer(),
+                valueDeserializer
         );
     }
 
@@ -67,6 +102,84 @@ public class KafkaConsumerConfig {
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
 
         return factory;
+    }
+
+    // Video Validation Consumer Configuration
+    @Bean
+    public ConsumerFactory<String, VideoValidationEvent> videoValidationConsumerFactory(
+            KafkaProperties properties
+    ) {
+        Map<String, Object> props = new HashMap<>(properties.buildConsumerProperties());
+        props.remove("spring.json.trusted.packages");
+        props.remove("spring.json.use.type.headers");
+        props.remove("spring.json.value.default.type");
+        props.remove("spring.json.key.default.type");
+
+        JsonDeserializer<VideoValidationEvent> valueDeserializer =
+                new JsonDeserializer<>(VideoValidationEvent.class);
+
+        valueDeserializer.setUseTypeHeaders(false);
+        valueDeserializer.addTrustedPackages("*");
+
+        return new DefaultKafkaConsumerFactory<>(
+                props,
+                new StringDeserializer(),
+                valueDeserializer
+        );
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, VideoValidationEvent>
+    videoValidationKafkaListenerContainerFactory(
+            ConsumerFactory<String, VideoValidationEvent> consumerFactory
+    ) {
+        ConcurrentKafkaListenerContainerFactory<String, VideoValidationEvent> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+
+        factory.setConsumerFactory(consumerFactory);
+        factory.setConcurrency(CONSUMER_PARTITIONS); // 파티션 수 이하
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
+
+        return factory;
+    }
+
+    // Video Encoding Consumer Configuration
+    @Bean
+    public ConsumerFactory<String, VideoEncodingEvent> EncodingConsumerFactory(
+            KafkaProperties properties){
+        Map<String, Object> props = new HashMap<>(properties.buildConsumerProperties());
+        props.remove("spring.json.trusted.packages");
+        props.remove("spring.json.use.type.headers");
+        props.remove("spring.json.value.default.type");
+        props.remove("spring.json.key.default.type");
+
+        JsonDeserializer<VideoEncodingEvent> valueDeserializer =
+                new JsonDeserializer<>(VideoEncodingEvent.class);
+
+        valueDeserializer.setUseTypeHeaders(false);
+        valueDeserializer.addTrustedPackages("*");
+
+        return new DefaultKafkaConsumerFactory<>(
+                props,
+                new StringDeserializer(),
+                valueDeserializer
+        );
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, VideoEncodingEvent>
+    videoEncodingKafkaListenerContainerFactory(
+            ConsumerFactory<String, VideoEncodingEvent> consumerFactory
+    ){
+        ConcurrentKafkaListenerContainerFactory<String, VideoEncodingEvent> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+
+        factory.setConsumerFactory(consumerFactory);
+        factory.setConcurrency(CONSUMER_PARTITIONS); // 파티션 수 이하
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
+
+        return factory;
+
     }
 
 }

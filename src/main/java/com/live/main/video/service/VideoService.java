@@ -1,17 +1,27 @@
 package com.live.main.video.service;
 
 import com.live.main.common.database.dto.ErrorCode;
+import com.live.main.common.database.dto.VideoEncodingEvent;
+import com.live.main.common.database.dto.VideoValidationEvent;
 import com.live.main.common.exception.CustomException;
-import com.live.main.video.database.dto.VideoDto;
+import com.live.main.video.database.dto.*;
 import com.live.main.video.database.entity.Status;
+import com.live.main.video.database.entity.UploadSessionEntity;
+import com.live.main.video.database.entity.UploadSessionStatus;
 import com.live.main.video.database.entity.VideoEntity;
 import com.live.main.video.database.mapper.VideoMapper;
+import com.live.main.video.database.repository.UploadSessionRepository;
 import com.live.main.video.database.repository.VideoRepository;
 import com.live.main.video.service.Interface.VideoServiceInterface;
 import lombok.extern.slf4j.Slf4j;
-import org.antlr.v4.runtime.misc.FlexibleHashMap;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.Acknowledgment;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,14 +31,14 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedUploadPartRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.UploadPartPresignRequest;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -45,20 +55,36 @@ public class VideoService implements VideoServiceInterface {
   private String transcoding_video_folder;
   @Value("${app.file.video_limit_size}")
   private Long video_limit_size;
+  @Value("${app.file.multi_part_size}")
+  private Long multi_part_size;
 
   private final VideoMapper videoMapper;
   private final VideoRepository videoRepository;
+
+  private final UploadSessionRepository uploadSessionRepository;
+
+  @Value("${app.kafka.topic.video-complete.name}")
+  private String VIDEO_VALIDATION_TOPIC_NAME;
+  private final ApplicationEventPublisher publisher;
+  private final KafkaTemplate<String, VideoValidationEvent> kafkaTemplate;
 
   public VideoService(
           @Qualifier("r2Client") S3Client s3Client,
           @Qualifier("r2Presigner") S3Presigner s3Presigner,
           VideoMapper videoMapper,
-          VideoRepository videoRepository){
+          VideoRepository videoRepository,
+          UploadSessionRepository uploadSessionRepository,
+          ApplicationEventPublisher publisher,
+          KafkaTemplate<String, VideoValidationEvent> kafkaTemplate){
     this.s3Client = s3Client;
     this.s3Presigner = s3Presigner;
     this.videoMapper = videoMapper;
     this.videoRepository = videoRepository;
+    this.uploadSessionRepository = uploadSessionRepository;
+    this.publisher = publisher;
+    this.kafkaTemplate = kafkaTemplate;
   }
+
   @Override
   @Transactional
   public Map<String, Object> VideoUploadUrl(String channel_name, String user_login_id, VideoDto videoDto) {
@@ -118,6 +144,300 @@ public class VideoService implements VideoServiceInterface {
   }
 
   @Override
+  @Transactional
+  public MultipartUploadRequest createMultipartUploadSession(String channel_name, VideoDto videoDto){
+
+    Long videoId=null;
+    String objectKey=null;
+    String uploadId=null;
+
+    if(channel_name.isBlank() || videoDto.getTitle().isBlank()){
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    if(!videoDto.getFile_type().equals("mp4") && !videoDto.getFile_type().equals("mov")){
+      log.info(videoDto.getFile_type());
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+    try {
+
+      videoDto.setChannel_name(channel_name);
+      VideoEntity entity = videoMapper.toEntity(videoDto);
+      entity.setStatus(Status.PRIVATE);
+
+      VideoEntity savedEntity = videoRepository.save(entity);
+      videoId = savedEntity.getId();
+      objectKey = original_video_folder + channel_name + "/" +
+              videoId + "_" + videoDto.getTitle();
+      String contentType = normalizeContentType(videoDto.getFile_type());
+
+      log.info("비디오 객체 타입: {}", contentType);
+
+      CreateMultipartUploadRequest createRequest = CreateMultipartUploadRequest.builder()
+              .bucket(bucket_name)
+              .key(objectKey)
+              .contentType(contentType)
+              .build();
+      CreateMultipartUploadResponse createResponse = s3Client.createMultipartUpload(createRequest);
+      int totalPartCount = (int) Math.ceil((double) videoDto.getSize() / multi_part_size);
+      uploadId=createResponse.uploadId();
+
+      UploadSessionEntity session = new UploadSessionEntity();
+      session.setUploadId(uploadId);
+      session.setVideoId(videoId);
+      session.setObjectKey(objectKey);
+      session.setStatus(UploadSessionStatus.INITIATED);
+      session.setTotalPartCount(totalPartCount);
+      session.setCompletedPartCount(0);
+      session.setPartSize(multi_part_size);
+      uploadSessionRepository.save(session);
+      
+      return new MultipartUploadRequest(
+              savedEntity.getId(),
+              objectKey,
+              createResponse.uploadId(),
+              multi_part_size,
+              totalPartCount
+      );
+    } catch (Exception e) {
+      log.error(e.getMessage());
+      abortUpload(new AbortUploadRequest(videoId, objectKey, uploadId));
+      throw new CustomException(ErrorCode.SERVER_ERROR);
+    }
+  }
+
+  @Override
+  @Transactional
+  public List<PartPresignedUrlResponse> presignUploadParts(PresignPartsRequest presignPartsRequest){
+    Long videoId=null;
+    String objectKey=null;
+    String uploadId=null;
+
+    if(presignPartsRequest.getUploadId().isBlank()
+    || presignPartsRequest.getVideoId() == null
+    || presignPartsRequest.getKey().isBlank()){
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+    videoId= presignPartsRequest.getVideoId();
+
+    UploadSessionEntity uploadSession = uploadSessionRepository.findByUploadIdAndVideoId(
+      presignPartsRequest.getUploadId(), presignPartsRequest.getVideoId());
+
+    if(uploadSession.getStatus() == UploadSessionStatus.COMPLETED ||
+            uploadSession.getStatus() == UploadSessionStatus.ABORTED){
+      log.error("this upload session is already closed");
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    validatePartNumbers(presignPartsRequest.getPartNumbers(), uploadSession.getTotalPartCount());
+
+    try{
+      List<PartPresignedUrlResponse> partPresignedUrlResponses = new ArrayList<>();
+      objectKey= presignPartsRequest.getKey();
+      uploadId=presignPartsRequest.getUploadId();
+      for(int part_number: presignPartsRequest.getPartNumbers()){
+        UploadPartRequest uploadPartRequest= UploadPartRequest.builder()
+                .bucket(bucket_name)
+                .key(objectKey)
+                .uploadId(uploadId)
+                .partNumber(part_number)
+                .build();
+
+        UploadPartPresignRequest presignRequest = UploadPartPresignRequest.builder()
+                .signatureDuration(Duration.ofMinutes(30))
+                .uploadPartRequest(uploadPartRequest)
+                .build();
+
+        PresignedUploadPartRequest presigned = s3Presigner.presignUploadPart(presignRequest);
+
+        partPresignedUrlResponses.add(new PartPresignedUrlResponse(part_number, presigned.url().toString()));
+      }
+
+      uploadSession.setStatus(UploadSessionStatus.UPLOADING);
+      uploadSessionRepository.save(uploadSession);
+
+      return partPresignedUrlResponses;
+
+    }catch (Exception e){
+      log.error("미리 서명된 Multipart Upload url 생성 실패 Error Message: {}", e.getMessage());
+      log.error("{}, {}, {}, {}", e.getCause(), e.getStackTrace(), e.getLocalizedMessage(), e.getSuppressed());
+      abortUpload(new AbortUploadRequest(videoId, objectKey, uploadId));
+      throw e;
+
+    }
+  }
+
+  @Override
+  public void validatePartNumbers(List<Integer> partNumbers, int totalPartCount){
+    if(partNumbers == null || partNumbers.isEmpty()){
+      log.error("part 목록이 유효하지 않습니다");
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+    if(partNumbers.size() > 100){
+      log.error("part 목록이 너무 큽니다.");
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    Set<Integer> unique = new HashSet<>();
+    for (Integer partNumber : partNumbers) {
+      if (partNumber == null || partNumber < 1 || partNumber > totalPartCount) {
+        log.error("유효하지 않은 part 번호입니다.");
+        throw new CustomException(ErrorCode.BAD_REQUEST);
+      }
+      if (!unique.add(partNumber)) {
+        log.error("중복된 part 번호 입니다.");
+        throw new CustomException(ErrorCode.BAD_REQUEST);
+      }
+    }
+  }
+
+  @Override
+  @Transactional
+  public void completeMultipartUpload(CompleteUploadRequest request){
+
+    if (request == null
+            || request.getUploadId() == null || request.getUploadId().isBlank()
+            || request.getVideoId() == null
+            || request.getKey() == null || request.getKey().isBlank()
+            || request.getParts() == null || request.getParts().isEmpty()) {
+      log.error("completeMultipartUpload bad request");
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    UploadSessionEntity sessionEntity = uploadSessionRepository.findByUploadIdAndVideoId(
+      request.getUploadId(), request.getVideoId());
+
+    if (sessionEntity == null) {
+      log.error("upload session not found. uploadId={}, videoId={}",
+              request.getUploadId(), request.getVideoId());
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    if (!Objects.equals(sessionEntity.getObjectKey(), request.getKey())) {
+      log.error("object key mismatch. requestKey={}, savedKey={}",
+              request.getKey(), sessionEntity.getObjectKey());
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    if (sessionEntity.getStatus() == UploadSessionStatus.COMPLETED) {
+      log.error("upload already completed. uploadId={}, videoId={}",
+              request.getUploadId(), request.getVideoId());
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+    if (sessionEntity.getStatus() == UploadSessionStatus.ABORTED) {
+      log.error("upload already aborted. uploadId={}, videoId={}",
+              request.getUploadId(), request.getVideoId());
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    try{
+
+      validateCompleteParts(request.getParts(), sessionEntity.getTotalPartCount());
+
+      List<CompletedPart> completedParts = request.getParts().stream()
+              .map(part -> {
+
+                if (part.getPartNumber() == null || part.getPartNumber() <= 0
+                        || part.getEtag() == null || part.getEtag().isBlank()) {
+                  log.error("invalid completed part. partNumber={}, etag={}",
+                          part.getPartNumber(), part.getEtag());
+                  throw new CustomException(ErrorCode.BAD_REQUEST);
+                }
+
+                return CompletedPart.builder()
+                      .partNumber(part.getPartNumber())
+                      .eTag(part.getEtag())
+                      .build();
+              })
+              .sorted(Comparator.comparingInt(CompletedPart::partNumber))
+              .toList();
+
+      CompleteMultipartUploadRequest completeRequest= CompleteMultipartUploadRequest.builder()
+              .bucket(bucket_name)
+              .key(request.getKey())
+              .uploadId(request.getUploadId())
+              .multipartUpload(
+                      CompletedMultipartUpload.builder()
+                              .parts(completedParts)
+                              .build()
+              )
+              .build();
+
+      s3Client.completeMultipartUpload(completeRequest);
+
+      sessionEntity.setCompletedPartCount(request.getParts().size());
+      sessionEntity.setCompletedAt(LocalDateTime.now());
+      sessionEntity.setStatus(UploadSessionStatus.COMPLETED);
+
+      uploadSessionRepository.save(sessionEntity);
+
+      log.info("multipart upload completed. uploadId={}, videoId={}, partCount={}",
+              sessionEntity.getUploadId(),
+              sessionEntity.getVideoId(),
+              completedParts.size());
+
+    } catch (CustomException e) {
+      throw e;
+    } catch (Exception e) {
+      log.error("failed to complete multipart upload. uploadId={}, videoId={}",
+              request.getUploadId(), request.getVideoId(), e);
+      throw new CustomException(ErrorCode.SERVER_ERROR);
+    }
+
+  }
+
+  @Override
+  @Transactional
+  public void validateCompleteParts(List<CompletePartRequest> parts, int totalPartCount){
+    if (parts == null || parts.isEmpty()) {
+      log.error("partNumbers is required");
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+    if (parts.size() > 100) {
+      log.error("too many part numbers requested");
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    Set<Integer> unique = new HashSet<>();
+    for (CompletePartRequest part : parts) {
+      if(part.getPartNumber() == null || part.getPartNumber() < 1 || part.getPartNumber() > totalPartCount) {
+        log.error("invalid part number: " + part.getPartNumber());
+        throw new CustomException(ErrorCode.BAD_REQUEST);
+      }
+      if (part.getEtag() == null || part.getEtag().isBlank()) {
+        log.error("etag is required");
+        throw new CustomException(ErrorCode.BAD_REQUEST);
+      }
+      if (!unique.add(part.getPartNumber())) {
+        log.error("duplicate complete part number");
+        throw new CustomException(ErrorCode.BAD_REQUEST);
+      }
+    }
+  }
+
+  @Override
+  public void abortUpload(AbortUploadRequest request){
+    UploadSessionEntity session = uploadSessionRepository
+            .findByUploadIdAndVideoId(request.getUploadId(),request.getVideoId());
+    if(session == null || session.getStatus() == UploadSessionStatus.COMPLETED){
+      log.error("completed upload cannot be aborted");
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    AbortMultipartUploadRequest abortRequest = AbortMultipartUploadRequest.builder()
+            .bucket(bucket_name)
+            .key(request.getKey())
+            .uploadId(request.getUploadId())
+            .build();
+
+    s3Client.abortMultipartUpload(abortRequest);
+
+    session.setStatus(UploadSessionStatus.ABORTED);
+    session.setAbortedAt(LocalDateTime.now());
+    uploadSessionRepository.save(session);
+  }
+
+  @Override
   public String normalizeContentType(String fileType){
     if (fileType == null || fileType.isBlank()) {
       return "application/octet-stream";
@@ -134,7 +454,7 @@ public class VideoService implements VideoServiceInterface {
 
   @Override
   @Transactional
-  public void videoValidation(String channel_name, Long video_id){
+  public boolean videoValidation(String channel_name, Long video_id){
     String object_id=null;
 
     if(channel_name == null || channel_name.isBlank() || video_id == null) {
@@ -206,7 +526,9 @@ public class VideoService implements VideoServiceInterface {
       }
 
       log.info("동영상 2차 검증 완료 - video_id: {}, key: {}", video_id, object_id);
-      //Kafka에 검증 완료 메시지 넣는 로직 추가 예정
+      publisher.publishEvent(new VideoValidationEvent(video_id, object_id));
+
+      return true;
 
     } catch (NoSuchKeyException e) {
       log.error("R2 객체 없음 - key: {}", object_id, e);
@@ -217,6 +539,54 @@ public class VideoService implements VideoServiceInterface {
               : e.getMessage();
       log.error("R2 파일 검증 실패 - key: {}, message: {}", object_id, errorMessage, e);
       throw new RuntimeException("R2 파일 검증 실패", e);
+    }
+  }
+
+  @Async("IOTaskExecutor")
+  @EventListener
+  @Override
+  public void publishVideoValidationCompleted(VideoValidationEvent event){
+    kafkaTemplate.send(
+      VIDEO_VALIDATION_TOPIC_NAME,
+      event.getObject_key(),
+      event
+    );
+
+    log.info("Kafka Video Validation Message Produced to Kafka - Object KEY: {}, Video ID: {}",
+            event.getObject_key(),
+            event.getVideo_id());
+  }
+
+  @KafkaListener(
+          topics = "video-encoding-topic",
+          groupId = "video-encoding_group",
+          containerFactory = "videoEncodingKafkaListenerContainerFactory"
+  )
+  @Override
+  @Transactional
+  public void consumerEncodingComplete(VideoEncodingEvent encodeEvent, Acknowledgment ack){
+    try{
+      log.info("Kafka Video Encoding Message Received by Kafka - Video Id: {}, Object Key: {}, Result Key: {}",
+        encodeEvent.getVideoId(),
+        encodeEvent.getObjectKey(),
+        encodeEvent.getResultKey());
+
+      VideoEntity entity = videoRepository.findById(encodeEvent.getVideoId())
+              .orElseThrow(() -> new CustomException(ErrorCode.BAD_REQUEST));
+      String ResultKey =encodeEvent.getResultKey();
+      if (ResultKey == null || ResultKey.isBlank()) {
+        throw new CustomException(ErrorCode.BAD_REQUEST);
+      }
+      String resultPrefix=ResultKey.endsWith("/") ? ResultKey : ResultKey+ "/";
+      String hlsObjectKey = resultPrefix + "master.m3u8";
+      entity.setStatus(Status.NORMAL);
+      entity.setHls_url(hlsObjectKey);
+      videoRepository.save(entity);
+
+      ack.acknowledge();
+    } catch (Exception e) {
+      log.error("Video Encoding message consume failed", e);
+      throw e;
     }
   }
 

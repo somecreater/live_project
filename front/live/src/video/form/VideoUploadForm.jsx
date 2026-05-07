@@ -3,11 +3,9 @@ import { useState } from "react";
 
 /**
  * VideoUploadForm 컴포넌트 - 동영상 업로드 폼
- * 먼저 동영상 정보를 임시로 DB에 저장하고, 미리 서명된 URL을 사용하여 Cloudflare에 직접 업로드
- * @param {function} onVideoUploadUrl - 동영상 정보 업로드 API 호출 함수
- * @param {function} onSuccess - 동영상 정보 업로드 성공 시 호출될 콜백 함수
+ * @param {function} onSuccess - 폼 제출 성공 시 동영상 데이터를 전달할 콜백 함수
  */
-function VideoUploadForm({ onVideoUploadUrl, onSuccess }) {
+function VideoUploadForm({ onSuccess }) {
 
     const [video, setVideo] = useState({
         id: "",
@@ -26,16 +24,25 @@ function VideoUploadForm({ onVideoUploadUrl, onSuccess }) {
         setVideo(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
         setError(null);
-        const data = await onVideoUploadUrl(video);
-        if (data.result) {
-            onSuccess(data);
-        } else {
-            console.error("업로드 오류:", data);
-            setError(data.message);
+
+        if (!video.title) {
+            setError("제목을 입력해주세요.");
+            return;
         }
+
+        if (!video.description) {
+            setError("설명을 입력해주세요.");
+            return;
+        }
+
+        if (!video.file_type) {
+            setError("파일 타입을 선택해주세요.");
+            return;
+        }
+        onSuccess(video);
     };
 
     return (
@@ -65,7 +72,7 @@ function VideoUploadForm({ onVideoUploadUrl, onSuccess }) {
             </Form.Group>
 
             <Button variant="primary" type="submit">
-                업로드 준비
+                동영상 정보 등록
             </Button>
         </Form>
     );

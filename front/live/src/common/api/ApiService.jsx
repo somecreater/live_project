@@ -104,7 +104,11 @@ const ApiService = {
   },
   video: {
     upload_url: (dto) => RefreshApi.post(API_END_POINT.video.upload_url, dto),
-    upload_complete: (id) => RefreshApi.post(`${API_END_POINT.video.upload_complete}?video_id=${id}`),
+    multipart_upload_url_request: (dto) => RefreshApi.post(API_END_POINT.video.multipart_upload_url_request, dto),
+    multipart_upload_url: (dto) => RefreshApi.post(API_END_POINT.video.multipart_upload_url, dto),
+    multipart_upload_complete: (dto) => RefreshApi.post(API_END_POINT.video.multipart_upload_complete, dto),
+    multipart_upload_abort: (dto) => RefreshApi.post(API_END_POINT.video.multipart_upload_abort, dto),
+    upload_validate: (id) => RefreshApi.post(`${API_END_POINT.video.upload_validate}?video_id=${id}`),
     list: (dto) => RefreshApi.post(API_END_POINT.video.list, dto),
     delete: (dto) => RefreshApi.post(API_END_POINT.video.delete, dto)
   }
