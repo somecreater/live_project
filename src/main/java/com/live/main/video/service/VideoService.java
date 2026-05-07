@@ -571,18 +571,22 @@ public class VideoService implements VideoServiceInterface {
         encodeEvent.getObjectKey(),
         encodeEvent.getResultKey());
 
-      VideoEntity entity= videoRepository.findById(encodeEvent.getVideoId()).orElse(null);
-      if(entity == null){
-        throw new Exception();
+      VideoEntity entity = videoRepository.findById(encodeEvent.getVideoId())
+              .orElseThrow(() -> new CustomException(ErrorCode.BAD_REQUEST));
+      String ResultKey =encodeEvent.getResultKey();
+      if (ResultKey == null || ResultKey.isBlank()) {
+        throw new CustomException(ErrorCode.BAD_REQUEST);
       }
+      String resultPrefix=ResultKey.endsWith("/") ? ResultKey : ResultKey+ "/";
+      String hlsObjectKey = resultPrefix + "master.m3u8";
       entity.setStatus(Status.NORMAL);
-      entity.setHls_url(encodeEvent.getResultKey());
+      entity.setHls_url(hlsObjectKey);
       videoRepository.save(entity);
 
       ack.acknowledge();
     } catch (Exception e) {
       log.error("Video Encoding message consume failed", e);
-      throw new CustomException(ErrorCode.BAD_REQUEST);
+      throw e;
     }
   }
 
