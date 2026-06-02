@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Repository
 public interface VideoRepository extends JpaRepository<VideoEntity, Long> {
@@ -18,4 +19,6 @@ public interface VideoRepository extends JpaRepository<VideoEntity, Long> {
     @Transactional
     @Query("DELETE FROM VideoEntity v WHERE v.status = :status AND v.createdAt < :time")
     int deleteOldPendingVideos(@Param("status") Status status, @Param("time") LocalDateTime time);
+
+    Optional<VideoEntity> findByChannelEntity_NameAndTitle(String name, String title);
 }

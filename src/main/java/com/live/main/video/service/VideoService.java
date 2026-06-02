@@ -27,14 +27,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.ResponseBytes;
+import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
-import software.amazon.awssdk.services.s3.presigner.model.PresignedUploadPartRequest;
-import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
-import software.amazon.awssdk.services.s3.presigner.model.UploadPartPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.*;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -57,6 +56,8 @@ public class VideoService implements VideoServiceInterface {
   private Long video_limit_size;
   @Value("${app.file.multi_part_size}")
   private Long multi_part_size;
+  @Value("${app.video.presigned-url-duration}")
+  private Long presigned_url_duration;
 
   private final VideoMapper videoMapper;
   private final VideoRepository videoRepository;
@@ -652,9 +653,64 @@ public class VideoService implements VideoServiceInterface {
   }
 
   @Override
-  @Transactional
-  public String VideoPlayUrl(String channel_name, String video_title) {
+  @Transactional(readOnly = true)
+  public String VideoEncodingUrl(String channel_name, String video_title) {
+    VideoEntity entity= videoRepository.findByChannelEntity_NameAndTitle(channel_name, video_title)
+      .orElseThrow(()->new CustomException(ErrorCode.BAD_REQUEST));
+    if(entity.getStatus() == Status.PRIVATE || entity.getStatus() == Status.DELETED){
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+    String masterKey = entity.getHls_url();
+    if (masterKey == null || masterKey.isBlank()) {
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+    masterKey+="master.m3u8";
+
+    String masterM3u8 = readObjectAsString(masterKey);
+
+    return rewriteM3u8(entity.getId(), masterKey, masterM3u8);
+  }
+
+  public String readObjectAsString(String objectKey) {
+    GetObjectRequest request = GetObjectRequest.builder()
+            .bucket(bucket_name)
+            .key(objectKey)
+            .build();
+
+    try (ResponseInputStream<GetObjectResponse> response = s3Client.getObject(request)) {
+      return new String(response.readAllBytes(), StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+  }
+
+  public String rewriteM3u8(Long videoId, String currentM3u8Key, String content){
+
+    int lastSlashIndex = currentM3u8Key.lastIndexOf("/");
+    if (lastSlashIndex == -1) {
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    String parentPrefix =currentM3u8Key.substring(0, lastSlashIndex + 1);
+
     return "";
+  }
+
+  @Override
+  public String createPresignedGetUrl(String objectKey){
+    GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+            .bucket(bucket_name)
+            .key(objectKey)
+            .build();
+
+    GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+            .signatureDuration(Duration.ofMinutes(presigned_url_duration))
+            .getObjectRequest(getObjectRequest)
+            .build();
+
+    PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(presignRequest);
+
+    return presignedRequest.url().toString();
   }
 
   @Override
