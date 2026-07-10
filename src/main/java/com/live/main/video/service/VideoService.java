@@ -34,6 +34,7 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.*;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -664,13 +665,13 @@ public class VideoService implements VideoServiceInterface {
     if (masterKey == null || masterKey.isBlank()) {
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
-    masterKey+="master.m3u8";
 
     String masterM3u8 = readObjectAsString(masterKey);
 
     return rewriteM3u8(entity.getId(), masterKey, masterM3u8);
   }
 
+  @Override
   public String readObjectAsString(String objectKey) {
     GetObjectRequest request = GetObjectRequest.builder()
             .bucket(bucket_name)
@@ -679,21 +680,77 @@ public class VideoService implements VideoServiceInterface {
 
     try (ResponseInputStream<GetObjectResponse> response = s3Client.getObject(request)) {
       return new String(response.readAllBytes(), StandardCharsets.UTF_8);
-    } catch (IOException e) {
+    } catch (S3Exception | IOException e) {
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
   }
 
+  @Override
   public String rewriteM3u8(Long videoId, String currentM3u8Key, String content){
+    String parentPrefix = getParentPrefix(currentM3u8Key);
+    StringBuilder result = new StringBuilder();
 
-    int lastSlashIndex = currentM3u8Key.lastIndexOf("/");
-    if (lastSlashIndex == -1) {
+    String[] lines = content.split("\\r?\\n");
+
+    for(String line : lines){
+      String trimmed = line.trim();
+
+      if (trimmed.isBlank()) {
+        result.append(line).append("\n");
+        continue;
+      }
+
+      // 주석/메타데이터 라인은 기본적으로 그대로 둠
+      if (trimmed.startsWith("#")) {
+        result.append(line).append("\n");
+        continue;
+      }
+
+      // 이미 절대 URL이면 그대로 둠
+      if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+        result.append(line).append("\n");
+        continue;
+      }
+
+      String childKey = resolveChildKey(parentPrefix, trimmed);
+
+      if (trimmed.contains(".m3u8")) {
+        String apiUrl = "/api/videos/" + videoId + "/hls/playlist?key=" +
+                URLEncoder.encode(childKey, StandardCharsets.UTF_8);
+        result.append(apiUrl).append("\n");
+      } else {
+        // segment_00000.ts 같은 파일은 presigned URL로 변환
+        String signedUrl = createPresignedGetUrl(childKey);
+        result.append(signedUrl).append("\n");
+      }
+    }
+
+    return result.toString();
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public String videoEncodingPlaylist(Long videoId, String playlistKey){
+    VideoEntity entity = videoRepository.findById(videoId)
+            .orElseThrow(() -> new CustomException(ErrorCode.BAD_REQUEST));
+    if(entity.getStatus() == Status.PRIVATE || entity.getStatus() == Status.DELETED){
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
 
-    String parentPrefix =currentM3u8Key.substring(0, lastSlashIndex + 1);
+    String masterKey = entity.getHls_url();
+    if (masterKey == null || masterKey.isBlank()) {
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
 
-    return "";
+    String basePrefix = getParentPrefix(masterKey);
+
+    if (!playlistKey.startsWith(basePrefix)) {
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    String playlistM3u8 = readObjectAsString(playlistKey);
+
+    return rewriteM3u8(entity.getId(), playlistKey, playlistM3u8);
   }
 
   @Override
@@ -711,6 +768,26 @@ public class VideoService implements VideoServiceInterface {
     PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(presignRequest);
 
     return presignedRequest.url().toString();
+  }
+
+  @Override
+  public String getParentPrefix(String objectKey){
+    int lastSlashIndex = objectKey.lastIndexOf("/");
+
+    if (lastSlashIndex == -1) {
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    return objectKey.substring(0, lastSlashIndex + 1);
+  }
+
+  @Override
+  public String resolveChildKey(String parentPrefix, String childPath){
+    if (childPath.startsWith("/")) {
+      return childPath.substring(1);
+    }
+
+    return parentPrefix + childPath;
   }
 
   @Override

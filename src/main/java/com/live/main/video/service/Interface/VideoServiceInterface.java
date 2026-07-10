@@ -50,6 +50,10 @@ public interface VideoServiceInterface {
   public String rewriteM3u8(Long videoId, String currentM3u8Key, String content);
   /**동영상 재생을 위한 presigned GET URL 발급*/
   public String createPresignedGetUrl(String objectKey);
+  /**playList 목록 가져옴*/
+  public String videoEncodingPlaylist(Long videoId, String playlistKey);
+  public String getParentPrefix(String objectKey);
+  public String resolveChildKey(String parentPrefix, String childPath);
 
   /**동영상 삭제 기능*/
   public boolean VideoDelete(String channel_name, String video_title);
