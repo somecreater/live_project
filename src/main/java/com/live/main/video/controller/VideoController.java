@@ -8,6 +8,8 @@ import com.live.main.video.database.dto.*;
 import com.live.main.video.service.Interface.VideoServiceInterface;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.CacheControl;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -107,4 +109,34 @@ public class VideoController {
     }
     return ResponseEntity.ok(result);
   }
+
+  @GetMapping(
+          value = "/{videoId}/hls/master.m3u8",
+          produces = "application/vnd.apple.mpegurl"
+  )
+  public ResponseEntity<String> getMasterPlaylist(@PathVariable Long videoId){
+    String playlist = videoService.VideoEncodingUrl(videoId);
+
+    return ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType("application/vnd.apple.mpegurl"))
+            .cacheControl(CacheControl.noCache())
+            .body(playlist);
+  }
+
+  @GetMapping(
+          value = "/{videoId}/hls/playlist",
+          produces = "application/vnd.apple.mpegurl"
+  )
+  public ResponseEntity<String> getVariantPlaylist(
+          @PathVariable Long videoId,
+          @RequestParam String key
+  ){
+    String playlist = videoService.videoEncodingPlaylist(videoId, key);
+
+    return ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType("application/vnd.apple.mpegurl"))
+            .cacheControl(CacheControl.noCache())
+            .body(playlist);
+  }
+
 }

@@ -43,7 +43,7 @@ public interface VideoServiceInterface {
   /**동영상 썸네일 업로드 기능*/
   public boolean ThumbnailUpload(String channel_name, VideoDto videoDto, MultipartFile file);
   /**인코딩된 동영상 경로 제공 기능*/
-  public String VideoEncodingUrl(String channel_name, String video_title);
+  public String VideoEncodingUrl(Long videoId);
   /**R2에 저장된 m3u8 파일을 문자열로 읽어옴*/
   public String readObjectAsString(String objectKey);
   /** m3u8 파일 내부의 상대 경로를 재생 가능한 URL로 변환*/

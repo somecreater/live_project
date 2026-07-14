@@ -655,8 +655,8 @@ public class VideoService implements VideoServiceInterface {
 
   @Override
   @Transactional(readOnly = true)
-  public String VideoEncodingUrl(String channel_name, String video_title) {
-    VideoEntity entity= videoRepository.findByChannelEntity_NameAndTitle(channel_name, video_title)
+  public String VideoEncodingUrl(Long videoId) {
+    VideoEntity entity= videoRepository.findById(videoId)
       .orElseThrow(()->new CustomException(ErrorCode.BAD_REQUEST));
     if(entity.getStatus() == Status.PRIVATE || entity.getStatus() == Status.DELETED){
       throw new CustomException(ErrorCode.BAD_REQUEST);
