@@ -99,6 +99,8 @@ export const API_END_POINT = {
     multipart_upload_complete: `${API_BASE_URL}/api/video/multipart-upload-complete`,
     multipart_upload_abort: `${API_BASE_URL}/api/video/multipart-upload-abort`,
     upload_validate: `${API_BASE_URL}/api/video/upload_validate`,
+    get_video: `${API_BASE_URL}/api/video`,
+    get_video_playlist: `${API_BASE_URL}/api/video`,
     list: `${API_BASE_URL}/api/video/list`,
     delete: `${API_BASE_URL}/api/video/delete`
   }

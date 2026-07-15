@@ -715,7 +715,7 @@ public class VideoService implements VideoServiceInterface {
       String childKey = resolveChildKey(parentPrefix, trimmed);
 
       if (trimmed.contains(".m3u8")) {
-        String apiUrl = "/api/videos/" + videoId + "/hls/playlist?key=" +
+        String apiUrl = "/api/video/" + videoId + "/hls/playlist?key=" +
                 URLEncoder.encode(childKey, StandardCharsets.UTF_8);
         result.append(apiUrl).append("\n");
       } else {

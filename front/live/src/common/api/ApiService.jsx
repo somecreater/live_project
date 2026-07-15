@@ -109,6 +109,10 @@ const ApiService = {
     multipart_upload_complete: (dto) => RefreshApi.post(API_END_POINT.video.multipart_upload_complete, dto),
     multipart_upload_abort: (dto) => RefreshApi.post(API_END_POINT.video.multipart_upload_abort, dto),
     upload_validate: (id) => RefreshApi.post(`${API_END_POINT.video.upload_validate}?video_id=${id}`),
+    get_video: (id) => RefreshApi.get(`${API_END_POINT.video.get_video}/${id}/hls/master.m3u8`),
+    get_video_playlist: (id, key) => RefreshApi.get(`${API_END_POINT.video.get_video_playlist}/${id}/hls/playlist`, {
+      params: { key }
+    }),
     list: (dto) => RefreshApi.post(API_END_POINT.video.list, dto),
     delete: (dto) => RefreshApi.post(API_END_POINT.video.delete, dto)
   }
