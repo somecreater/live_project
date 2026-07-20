@@ -27,6 +27,15 @@ public class VideoController {
   private final VideoServiceInterface videoService;
   private final ChannelServiceInterface channelService;
 
+  @GetMapping("/videoList")
+  public ResponseEntity<?> getVideoList(
+
+  ){
+    Map<String ,Object> result = new HashMap<>();
+
+    return ResponseEntity.ok(result);
+  }
+
   @PostMapping("/upload-url")
   public ResponseEntity<?> getVideoUploadUrl(
           @AuthenticationPrincipal CustomUserDetails principal,
