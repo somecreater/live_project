@@ -1,6 +1,8 @@
 package com.live.main.video.database.dto;
 
+import com.live.main.video.database.entity.ProcessingStatus;
 import com.live.main.video.database.entity.Status;
+import com.live.main.video.database.entity.Visibility;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -12,16 +14,18 @@ public class VideoDto {
   private String description;
   private String file_type;
   private Long size;
-  private boolean visibility;
   private boolean allow_comments;
+  private Visibility visibility;
+  private ProcessingStatus processingStatus;
   private Status status;
   private int duration_seconds;
   private int like;
   private int unlike;
   private int view_count;
-  private String hls_url;
+  private String originalObjectKey;
+  private String hlsObjectKey;
+  private Long expectedFileSize;
   private String thumbnail_url;
-  private String presigned_url;
   private Long channel_id;
   private String channel_name;
   private LocalDateTime createdAt;

@@ -29,11 +29,16 @@ public class VideoEntity extends timeEntity {
   private Long size;
 
   @Column
-  private boolean visibility;
-
-  @Column
   private boolean allow_comments;
 
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private Visibility visibility = Visibility.PRIVATE;
+
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private ProcessingStatus processingStatus =
+          ProcessingStatus.CREATED;
   @Column
   @Enumerated(EnumType.STRING)
   private Status status;
@@ -51,13 +56,16 @@ public class VideoEntity extends timeEntity {
   private int view_count;
 
   @Column
-  private String hls_url;
-
-  @Column
   private String thumbnail_url;
 
+  @Column(length = 1024, unique = true)
+  private String originalObjectKey;
+
   @Column(length = 2048)
-  private String presigned_url;
+  private String hlsObjectKey;
+
+  @Column(nullable = false)
+  private Long expectedFileSize;
 
   @ManyToOne
   @JoinColumn(nullable = true, name = "channel_id")

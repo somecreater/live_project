@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class UploadSessionMapper {
 
-  public UploadSessionEntity toEntity(UploadSessionDto dto){
+ public UploadSessionEntity toEntity(UploadSessionDto dto){
       if (dto == null) {
           return null;
       }
@@ -23,6 +23,9 @@ public class UploadSessionMapper {
       entity.setTotalPartCount(dto.getTotalPartCount());
       entity.setCompletedPartCount(dto.getCompletedPartCount());
       entity.setPartSize(dto.getPartSize());
+      entity.setExpectedFileSize(dto.getExpectedFileSize());
+      entity.setExpiresAt(dto.getExpiresAt());
+      entity.setVersion(dto.getVersion());
       entity.setCompletedAt(dto.getCompletedAt());
       entity.setAbortedAt(dto.getAbortedAt());
       entity.setCreatedAt(dto.getCreatedAt());
@@ -45,6 +48,9 @@ public class UploadSessionMapper {
       dto.setTotalPartCount(entity.getTotalPartCount());
       dto.setCompletedPartCount(entity.getCompletedPartCount());
       dto.setPartSize(entity.getPartSize());
+      dto.setExpectedFileSize(entity.getExpectedFileSize());
+      dto.setExpiresAt(entity.getExpiresAt());
+      dto.setVersion(entity.getVersion());
       dto.setCompletedAt(entity.getCompletedAt());
       dto.setAbortedAt(entity.getAbortedAt());
       dto.setCreatedAt(entity.getCreatedAt());

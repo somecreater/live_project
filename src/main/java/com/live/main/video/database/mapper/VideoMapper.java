@@ -18,16 +18,18 @@ public class VideoMapper {
     entity.setDescription(videoDto.getDescription());
     entity.setFile_type(videoDto.getFile_type());
     entity.setSize(videoDto.getSize());
-    entity.setVisibility(videoDto.isVisibility());
     entity.setAllow_comments(videoDto.isAllow_comments());
+    entity.setVisibility(videoDto.getVisibility());
+    entity.setProcessingStatus(videoDto.getProcessingStatus());
     entity.setStatus(videoDto.getStatus());
     entity.setDuration_seconds(videoDto.getDuration_seconds());
     entity.setLike(videoDto.getLike());
     entity.setUnlike(videoDto.getUnlike());
     entity.setView_count(videoDto.getView_count());
-    entity.setHls_url(videoDto.getHls_url());
     entity.setThumbnail_url(videoDto.getThumbnail_url());
-    entity.setPresigned_url(videoDto.getPresigned_url());
+    entity.setOriginalObjectKey(videoDto.getOriginalObjectKey());
+    entity.setHlsObjectKey(videoDto.getHlsObjectKey());
+    entity.setExpectedFileSize(videoDto.getExpectedFileSize());
     if(videoDto.getChannel_id() != null){
       entity.setChannelEntity(channelRepository.findById(
         videoDto.getChannel_id()
@@ -49,16 +51,18 @@ public class VideoMapper {
     dto.setDescription(entity.getDescription());
     dto.setFile_type(entity.getFile_type());
     dto.setSize(entity.getSize());
-    dto.setVisibility(entity.isVisibility());
     dto.setAllow_comments(entity.isAllow_comments());
+    dto.setVisibility(entity.getVisibility());
+    dto.setProcessingStatus(entity.getProcessingStatus());
     dto.setStatus(entity.getStatus());
     dto.setDuration_seconds(entity.getDuration_seconds());
     dto.setLike(entity.getLike());
     dto.setUnlike(entity.getUnlike());
     dto.setView_count(entity.getView_count());
-    dto.setHls_url(entity.getHls_url());
     dto.setThumbnail_url(entity.getThumbnail_url());
-    dto.setPresigned_url(entity.getPresigned_url());
+    dto.setOriginalObjectKey(entity.getOriginalObjectKey());
+    dto.setHlsObjectKey(entity.getHlsObjectKey());
+    dto.setExpectedFileSize(entity.getExpectedFileSize());
     if(entity.getChannelEntity() != null){
       dto.setChannel_id(entity.getChannelEntity().getId());
       dto.setChannel_name(entity.getChannelEntity().getName());

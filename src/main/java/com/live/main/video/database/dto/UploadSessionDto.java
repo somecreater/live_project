@@ -15,6 +15,9 @@ public class UploadSessionDto {
   private Integer totalPartCount;
   private Integer completedPartCount;
   private Long partSize;
+  private Long expectedFileSize;
+  private Long version;
+  private LocalDateTime expiresAt;
   private LocalDateTime completedAt;
   private LocalDateTime abortedAt;
   private LocalDateTime createdAt;

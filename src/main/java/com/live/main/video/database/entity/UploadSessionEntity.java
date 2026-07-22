@@ -39,6 +39,14 @@ public class UploadSessionEntity extends timeEntity {
   @Column(name = "part_size")
   private Long partSize;
 
+  @Column(nullable = false)
+  private Long expectedFileSize;
+
+  @Version
+  private Long version;
+
+  private LocalDateTime expiresAt;
+
   @Column(name = "completed_at")
   private LocalDateTime completedAt;
 
