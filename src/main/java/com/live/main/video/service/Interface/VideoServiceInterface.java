@@ -59,6 +59,6 @@ public interface VideoServiceInterface {
   public boolean VideoDelete(String channel_name, String video_title);
   /**동영상 삭제 기능(채널 이름)*/
   public boolean VideoDeleteOnChannel(String channel_name);
-  /**미업로드 상태의 동영상 정보 삭제 기능*/
-  public void DeleteUnuploadedVideoInfo();
+  /**미업로드 상태의 동영상 정보 삭제 기능(2026/9/15 기준으로 미사용)*/
+  //public void DeleteUnuploadedVideoInfo();
 }

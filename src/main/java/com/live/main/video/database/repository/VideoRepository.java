@@ -15,10 +15,14 @@ import java.util.Optional;
 @Repository
 public interface VideoRepository extends JpaRepository<VideoEntity, Long> {
 
+    /*
+    미업로드 상태의 동영상 정보 삭제 기능
+    엔티티 구조변경으로, 미사용 상태(2026/9/15 기준)
     @Modifying
     @Transactional
     @Query("DELETE FROM VideoEntity v WHERE v.status = :status AND v.createdAt < :time")
     int deleteOldPendingVideos(@Param("status") Status status, @Param("time") LocalDateTime time);
+     */
 
     Optional<VideoEntity> findByChannelEntity_NameAndTitle(String name, String title);
 }

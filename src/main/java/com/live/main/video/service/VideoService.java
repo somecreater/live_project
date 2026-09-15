@@ -5,10 +5,7 @@ import com.live.main.common.database.dto.VideoEncodingEvent;
 import com.live.main.common.database.dto.VideoValidationEvent;
 import com.live.main.common.exception.CustomException;
 import com.live.main.video.database.dto.*;
-import com.live.main.video.database.entity.Status;
-import com.live.main.video.database.entity.UploadSessionEntity;
-import com.live.main.video.database.entity.UploadSessionStatus;
-import com.live.main.video.database.entity.VideoEntity;
+import com.live.main.video.database.entity.*;
 import com.live.main.video.database.mapper.VideoMapper;
 import com.live.main.video.database.repository.UploadSessionRepository;
 import com.live.main.video.database.repository.VideoRepository;
@@ -108,7 +105,7 @@ public class VideoService implements VideoServiceInterface {
 
       videoDto.setChannel_name(channel_name);
       VideoEntity entity = videoMapper.toEntity(videoDto);
-      entity.setStatus(Status.PRIVATE);
+      //entity.setStatus(Status.PRIVATE);
 
       VideoEntity savedEntity = videoRepository.save(entity);
 
@@ -129,7 +126,7 @@ public class VideoService implements VideoServiceInterface {
               .build();
 
       PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(presignRequest);
-      savedEntity.setPresigned_url(presignedRequest.url().toString());
+      //savedEntity.setPresigned_url(presignedRequest.url().toString());
       videoRepository.save(savedEntity);
 
       result.put("url", presignedRequest.url().toString());
@@ -165,7 +162,7 @@ public class VideoService implements VideoServiceInterface {
 
       videoDto.setChannel_name(channel_name);
       VideoEntity entity = videoMapper.toEntity(videoDto);
-      entity.setStatus(Status.PRIVATE);
+      //entity.setStatus(Status.PRIVATE);
 
       VideoEntity savedEntity = videoRepository.save(entity);
       videoId = savedEntity.getId();
@@ -582,7 +579,8 @@ public class VideoService implements VideoServiceInterface {
       String resultPrefix=ResultKey.endsWith("/") ? ResultKey : ResultKey+ "/";
       String hlsObjectKey = resultPrefix + "master.m3u8";
       entity.setStatus(Status.NORMAL);
-      entity.setHls_url(hlsObjectKey);
+      //entity.setHls_url(hlsObjectKey);
+      entity.setHlsObjectKey(hlsObjectKey);
       videoRepository.save(entity);
 
       ack.acknowledge();
@@ -658,10 +656,19 @@ public class VideoService implements VideoServiceInterface {
   public String VideoEncodingUrl(Long videoId) {
     VideoEntity entity= videoRepository.findById(videoId)
       .orElseThrow(()->new CustomException(ErrorCode.BAD_REQUEST));
+
+    /*
     if(entity.getStatus() == Status.PRIVATE || entity.getStatus() == Status.DELETED){
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
-    String masterKey = entity.getHls_url();
+    */
+    if(entity.getVisibility() == Visibility.PRIVATE ||
+       entity.getProcessingStatus() == ProcessingStatus.DELETED){
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    //String masterKey = entity.getHls_url();
+    String masterKey = entity.getHlsObjectKey();
     if (masterKey == null || masterKey.isBlank()) {
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
@@ -733,11 +740,19 @@ public class VideoService implements VideoServiceInterface {
   public String videoEncodingPlaylist(Long videoId, String playlistKey){
     VideoEntity entity = videoRepository.findById(videoId)
             .orElseThrow(() -> new CustomException(ErrorCode.BAD_REQUEST));
+    /*
     if(entity.getStatus() == Status.PRIVATE || entity.getStatus() == Status.DELETED){
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
+    */
 
-    String masterKey = entity.getHls_url();
+    if(entity.getVisibility() == Visibility.PRIVATE ||
+       entity.getProcessingStatus() == ProcessingStatus.DELETED){
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+
+    //String masterKey = entity.getHls_url();
+    String masterKey = entity.getHlsObjectKey();
     if (masterKey == null || masterKey.isBlank()) {
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
@@ -802,6 +817,9 @@ public class VideoService implements VideoServiceInterface {
     return true;
   }
 
+  /*
+  미업로드 상태의 동영상 정보 삭제 기능,
+  엔티티 구조변경으로, 미사용 상태(2026/9/15 기준)
   @Scheduled(cron = "0 0 0 * * ?")
   @Override
   @Transactional
@@ -809,5 +827,6 @@ public class VideoService implements VideoServiceInterface {
     LocalDateTime threshold = LocalDateTime.now().minusHours(1);
     videoRepository.deleteOldPendingVideos(Status.PRIVATE, threshold);
   }
+  */
 
 }
