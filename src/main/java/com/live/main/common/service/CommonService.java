@@ -1,5 +1,7 @@
 package com.live.main.common.service;
 
+import com.live.main.common.database.dto.ErrorCode;
+import com.live.main.common.exception.CustomException;
 import com.live.main.common.service.Interface.CommonServiceInterface;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +22,13 @@ public class CommonService implements CommonServiceInterface {
   private static final Set<String> SAFE_TYPES = Set.of(
     "image/png", "image/jpg", "image/jpeg", "image/gif"
   );
+
+  @Override
+  public void validateData(String data){
+    if (data == null || data.isBlank()) {
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+  }
 
   @Override
   public String maskData(String data) {
