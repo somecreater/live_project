@@ -36,4 +36,8 @@ public interface ChannelRepository extends JpaRepository<ChannelEntity, Long> {
     @EntityGraph(attributePaths = {"users"})
     @Query("SELECT c FROM ChannelEntity c WHERE c.users.loginId LIKE CONCAT('%', :loginId, '%')" )
     Page<ChannelEntity> findByUsers_LoginIdContains(@Param("loginId") String loginId, Pageable pageable);
+
+    boolean existsByNameAndUsers_LoginId(String channelName, String userLoginId);
+
+    boolean existsByIdAndUsers_LoginId(Long id, String userLoginId);
 }
