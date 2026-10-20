@@ -1,8 +1,11 @@
 package com.live.main.video.service;
 
+import com.live.main.common.database.dto.ErrorCode;
 import com.live.main.common.database.dto.VideoEncodingEvent;
+import com.live.main.common.exception.CustomException;
 import com.live.main.video.config.VideoConfigProperties;
 import com.live.main.video.database.dto.VideoPlaybackResponse;
+import com.live.main.video.database.entity.ProcessingStatus;
 import com.live.main.video.database.repository.VideoRepository;
 import com.live.main.video.service.Interface.ChannelAccessValidator;
 import com.live.main.video.service.Interface.R2ServiceInterface;
@@ -14,6 +17,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
 @Service
@@ -37,7 +41,7 @@ public class VideoMediaService implements VideoMediaServiceInterface {
             "qt  "
     );
 
-    private final R2ServiceInterface R2service;
+    private final R2ServiceInterface r2service;
     private final VideoRepository videoRepository;
     private final ChannelAccessValidator accessValidator;
     private final VideoConfigProperties configProperties;
@@ -74,36 +78,111 @@ public class VideoMediaService implements VideoMediaServiceInterface {
 
     @Override
     public boolean isValidMp4OrMov(byte[] bytes) {
+        if (bytes == null || bytes.length < 12) {
+            return false;
+        }
+
+        int max = Math.min(bytes.length - 8, 256);
+
+        for (int index = 0; index < max; index++) {
+            boolean ftyp =
+                    bytes[index] == 'f'
+                            && bytes[index + 1] == 't'
+                            && bytes[index + 2] == 'y'
+                            && bytes[index + 3] == 'p';
+
+            if (!ftyp) {
+                continue;
+            }
+
+            if (index + 8 > bytes.length) {
+                return false;
+            }
+
+            String brand = new String(
+                    bytes,
+                    index + 4,
+                    4,
+                    StandardCharsets.US_ASCII
+            );
+
+            return SUPPORTED_BRANDS.contains(brand);
+        }
+
         return false;
     }
 
     @Override
     public void validateValidationRequest(Long videoId, String channelName, String userLoginId) {
+        if (videoId == null
+                || channelName == null
+                || channelName.isBlank()
+                || userLoginId == null
+                || userLoginId.isBlank()) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
 
     }
 
     @Override
     public void validateEncodingEvent(VideoEncodingEvent event) {
-
+        if (event == null
+                || event.getVideoId() == null
+                || event.getObjectKey() == null
+                || event.getObjectKey().isBlank()
+                || event.getResultKey() == null
+                || event.getResultKey().isBlank()) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
     }
 
     @Override
     public void validateObjectSize(Long actualSize, long expectedSize) {
-
+        if (actualSize == null
+                || actualSize < MINIMUM_FILE_SIZE
+                || actualSize > configProperties.videoLimitSize()
+                || actualSize != expectedSize) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
     }
 
     @Override
     public void failValidationAndDelete(ValidationContext context) {
+        try {
+            r2service.deleteObject(context.objectKey());
+        } catch (Exception exception) {
+            log.error(
+                    "검증 실패 객체 삭제 실패. videoId={}, key={}",
+                    context.videoId(),
+                    context.objectKey(),
+                    exception
+            );
+        }
+
+        markVideoFailed(context.videoId());
 
     }
 
     @Override
     public void markVideoFailed(Long videoId) {
-
+        transactionTemplate.executeWithoutResult(status ->
+                videoRepository.findById(videoId)
+                        .ifPresent(video ->
+                                video.setProcessingStatus(
+                                        ProcessingStatus.FAILED
+                                )
+                        )
+        );
     }
 
     @Override
     public String normalizePrefix(String value) {
-        return "";
+        String normalized = value.startsWith("/")
+                ? value.substring(1)
+                : value;
+
+        return normalized.endsWith("/")
+                ? normalized
+                : normalized + "/";
     }
 }
