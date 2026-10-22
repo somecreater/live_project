@@ -1,4 +1,4 @@
-package com.live.main.video.database.dto;
+package com.live.main.video.database.dto.Upload;
 
 import java.time.LocalDateTime;
 

@@ -25,6 +25,8 @@ public interface VideoMediaServiceInterface {
     /**Spring이 m3u8을 읽고 재작성하지 않고 Cloudflare CDN URL만 반환*/
     public VideoPlaybackResponse getPlaybackUrl(Long videoId, String userLoginId);
 
+
+    //파일, 요청, 이벤트 검증
     /**파일 앞부분의 ftyp 박스와 major brand를 확인해 MP4/MOV 계열 파일인지 빠르게 판별*/
     public boolean isValidMp4OrMov(byte[] bytes);
 
@@ -37,12 +39,16 @@ public interface VideoMediaServiceInterface {
     /**R2 실제 파일 크기가 허용 범위 내이며 업로드 요청 당시 크기와 일치하는지 확인*/
     public void validateObjectSize(Long actualSize, long expectedSize);
 
+
+    //실패 처리
     /**파일 형식 검증 실패 시 잘못된 원본 객체를 삭제하고 영상 상태를 FAILED로 변경*/
     public void failValidationAndDelete(ValidationContext context);
 
     /**영상 처리 과정에서 복구할 수 없는 오류가 발생했을 때 처리 상태를 FAILED로 기록*/
     public void markVideoFailed(Long videoId);
 
+
+    //경로 정규화
     /**R2 Object Prefix의 앞쪽 슬래시를 제거하고 끝에 슬래시가 하나 존재하도록 정규화*/
     public String normalizePrefix(String value);
 
