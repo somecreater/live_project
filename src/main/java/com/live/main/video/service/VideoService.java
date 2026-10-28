@@ -220,7 +220,7 @@ public class VideoService implements VideoServiceInterface {
     videoId= presignPartsRequest.getVideoId();
 
     UploadSessionEntity uploadSession = uploadSessionRepository.findByUploadIdAndVideoId(
-      presignPartsRequest.getUploadId(), presignPartsRequest.getVideoId());
+      presignPartsRequest.getUploadId(), presignPartsRequest.getVideoId()).get();
 
     if(uploadSession.getStatus() == UploadSessionStatus.COMPLETED ||
             uploadSession.getStatus() == UploadSessionStatus.ABORTED){
@@ -304,7 +304,7 @@ public class VideoService implements VideoServiceInterface {
     }
 
     UploadSessionEntity sessionEntity = uploadSessionRepository.findByUploadIdAndVideoId(
-      request.getUploadId(), request.getVideoId());
+      request.getUploadId(), request.getVideoId()).get();
 
     if (sessionEntity == null) {
       log.error("upload session not found. uploadId={}, videoId={}",
@@ -417,7 +417,7 @@ public class VideoService implements VideoServiceInterface {
   @Override
   public void abortUpload(AbortUploadRequest request){
     UploadSessionEntity session = uploadSessionRepository
-            .findByUploadIdAndVideoId(request.getUploadId(),request.getVideoId());
+            .findByUploadIdAndVideoId(request.getUploadId(),request.getVideoId()).get();
     if(session == null || session.getStatus() == UploadSessionStatus.COMPLETED){
       log.error("completed upload cannot be aborted");
       throw new CustomException(ErrorCode.BAD_REQUEST);
