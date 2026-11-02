@@ -5,8 +5,10 @@ import com.live.main.common.exception.CustomException;
 import com.live.main.video.config.VideoConfigProperties;
 import com.live.main.video.database.dto.*;
 import com.live.main.video.database.dto.Upload.*;
+import com.live.main.video.database.entity.ProcessingStatus;
 import com.live.main.video.database.entity.UploadSessionEntity;
 import com.live.main.video.database.entity.UploadSessionStatus;
+import com.live.main.video.database.entity.VideoEntity;
 import com.live.main.video.database.mapper.VideoMapper;
 import com.live.main.video.database.repository.UploadSessionRepository;
 import com.live.main.video.database.repository.VideoRepository;
@@ -17,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.net.URL;
 import java.time.LocalDateTime;
@@ -218,12 +221,146 @@ public class VideoUploadService implements VideoUploadServiceInterface {
 
     @Override
     public void completeMultipartUpload(CompleteUploadRequest request, String userLoginId) {
+        UploadContext current = loadUploadContext(
+                request.getVideoId(),
+                request.getUploadId(),
+                userLoginId
+        );
+
+        if (current.status() == UploadSessionStatus.COMPLETED) {
+            return;
+        }
+
+        validateCompleteParts(
+                request.getParts(),
+                current.totalPartCount()
+        );
+
+        if ((current.status() == UploadSessionStatus.COMPLETING
+                || current.status() == UploadSessionStatus.FAILED)
+                && recoverCompletedUpload(
+                current,
+                request.getParts().size()
+        )) {
+            return;
+        }
+
+        UploadContext completing = transactionTemplate.execute(status -> {
+            UploadSessionEntity session = uploadSessionRepository
+                    .findByUploadIdAndVideoIdForUpdate(
+                            request.getUploadId(),
+                            request.getVideoId()
+                    )
+                    .orElseThrow(() ->
+                            new CustomException(ErrorCode.BAD_REQUEST)
+                    );
+
+            VideoEntity video = videoRepository
+                    .findById(request.getVideoId())
+                    .orElseThrow(() ->
+                            new CustomException(ErrorCode.BAD_REQUEST)
+                    );
+
+            channelAccessValidator.validateVideoOwner(
+                    video,
+                    userLoginId
+            );
+
+            validateUploadOpen(session.getStatus());
+            session.setStatus(UploadSessionStatus.COMPLETING);
+
+            return toContext(session);
+        });
+
+        if (completing == null) {
+            throw new CustomException(ErrorCode.SERVER_ERROR);
+        }
+
+        try{
+            r2Service.completeMultipartUpload(
+                    completing.objectKey(),
+                    completing.uploadId(),
+                    request.getParts()
+            );
+
+            verifyUploadedObject(
+                    completing.objectKey(),
+                    completing.expectedFileSize()
+            );
+        } catch (Exception exception) {
+            markUploadFailed(
+                    completing.videoId(),
+                    completing.uploadId()
+            );
+
+            log.error(
+                    "Multipart 완료 실패. videoId={}, uploadId={}",
+                    completing.videoId(),
+                    completing.uploadId(),
+                    exception
+            );
+
+            throw new CustomException(ErrorCode.SERVER_ERROR);
+
+        }
+
+        markUploadCompleted(
+                completing.videoId(),
+                completing.uploadId(),
+                request.getParts().size()
+        );
 
     }
 
     @Override
     public void abortMultipartUpload(AbortUploadRequest request, String userLoginId) {
+        UploadContext context = loadUploadContext(
+                request.getVideoId(),
+                request.getUploadId(),
+                userLoginId
+        );
 
+        if (context.status() == UploadSessionStatus.ABORTED) {
+            return;
+        }
+
+        if (context.status() == UploadSessionStatus.COMPLETED) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
+
+
+        try {
+            r2Service.abortMultipartUpload(
+                    context.objectKey(),
+                    context.uploadId()
+            );
+        } catch (S3Exception exception) {
+            if (exception.statusCode() != 404) {
+                throw exception;
+            }
+        }
+        transactionTemplate.executeWithoutResult(status->{
+            UploadSessionEntity session = uploadSessionRepository
+                    .findByUploadIdAndVideoIdForUpdate(
+                            context.uploadId(),
+                            context.videoId()
+                    )
+                    .orElseThrow(() ->
+                            new CustomException(ErrorCode.BAD_REQUEST)
+                    );
+
+            if (session.getStatus() != UploadSessionStatus.COMPLETED) {
+                session.setStatus(UploadSessionStatus.ABORTED);
+                session.setAbortedAt(LocalDateTime.now());
+            }
+
+            videoRepository.findById(context.videoId())
+                    .ifPresent(video ->
+                            video.setProcessingStatus(
+                                    ProcessingStatus.FAILED
+                            )
+                    );
+        });
     }
 
     @Override
