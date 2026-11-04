@@ -5,10 +5,7 @@ import com.live.main.common.exception.CustomException;
 import com.live.main.video.config.VideoConfigProperties;
 import com.live.main.video.database.dto.*;
 import com.live.main.video.database.dto.Upload.*;
-import com.live.main.video.database.entity.ProcessingStatus;
-import com.live.main.video.database.entity.UploadSessionEntity;
-import com.live.main.video.database.entity.UploadSessionStatus;
-import com.live.main.video.database.entity.VideoEntity;
+import com.live.main.video.database.entity.*;
 import com.live.main.video.database.mapper.VideoMapper;
 import com.live.main.video.database.repository.UploadSessionRepository;
 import com.live.main.video.database.repository.VideoRepository;
@@ -19,12 +16,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
+import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.net.URL;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
