@@ -599,21 +599,64 @@ public class VideoUploadService implements VideoUploadServiceInterface {
 
     @Override
     public ValidatedVideoInput validateVideoInput(String channelName, String userLoginId, VideoDto request) {
-        return null;
+        if (channelName == null
+                || channelName.isBlank()
+                || userLoginId == null
+                || userLoginId.isBlank()
+                || request == null
+                || request.getTitle() == null
+                || request.getTitle().isBlank()
+                || request.getSize() == null
+                || request.getSize() <= 0
+                || request.getSize() > properties.videoLimitSize()
+                || request.getFile_type() == null
+                || request.getFile_type().isBlank()) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
+
+        return switch (request.getFile_type().toLowerCase()) {
+            case "mp4", "video/mp4" -> new ValidatedVideoInput("mp4", "video/mp4");
+
+            case "mov", "video/quicktime" -> new ValidatedVideoInput("mov", "video/quicktime");
+
+            default -> throw new CustomException(ErrorCode.BAD_REQUEST);
+        };
     }
 
     @Override
     public int calculateTotalPartCount(long fileSize) {
-        return 0;
+        long partSize = properties.multiPartSize();
+        long partCount = (fileSize + partSize - 1) / partSize;
+
+        if (partCount <= 0 || partCount > 10_000) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
+
+        return Math.toIntExact(partCount);
     }
 
     @Override
     public void safeAbort(String objectKey, String uploadId) {
-
+        try {
+            r2Service.abortMultipartUpload(objectKey, uploadId);
+        } catch (Exception exception) {
+            log.error(
+                    "Multipart 보상 취소 실패. uploadId={}",
+                    uploadId,
+                    exception
+            );
+        }
     }
 
     @Override
     public UploadContext toContext(UploadSessionEntity session) {
-        return null;
+        return new UploadContext(
+                session.getVideoId(),
+                session.getUploadId(),
+                session.getObjectKey(),
+                session.getTotalPartCount(),
+                session.getExpectedFileSize(),
+                session.getStatus()
+        );
     }
 }
