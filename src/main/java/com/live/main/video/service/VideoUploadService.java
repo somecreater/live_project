@@ -579,21 +579,69 @@ public class VideoUploadService implements VideoUploadServiceInterface {
 
     @Override
     public void verifyUploadedObject(String objectKey, long expectedFileSize) {
+        HeadObjectResponse head = r2Service.headObject(objectKey);
+        Long actualFileSize = head.contentLength();
+
+        if (actualFileSize == null
+                || actualFileSize <= 0
+                || actualFileSize != expectedFileSize) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
 
     }
 
     @Override
     public void validateUploadOpen(UploadSessionStatus status) {
-
+        if (status == UploadSessionStatus.COMPLETED
+                || status == UploadSessionStatus.ABORTED
+                || status == UploadSessionStatus.EXPIRED) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
     }
 
     @Override
     public void validatePartNumbers(List<Integer> partNumbers, int totalPartCount) {
+        if (partNumbers == null
+                || partNumbers.isEmpty()
+                || partNumbers.size() > MAX_PART_URLS_PER_REQUEST) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
 
+        Set<Integer> unique = new HashSet<>();
+
+        for (Integer partNumber : partNumbers) {
+            if (partNumber == null
+                    || partNumber < 1
+                    || partNumber > totalPartCount
+                    || !unique.add(partNumber)) {
+                throw new CustomException(ErrorCode.BAD_REQUEST);
+            }
+        }
     }
 
     @Override
     public void validateCompleteParts(List<CompletePartRequest> parts, int totalPartCount) {
+        if (parts == null || parts.size() != totalPartCount) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
+
+        List<CompletePartRequest> sorted = parts.stream()
+                .sorted(Comparator.comparingInt(
+                        CompletePartRequest::getPartNumber
+                ))
+                .toList();
+
+        for (int index = 0; index < sorted.size(); index++) {
+            CompletePartRequest part = sorted.get(index);
+            int expectedPartNumber = index + 1;
+
+            if (part.getPartNumber() == null
+                    || part.getPartNumber() != expectedPartNumber
+                    || part.getEtag() == null
+                    || part.getEtag().isBlank()) {
+                throw new CustomException(ErrorCode.BAD_REQUEST);
+            }
+        }
 
     }
 
