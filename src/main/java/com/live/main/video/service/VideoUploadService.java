@@ -365,12 +365,112 @@ public class VideoUploadService implements VideoUploadServiceInterface {
 
     @Override
     public void cleanupExpiredUploads() {
+        List<UploadContext> expired = transactionTemplate.execute(status ->
+                uploadSessionRepository
+                        .findTop100ByStatusInAndExpiresAtBeforeOrderByExpiresAtAsc(
+                                List.of(
+                                        UploadSessionStatus.INITIATED,
+                                        UploadSessionStatus.UPLOADING,
+                                        UploadSessionStatus.FAILED
+                                ),
+                                LocalDateTime.now()
+                        )
+                        .stream()
+                        .map(this::toContext)
+                        .toList()
+        );
 
+        if (expired == null || expired.isEmpty()) {
+            return;
+        }
+
+        for (UploadContext context : expired) {
+            try {
+                r2Service.abortMultipartUpload(
+                        context.objectKey(),
+                        context.uploadId()
+                );
+            } catch (Exception exception) {
+                log.warn(
+                        "만료 Multipart R2 정리 실패. videoId={}, uploadId={}",
+                        context.videoId(),
+                        context.uploadId(),
+                        exception
+                );
+            }
+
+
+            transactionTemplate.executeWithoutResult(status -> {
+                uploadSessionRepository
+                        .findByUploadIdAndVideoId(
+                                context.uploadId(),
+                                context.videoId()
+                        )
+                        .ifPresent(session -> {
+                            if (session.getStatus()
+                                    != UploadSessionStatus.COMPLETED) {
+                                session.setStatus(
+                                        UploadSessionStatus.EXPIRED
+                                );
+                            }
+                        });
+
+                videoRepository.findById(context.videoId())
+                        .ifPresent(video -> {
+                            if (video.getProcessingStatus()
+                                    != ProcessingStatus.READY) {
+                                video.setProcessingStatus(
+                                        ProcessingStatus.FAILED
+                                );
+                            }
+                        });
+            });
+        }
     }
 
     @Override
     public PendingVideo createPendingVideo(String channelName, String userLoginId, VideoDto request, ValidatedVideoInput input) {
-        return null;
+        PendingVideo result = transactionTemplate.execute(status -> {
+            channelAccessValidator.validateChannelOwner(
+                    channelName,
+                    userLoginId
+            );
+
+            request.setChannel_name(channelName);
+
+            VideoEntity video = videoMapper.toEntity(request);
+            video.setVisibility(Visibility.PRIVATE);
+            video.setProcessingStatus(ProcessingStatus.CREATED);
+            video.setExpectedFileSize(request.getSize());
+
+            VideoEntity saved = videoRepository.save(video);
+
+            String objectKey =
+                    properties.normalizedOriginalPrefix()
+                            + "videos/"
+                            + saved.getId()
+                            + "/"
+                            + UUID.randomUUID()
+                            + "."
+                            + input.extension();
+
+            saved.setOriginalObjectKey(objectKey);
+            saved.setProcessingStatus(ProcessingStatus.UPLOADING);
+
+            return new PendingVideo(
+                    saved.getId(),
+                    objectKey,
+                    request.getSize(),
+                    input.contentType()
+            );
+
+        });
+
+        if (result == null) {
+            throw new CustomException(ErrorCode.SERVER_ERROR);
+        }
+
+        return result;
     }
 
     @Override
