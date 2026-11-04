@@ -475,27 +475,109 @@ public class VideoUploadService implements VideoUploadServiceInterface {
 
     @Override
     public UploadContext loadUploadContext(Long videoId, String uploadId, String userLoginId) {
-        return null;
+        UploadContext result = transactionTemplate.execute(status -> {
+            UploadSessionEntity session = uploadSessionRepository
+                    .findByUploadIdAndVideoId(uploadId, videoId)
+                    .orElseThrow(() ->
+                            new CustomException(ErrorCode.BAD_REQUEST)
+                    );
+
+            VideoEntity video = videoRepository
+                    .findById(videoId)
+                    .orElseThrow(() ->
+                            new CustomException(ErrorCode.BAD_REQUEST)
+                    );
+
+            channelAccessValidator.validateVideoOwner(
+                    video,
+                    userLoginId
+            );
+
+            return toContext(session);
+        });
+
+        if (result == null) {
+            throw new CustomException(ErrorCode.SERVER_ERROR);
+        }
+
+        return result;
     }
 
     @Override
     public boolean recoverCompletedUpload(UploadContext context, int completedPartCount) {
-        return false;
+        if (!r2Service.objectExists(context.objectKey())) {
+            return false;
+        }
+
+        verifyUploadedObject(
+                context.objectKey(),
+                context.expectedFileSize()
+        );
+
+        markUploadCompleted(
+                context.videoId(),
+                context.uploadId(),
+                completedPartCount
+        );
+
+        return true;
     }
 
     @Override
     public void markUploadCompleted(Long videoId, String uploadId, int completedPartCount) {
+        transactionTemplate.executeWithoutResult(status -> {
+            UploadSessionEntity session = uploadSessionRepository
+                    .findByUploadIdAndVideoIdForUpdate(
+                            uploadId,
+                            videoId
+                    )
+                    .orElseThrow(() ->
+                            new CustomException(ErrorCode.BAD_REQUEST)
+                    );
+
+            VideoEntity video = videoRepository
+                    .findById(videoId)
+                    .orElseThrow(() ->
+                            new CustomException(ErrorCode.BAD_REQUEST)
+                    );
+
+            session.setStatus(UploadSessionStatus.COMPLETED);
+            session.setCompletedPartCount(completedPartCount);
+            session.setCompletedAt(LocalDateTime.now());
+            video.setProcessingStatus(ProcessingStatus.UPLOADED);
+        });
 
     }
 
     @Override
     public void markUploadFailed(Long videoId, String uploadId) {
+        transactionTemplate.executeWithoutResult(status -> {
+            if (uploadId != null && !uploadId.isBlank()) {
+                uploadSessionRepository
+                        .findByUploadIdAndVideoId(uploadId, videoId)
+                        .ifPresent(session -> {
+                            if (session.getStatus()
+                                    != UploadSessionStatus.COMPLETED) {
+                                session.setStatus(
+                                        UploadSessionStatus.FAILED
+                                );
+                            }
+                        });
+            }
+
+            videoRepository.findById(videoId)
+                    .ifPresent(video ->
+                            video.setProcessingStatus(
+                                    ProcessingStatus.FAILED
+                            )
+                    );
+        });
 
     }
 
     @Override
     public void markVideoFailed(Long videoId) {
-
+        markUploadFailed(videoId, null);
     }
 
     @Override
