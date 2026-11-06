@@ -103,5 +103,8 @@ export const API_END_POINT = {
     get_video_playlist: `${API_BASE_URL}/api/video`,
     list: `${API_BASE_URL}/api/video/list`,
     delete: `${API_BASE_URL}/api/video/delete`
+  },
+  video_v2: {
+
   }
 };
