@@ -1,5 +1,7 @@
 package com.live.main.video.controller;
 
+import com.live.main.common.database.dto.ErrorCode;
+import com.live.main.common.exception.CustomException;
 import com.live.main.user.database.dto.CustomUserDetails;
 import com.live.main.video.database.dto.*;
 import com.live.main.video.database.dto.Upload.MultipartUploadResponse;
@@ -34,6 +36,9 @@ public class VideoRefactoringController {
             @RequestParam String userLoginId,
             @Valid @RequestBody VideoDto request
     ) {
+        if(principal.getUserid().compareTo(userLoginId) != 0){
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
         return ResponseEntity.ok(
                 videoUploadService.createSingleUploadUrl(
                         channelName,
@@ -53,6 +58,9 @@ public class VideoRefactoringController {
             @RequestParam String userLoginId,
             @Valid @RequestBody VideoDto request
     ) {
+        if(principal.getUserid().compareTo(userLoginId) != 0){
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
         return ResponseEntity.ok(
                 videoUploadService.createMultipartUpload(
                         channelName,
@@ -72,6 +80,9 @@ public class VideoRefactoringController {
             @RequestParam String userLoginId,
             @Valid @RequestBody PresignPartsRequest request
     ) {
+        if(principal.getUserid().compareTo(userLoginId) != 0){
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
         return ResponseEntity.ok(
                 videoUploadService.createPartUrls(
                         request,
@@ -89,6 +100,9 @@ public class VideoRefactoringController {
             @RequestParam String userLoginId,
             @Valid @RequestBody CompleteUploadRequest request
     ) {
+        if(principal.getUserid().compareTo(userLoginId) != 0){
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
         videoUploadService.completeMultipartUpload(
                 request,
                 userLoginId
@@ -106,6 +120,9 @@ public class VideoRefactoringController {
             @RequestParam String userLoginId,
             @Valid @RequestBody AbortUploadRequest request
     ) {
+        if(principal.getUserid().compareTo(userLoginId) != 0){
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
         videoUploadService.abortMultipartUpload(
                 request,
                 userLoginId
@@ -124,6 +141,9 @@ public class VideoRefactoringController {
             @RequestParam String channelName,
             @RequestParam String userLoginId
     ) {
+        if(principal.getUserid().compareTo(userLoginId) != 0){
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
         videoMediaService.validateUploadedVideo(
                 videoId,
                 channelName,
