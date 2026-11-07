@@ -115,6 +115,36 @@ const ApiService = {
     }),
     list: (dto) => RefreshApi.post(API_END_POINT.video.list, dto),
     delete: (dto) => RefreshApi.post(API_END_POINT.video.delete, dto)
+  },
+  video_refactoring: {
+    createSingleUpload: (dto, context) => RefreshApi.post(
+      API_END_POINT.video_refactoring.singleUpload, dto,
+      { params: { channelName: context.channelName, userLoginId: context.userLoginId } }
+    ),
+    createMultipartUpload: (dto, context) => RefreshApi.post(
+      API_END_POINT.video_refactoring.multipartCreate, dto,
+      { params: { channelName: context.channelName, userLoginId: context.userLoginId } }
+    ),
+    createMultipartPartUrls: (dto, context) => RefreshApi.post(
+      API_END_POINT.video_refactoring.multipartParts, dto,
+      { params: { userLoginId: context.userLoginId } }
+    ),
+    completeMultipartUpload: (dto, context) => RefreshApi.post(
+      API_END_POINT.video_refactoring.multipartComplete, dto,
+      { params: { userLoginId: context.userLoginId }, timeout: 60000 }
+    ),
+    abortMultipartUpload: (dto, context) => RefreshApi.post(
+      API_END_POINT.video_refactoring.multipartAbort, dto,
+      { params: { userLoginId: context.userLoginId } }
+    ),
+    validateUploadedVideo: (videoId, context) => RefreshApi.post(
+      `${API_END_POINT.video_refactoring.uploadValidation}/${encodeURIComponent(videoId)}/validate`, null,
+      { params: { channelName: context.channelName, userLoginId: context.userLoginId }, timeout: 60000 }
+    ),
+    getPlayback: (videoId, context = {}) => RefreshApi.get(
+      `${API_END_POINT.video_refactoring.playback}/${encodeURIComponent(videoId)}/playback`,
+      { params: context.userLoginId ? { userLoginId: context.userLoginId } : {} }
+    )
   }
 };
 

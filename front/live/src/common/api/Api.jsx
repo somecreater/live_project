@@ -104,7 +104,13 @@ export const API_END_POINT = {
     list: `${API_BASE_URL}/api/video/list`,
     delete: `${API_BASE_URL}/api/video/delete`
   },
-  video_v2: {
-
+  video_refactoring: {
+    singleUpload: `${API_BASE_URL}/api/v2/video/single`,
+    multipartCreate: `${API_BASE_URL}/api/v2/video/multipart`,
+    multipartParts: `${API_BASE_URL}/api/v2/video/multipart/parts`,
+    multipartComplete: `${API_BASE_URL}/api/v2/video/multipart/complete`,
+    multipartAbort: `${API_BASE_URL}/api/v2/video/multipart/abort`,
+    uploadValidation: `${API_BASE_URL}/api/v2/video`,
+    playback: `${API_BASE_URL}/api/v2/video`
   }
 };
