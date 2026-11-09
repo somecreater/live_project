@@ -36,6 +36,7 @@ public class VideoRefactoringController {
             @RequestParam String userLoginId,
             @Valid @RequestBody VideoDto request
     ) {
+        log.info("[POST] /api/v2/video/single - {}", channelName);
         if(principal.getUserid().compareTo(userLoginId) != 0){
             throw new CustomException(ErrorCode.BAD_REQUEST);
         }
@@ -58,6 +59,7 @@ public class VideoRefactoringController {
             @RequestParam String userLoginId,
             @Valid @RequestBody VideoDto request
     ) {
+        log.info("[POST] /api/v2/video/multipart - {}", channelName);
         if(principal.getUserid().compareTo(userLoginId) != 0){
             throw new CustomException(ErrorCode.BAD_REQUEST);
         }
@@ -80,6 +82,7 @@ public class VideoRefactoringController {
             @RequestParam String userLoginId,
             @Valid @RequestBody PresignPartsRequest request
     ) {
+        log.info("[POST] /api/v2/video/multipart/parts - {} {}", request.getKey(), request.getUploadId());
         if(principal.getUserid().compareTo(userLoginId) != 0){
             throw new CustomException(ErrorCode.BAD_REQUEST);
         }
@@ -100,6 +103,7 @@ public class VideoRefactoringController {
             @RequestParam String userLoginId,
             @Valid @RequestBody CompleteUploadRequest request
     ) {
+        log.info("[POST] /api/v2/video/multipart/complete - {} {}", request.getKey(), request.getUploadId());
         if(principal.getUserid().compareTo(userLoginId) != 0){
             throw new CustomException(ErrorCode.BAD_REQUEST);
         }
@@ -120,6 +124,7 @@ public class VideoRefactoringController {
             @RequestParam String userLoginId,
             @Valid @RequestBody AbortUploadRequest request
     ) {
+        log.info("[POST] /api/v2/video/multipart/abort - {} {}", request.getKey(), request.getUploadId());
         if(principal.getUserid().compareTo(userLoginId) != 0){
             throw new CustomException(ErrorCode.BAD_REQUEST);
         }
@@ -141,6 +146,7 @@ public class VideoRefactoringController {
             @RequestParam String channelName,
             @RequestParam String userLoginId
     ) {
+        log.info("[POST] /api/v2/video/{}/validate - {} {}", videoId, channelName, userLoginId);
         if(principal.getUserid().compareTo(userLoginId) != 0){
             throw new CustomException(ErrorCode.BAD_REQUEST);
         }
@@ -162,6 +168,7 @@ public class VideoRefactoringController {
             @PathVariable Long videoId,
             @RequestParam(required = false) String userLoginId
     ) {
+        log.info("[GET] /api/v2/video/{}/playback - {}", videoId, userLoginId);
         return ResponseEntity.ok(
                 videoMediaService.getPlaybackUrl(
                         videoId,

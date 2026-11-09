@@ -8,58 +8,161 @@ import ApiService from "../../common/api/ApiService";
 class VideoUploadService {
     // 100MB 기준 (추후 조정 가능)
     static MULTIPART_THRESHOLD = 100 * 1024 * 1024;
+    static PRESIGN_BATCH_SIZE = 10;
+    static CONCURRENCY = 4;
+    static MAX_RETRIES = 3;
+
+
+    /** 사용자 정보/내 채널 응답에서 업로드에 필요한 인증 컨텍스트를 찾는다. */
+    static async resolveUploadContext() {
+        const [userResponse, channelResponse] = await Promise.all([
+            ApiService.user.info(),
+            ApiService.channel.my_channel(),
+        ]);
+
+        const candidates = (response) => {
+            const raw = response?.data ?? response;
+            return raw;
+        };
+
+        const firstString = (items, names) => {
+            for (const item of items) {
+                for (const name of names) {
+                    if (typeof item?.[name] === "string" && item[name].trim()) {
+                        return item[name].trim();
+                    }
+                }
+            }
+            return null;
+        };
+
+        const userLoginId = firstString(candidates(userResponse), [
+            "loginId", "login_id", "userLoginId", "user_login_id",
+        ]);
+        const channelName = firstString(candidates(channelResponse), [
+            "name", "channelName", "channel_name",
+        ]);
+
+        if (!userLoginId) {
+            throw new Error("회원 정보에서 loginId를 찾을 수 없습니다. /api/user/info 응답을 확인해주세요.");
+        }
+        if (!channelName) {
+            throw new Error("내 채널 정보를 찾을 수 없습니다. /api/channel/my_channel 응답을 확인해주세요.");
+        }
+
+        return { userLoginId, channelName };
+    }
+
+    /** 실제 파일을 기준으로 메타데이터를 보정한다. */
+    static buildVideoDto(file, videoData) {
+        const extension = file.name.split(".").pop()?.toLowerCase();
+        if (!file.size || !["mp4", "mov"].includes(extension)) {
+            throw new Error("MP4 또는 MOV 파일만 업로드할 수 있습니다.");
+        }
+
+        return {
+            ...videoData,
+            title: videoData.title.trim(),
+            description: videoData.description?.trim() ?? "",
+            file_type: extension,
+            size: file.size,
+            visibility: videoData.visibility === "PUBLIC" ? "PUBLIC" : "PRIVATE",
+            allow_comments: Boolean(videoData.allow_comments),
+            duration_seconds: Number(videoData.duration_seconds) || 0,
+            category: videoData.category || "ETC",
+        };
+    }
+
+    static notify(onProgress, data) {
+        onProgress?.(data);
+    }
+
+    static assertNotCanceled(signal) {
+        if (signal?.aborted) {
+            throw new DOMException("업로드가 취소되었습니다.", "AbortError");
+        }
+    }
+
+    static isCanceled(error, signal) {
+        return signal?.aborted || error?.name === "AbortError" || error?.code === "ERR_CANCELED";
+    }
+
     /**
      * 동영상 업로드 시작
      * @param {File} file - 업로드할 파일
      * @param {Object} videoData - 이전 폼에서 입력받은 동영상 메타데이터
      * @param {function} onProgress - 진행률 콜백 (0~100)
+     * @param {Object} signal - 비동기 처리 과정 제어
      */
-    static async upload(file, videoData, onProgress) {
-        if (file.size < this.MULTIPART_THRESHOLD) {
-            return this.uploadSinglePut(file, videoData, onProgress);
-        } else {
-            return this.uploadMultipart(file, videoData, onProgress);
+    static async upload(file, videoData, onProgress, { signal } = {}) {
+        if (!(file instanceof File)) {
+            throw new Error("업로드할 파일이 없습니다.");
         }
+
+        const dto = this.buildVideoDto(file, videoData);
+        this.assertNotCanceled(signal);
+        this.notify(onProgress, { phase: "preparing", percent: 0, uploadedBytes: 0, totalBytes: file.size });
+
+        const context = await this.resolveUploadContext();
+        this.assertNotCanceled(signal);
+
+        // 소용량 업로드, 멀티파트 업로드 부분 간소화
+        const result = file.size < this.MULTIPART_THRESHOLD
+            ? await this.uploadSinglePut(file, dto, context, onProgress, signal)
+            : await this.uploadMultipart(file, dto, context, onProgress, signal);
+
+        // PUT 또는 Multipart Complete 이후에 검증을 요청한다. READY는 Kafka 트랜스코딩 후 별도로 전환된다.
+        this.notify(onProgress, {
+            phase: "validating", percent: 99, uploadedBytes: file.size,
+            totalBytes: file.size, videoId: result.videoId,
+        });
+
+        await ApiService.video.validateUploadedVideo(result.videoId, context);
+        this.notify(onProgress, {
+            phase: "accepted", percent: 100, uploadedBytes: file.size,
+            totalBytes: file.size, videoId: result.videoId,
+        });
+
+        return { result: true, videoId: result.videoId, processingStatus: "TRANSCODING" };
     }
 
     /**
      * 단일 PUT 업로드 (Small Files)
      */
-    static async uploadSinglePut(file, videoData, onProgress) {
+    static async uploadSinglePut(file, dto, context, onProgress, signal) {
         try {
             /** 
              * 1. 업로드용 Presigned URL 요청
-             * 백엔드 API인 upload_url은 동영상 정보를 저장하고 
+             * 백엔드 API인 createSingleUpload은 동영상 정보를 저장하고 
              * DB에 저장된 동영상에 대한 아이디와 업로드 가능한 PUT Presigned URL을 반환합니다.
              */
-            const response = await ApiService.video.upload_url({
-                ...videoData
-            });
-
-            const { uploadUrl, video_id } = response.data;
-
-            if (!uploadUrl) {
-                throw new Error("업로드 URL을 가져오지 못했습니다.");
+            const { data } = await ApiService.video.createSingleUpload(dto, context);
+            const { videoId, uploadUrl } = data ?? {};
+            if (!videoId || !uploadUrl) {
+                throw new Error("단일 업로드 응답에 videoId 또는 uploadUrl이 없습니다.");
             }
+            this.assertNotCanceled(signal);
 
             // 2. Axios를 사용하여 직접 PUT 업로드
-            const uploadResponse = await axios.put(uploadUrl, file, {
-                headers: {
-                    "Content-Type": file.type || "video/mp4",
-                },
-                onUploadProgress: (progressEvent) => {
-                    const percentCompleted = Math.round(
-                        (progressEvent.loaded * 100) / progressEvent.total
-                    );
-                    onProgress(percentCompleted);
+            // URL 서명에 포함된 Content-Type과 동일하게 전달해야 한다.
+            const contentType = dto.file_type === "mov" ? "video/quicktime" : "video/mp4";
+            await axios.put(uploadUrl, file, {
+                headers: { "Content-Type": contentType },
+                signal,
+                timeout: 0,
+                withCredentials: false,
+                onUploadProgress: ({ loaded }) => {
+                    const uploaded = Math.min(file.size, loaded || 0);
+                    this.notify(onProgress, {
+                        phase: "uploading", percent: Math.min(99, Math.floor(uploaded / file.size * 100)),
+                        uploadedBytes: uploaded, totalBytes: file.size, videoId,
+                    });
                 },
             });
 
-            // 업로드 완료 후 비디오 아이디를 포함하여 반환
-            return {
-                ...uploadResponse,
-                video_id: video_id
-            };
+            this.notify(onProgress, { phase: "finalizing", percent: 99, uploadedBytes: file.size, totalBytes: file.size, videoId });
+            // 업로드 완료 후 비디오 아이디를 반환
+            return { videoId };
         } catch (error) {
             console.error("Single PUT Upload Error:", error);
             throw error;
