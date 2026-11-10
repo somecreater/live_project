@@ -8,9 +8,9 @@ import ApiService from "../../common/api/ApiService";
 class VideoUploadService {
     // 100MB 기준 (추후 조정 가능)
     static MULTIPART_THRESHOLD = 100 * 1024 * 1024;
-    static PRESIGN_BATCH_SIZE = 10;
-    static CONCURRENCY = 4;
-    static MAX_RETRIES = 3;
+    static PRESIGN_BATCH_SIZE = 10; // URL 10개씩 요청
+    static CONCURRENCY = 4; // 동시 업로드 4개
+    static MAX_RETRIES = 3; // 재시도 3번
 
 
     /** 사용자 정보/내 채널 응답에서 업로드에 필요한 인증 컨텍스트를 찾는다. */
@@ -173,360 +173,150 @@ class VideoUploadService {
      * 멀티파트 업로드 (Large Files)
      * 대용량 파일을 청크 단위로 나누어 병렬/순차적으로 업로드합니다.
      */
-    static async uploadMultipart(file, videoData, onProgress) {
-        const CHUNK_SIZE = 50 * 1024 * 1024;
-        const PRESIGN_BATCH_SIZE = 10;       // URL 10개씩 요청
-        const CONCURRENCY = 4;               // 동시 업로드 4개
-        const MAX_RETRIES = 3;
-        const RETRY_BASE_DELAY_MS = 1000;
-        let uploadId = null;
-
-        const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-        const splitFileIntoParts = (targetFile, chunkSize) => {
-            const parts = [];
-            let start = 0;
-            let partNumber = 1;
-
-            while (start < targetFile.size) {
-                const end = Math.min(start + chunkSize, targetFile.size);
-
-                parts.push({
-                    partNumber,
-                    start,
-                    end,
-                    size: end - start,
-                    blob: targetFile.slice(start, end)
-                });
-
-                start = end;
-                partNumber++;
-            }
-
-            return parts;
-        };
-
-        const chunkArray = (array, size) => {
-            const result = [];
-            for (let i = 0; i < array.length; i += size) {
-                result.push(array.slice(i, i + size));
-            }
-            return result;
-        };
-
-        const shouldRetryUploadError = (error) => {
-            const status = error?.response?.status;
-
-            if (!status) {
-                return true;
-            }
-
-            if (status >= 500 || status === 408 || status === 429) {
-                return true;
-            }
-
-            return false;
-        };
-
-        const retryUploadPart = async (task, maxRetries = MAX_RETRIES) => {
-            let lastError = null;
-
-            for (let attempt = 1; attempt <= maxRetries; attempt++) {
-                try {
-                    return await task();
-                } catch (error) {
-                    lastError = error;
-
-                    if (!shouldRetryUploadError(error) || attempt === maxRetries) {
-                        break;
-                    }
-
-                    const delay = RETRY_BASE_DELAY_MS * attempt;
-                    console.warn(`Part upload retry ${attempt}/${maxRetries}, wait ${delay}ms`, error);
-                    await sleep(delay);
-                }
-            }
-
-            throw lastError;
-        };
-
-        const uploadSinglePart = async ({ part, url, onPartProgress }) => {
-            const response = await axios.put(url, part.blob, {
-                headers: {
-                    "Content-Type": "application/octet-stream"
-                },
-                onUploadProgress: (progressEvent) => {
-                    const loaded = progressEvent.loaded || 0;
-                    if (onPartProgress) {
-                        onPartProgress(loaded);
-                    }
-                }
-            });
-
-            const etag =
-                response.headers?.etag ||
-                response.headers?.ETag ||
-                response.headers?.["etag"] ||
-                response.headers?.["ETag"];
-
-            if (!etag) {
-                throw new Error(`part ${part.partNumber} 업로드 응답에 ETag가 없습니다. R2 CORS ExposeHeaders 설정을 확인하세요.`);
-            }
-
-            return {
-                partNumber: part.partNumber,
-                etag,
-                size: part.size
-            };
-        };
-
-        const uploadPartsInParallel = async ({
-            parts,
-            presignedParts,
-            onBatchProgress,
-            onBatchPartCompleted
-        }) => {
-            const results = [];
-            let currentIndex = 0;
-
-            const urlMap = new Map();
-            for (const item of presignedParts) {
-                const partNumber = item.partNumber ?? item.part_number;
-                const url = item.url;
-                urlMap.set(partNumber, url);
-            }
-
-            const worker = async () => {
-                while (true) {
-                    const index = currentIndex++;
-                    if (index >= parts.length) {
-                        return;
-                    }
-
-                    const part = parts[index];
-                    const url = urlMap.get(part.partNumber);
-
-                    if (!url) {
-                        throw new Error(`part ${part.partNumber}의 presigned URL이 없습니다.`);
-                    }
-
-                    const uploadedPart = await retryUploadPart(() =>
-                        uploadSinglePart({
-                            part,
-                            url,
-                            onPartProgress: (loaded) => {
-                                if (onBatchProgress) {
-                                    onBatchProgress({
-                                        partNumber: part.partNumber,
-                                        loaded
-                                    });
-                                }
-                            }
-                        })
-                    );
-
-                    results.push(uploadedPart);
-
-                    if (onBatchPartCompleted) {
-                        onBatchPartCompleted(uploadedPart);
-                    }
-                }
-            };
-
-            const workerCount = Math.min(CONCURRENCY, parts.length);
-            await Promise.all(Array.from({ length: workerCount }, () => worker()));
-
-            return results.sort((a, b) => a.partNumber - b.partNumber);
-        };
+    static async uploadMultipart(file, dto, context, onProgress, signal) {
+        let session = null;
+        let completionStarted = false;
 
         try {
-
-            if (!file) {
-                throw new Error("업로드할 파일이 없습니다.");
+            const { data } = await ApiService.video.createMultipartUpload(dto, context);
+            session = data;
+            const { videoId, uploadId, partSize, totalPartCount } = session ?? {};
+            if (!videoId || !uploadId || !Number.isSafeInteger(partSize) || partSize <= 0 ||
+                !Number.isSafeInteger(totalPartCount) || totalPartCount <= 0 ||
+                Math.ceil(file.size / partSize) !== totalPartCount) {
+                throw new Error("Multipart 세션 응답이 올바르지 않습니다.");
             }
 
-            if (!videoData) {
-                throw new Error("videoData가 없습니다.");
-            }
+            this.assertNotCanceled(signal);
+            const completed = [];
+            const progressByPart = new Map();
 
-            console.log("Multipart upload started for file size:", file.size);
-
-            // 멀티파트 업로드에 필요한 상태 객체들 (지역 변수)
-            let multipartUploadRequest = {
-                videoId: "",
-                key: "",
-                uploadId: "",
-                partSize: 0,
-                totalPartCount: 0
-            };
-
-            let presignPartsRequest = {
-                videoId: "",
-                key: "",
-                uploadId: "",
-                partNumbers: []
-            };
-
-            let partPresignedUrlResponse = [];
-
-            let completeUploadRequest = {
-                videoId: "",
-                key: "",
-                uploadId: "",
-                parts: []
-            };
-            videoData.size = file.size;
-            const initResponse = await ApiService.video.multipart_upload_url_request({
-                ...videoData
-            });
-            multipartUploadRequest = initResponse.data.multipart_upload_request;
-
-            if (!multipartUploadRequest) {
-                throw new Error("multipart_upload_request 응답이 없습니다.");
-            }
-
-            if (!multipartUploadRequest.videoId
-                || !multipartUploadRequest.key
-                || !multipartUploadRequest.uploadId
-                || !multipartUploadRequest.partSize
-                || !multipartUploadRequest.totalPartCount) {
-                console.log(multipartUploadRequest.videoId);
-                console.log(multipartUploadRequest.key);
-                console.log(multipartUploadRequest.uploadId);
-                console.log(multipartUploadRequest.partSize);
-                console.log(multipartUploadRequest.totalPartCount);
-                throw new Error("multipart_upload_request 응답이 올바르지 않습니다.");
-            }
-
-            const allParts = splitFileIntoParts(file, multipartUploadRequest.partSize);
-
-            if (allParts.length !== multipartUploadRequest.totalPartCount) {
-                throw new Error(`분할된 파트 수(${allParts.length})가 예상 수(${multipartUploadRequest.totalPartCount})와 일치하지 않습니다.`);
-            }
-
-            const totalPartCount = multipartUploadRequest.totalPartCount;
-            const partBatches = chunkArray(allParts, PRESIGN_BATCH_SIZE);
-
-            const progressMap = new Map();
-            let completedBytes = 0;
-            let inFlightLoadedTotal = 0;
-            const uploadedParts = [];
-
-            for (const batchParts of partBatches) {
-                presignPartsRequest = {
-                    videoId: multipartUploadRequest.videoId,
-                    key: multipartUploadRequest.key,
-                    uploadId: multipartUploadRequest.uploadId,
-                    partNumbers: batchParts.map((part) => part.partNumber)
-                };
-
-                const partUrlResponse = await ApiService.video.multipart_upload_url({
-                    ...presignPartsRequest
+            const updateProgress = (partNumber, loaded, size) => {
+                progressByPart.set(partNumber, Math.min(size, Math.max(0, loaded)));
+                const uploadedBytes = [...progressByPart.values()].reduce((sum, value) => sum + value, 0);
+                this.notify(onProgress, {
+                    phase: "uploading", percent: Math.min(99, Math.floor(uploadedBytes / file.size * 100)),
+                    uploadedBytes, totalBytes: file.size, videoId, uploadId, totalPartCount,
                 });
+            };
+            for (let startPart = 1; startPart <= totalPartCount; startPart += this.PRESIGN_BATCH_SIZE) {
+                this.assertNotCanceled(signal);
+                const endPart = Math.min(totalPartCount, startPart + this.PRESIGN_BATCH_SIZE - 1);
+                const partNumbers = Array.from({ length: endPart - startPart + 1 }, (_, i) => startPart + i);
+                const response = await ApiService.video.createMultipartPartUrls(
+                    { videoId, uploadId, partNumbers }, context
+                );
 
-                partPresignedUrlResponse = partUrlResponse.data.multipart_upload_url;
-
-                if (!partPresignedUrlResponse
-                    || !Array.isArray(partPresignedUrlResponse)
-                    || partPresignedUrlResponse.length == 0) {
-                    throw new Error("multipart_upload_url 응답이 올바르지 않습니다.");
+                const urls = new Map((response.data ?? []).map(({ partNumber, uploadUrl }) => [partNumber, uploadUrl]));
+                if (urls.size !== partNumbers.length) {
+                    throw new Error("요청한 모든 Part의 Presigned URL을 받지 못했습니다.");
                 }
 
-                const batchUploadedParts = await uploadPartsInParallel({
-                    parts: batchParts,
-                    presignedParts: partPresignedUrlResponse,
-                    onBatchProgress: ({ partNumber, loaded }) => {
-                        const previousLoaded = progressMap.get(partNumber) || 0;
-                        progressMap.set(partNumber, loaded);
+                let nextIndex = 0;
+                let firstError = null;
+                const worker = async () => {
+                    while (nextIndex < partNumbers.length && !firstError) {
+                        this.assertNotCanceled(signal);
+                        const partNumber = partNumbers[nextIndex++];
+                        const begin = (partNumber - 1) * partSize;
+                        const end = Math.min(file.size, begin + partSize);
+                        const size = end - begin;
+                        const url = urls.get(partNumber);
+                        if (!url) throw new Error(`Part ${partNumber} 업로드 URL이 없습니다.`);
+                        const blob = file.slice(begin, end);
 
-                        inFlightLoadedTotal += (loaded - previousLoaded);
-
-                        const currentUploadedBytes = completedBytes + inFlightLoadedTotal;
-                        const percent = Math.min(100, Math.round((currentUploadedBytes / file.size) * 100));
-
-                        if (onProgress) {
-                            onProgress({
-                                percent,
-                                uploadedBytes: currentUploadedBytes,
-                                totalBytes: file.size,
-                                videoId: multipartUploadRequest.videoId,
-                                uploadId: multipartUploadRequest.uploadId,
-                                totalPartCount
-                            });
-                        }
-                    },
-                    onBatchPartCompleted: (uploadedPart) => {
-                        const previousLoaded = progressMap.get(uploadedPart.partNumber) || 0;
-                        progressMap.delete(uploadedPart.partNumber);
-
-                        inFlightLoadedTotal -= previousLoaded;
-                        completedBytes += uploadedPart.size;
-
-                        const percent = Math.min(100, Math.round((completedBytes / file.size) * 100));
-
-                        if (onProgress) {
-                            onProgress({
-                                percent,
-                                uploadedBytes: completedBytes,
-                                totalBytes: file.size,
-                                videoId: multipartUploadRequest.videoId,
-                                uploadId: multipartUploadRequest.uploadId,
-                                totalPartCount
-                            });
+                        try {
+                            const etag = await this.uploadPartWithRetry(
+                                url, blob, signal,
+                                (loaded) => updateProgress(partNumber, loaded, size)
+                            );
+                            updateProgress(partNumber, size, size);
+                            completed.push({ partNumber, etag });
+                        } catch (error) {
+                            firstError = error;
+                            throw error;
                         }
                     }
-                });
-
-                uploadedParts.push(...batchUploadedParts);
+                };
+                const workers = Array.from(
+                    { length: Math.min(this.CONCURRENCY, partNumbers.length) },
+                    () => worker()
+                );
+                // 모든 워커가 정리된 뒤 오류를 전달한다 (미완료 요청이 남지 않도록).
+                const outcomes = await Promise.allSettled(workers);
+                const failed = outcomes.find((item) => item.status === "rejected");
+                if (failed) throw failed.reason;
             }
 
-            completeUploadRequest = {
-                videoId: multipartUploadRequest.videoId,
-                key: multipartUploadRequest.key,
-                uploadId: multipartUploadRequest.uploadId,
-                parts: uploadedParts.map((part) => ({
-                    partNumber: part.partNumber,
-                    etag: part.etag
-                })).sort((a, b) => a.partNumber - b.partNumber)
-            };
+            this.assertNotCanceled(signal);
+            if (completed.length !== totalPartCount) {
+                throw new Error("모든 Part가 업로드되지 않았습니다.");
+            }
 
-            await ApiService.video.multipart_upload_complete({
-                ...completeUploadRequest
+            completed.sort((a, b) => a.partNumber - b.partNumber);
+            completionStarted = true;
+            this.notify(onProgress, {
+                phase: "finalizing", percent: 99, uploadedBytes: file.size,
+                totalBytes: file.size, videoId, uploadId,
             });
-
-            if (onProgress) {
-                onProgress({
-                    percent: 100,
-                    uploadedBytes: file.size,
-                    totalBytes: file.size,
-                    videoId: multipartUploadRequest.videoId,
-                    uploadId: multipartUploadRequest.uploadId,
-                    totalPartCount
-                });
-            }
-
-            return {
-                result: true,
-                multipartUploadRequest,
-                completeUploadRequest
-            };
+            await ApiService.video.completeMultipartUpload({ videoId, uploadId, parts: completed }, context);
+            return { videoId };
         } catch (error) {
-            console.error("Multipart Upload Error:", error);
-
-            if (uploadId) {
+            // 사용자 요청으로 취소한 경우에만 Abort. 일반 오류는 서버의 만료 정리/복구 대상이다.
+            if (this.isCanceled(error, signal) && session?.videoId && session?.uploadId && !completionStarted) {
                 try {
-                    await ApiService.video.multipart_upload_abort({
-                        video_id: multipartUploadRequest.videoId,
-                        key: multipartUploadRequest.key,
-                        upload_id: multipartUploadRequest.uploadId
-                    });
+                    await ApiService.video.abortMultipartUpload(
+                        { videoId: session.videoId, uploadId: session.uploadId }, context
+                    );
                 } catch (abortError) {
-                    console.error("Multipart abort failed:", abortError);
+                    console.error("Multipart 취소 API 실패:", abortError);
                 }
             }
             throw error;
         }
     }
+
+    /** 네트워크 일시 오류에 한해 Part 전송을 최대 3회 시도한다. */
+    static async uploadPartWithRetry(url, blob, signal, onLoaded) {
+        let lastError;
+        for (let attempt = 1; attempt <= this.MAX_RETRIES; attempt++) {
+            this.assertNotCanceled(signal);
+            try {
+                const response = await axios.put(url, blob, {
+                    headers: { "Content-Type": "application/octet-stream" },
+                    signal,
+                    timeout: 0,
+                    withCredentials: false,
+                    onUploadProgress: ({ loaded }) => onLoaded?.(loaded || 0),
+                });
+                const etag = response.headers?.etag;
+                if (!etag) {
+                    throw new Error("R2 ETag 헤더가 없습니다. R2 CORS ExposeHeaders에 ETag를 추가해주세요.");
+                }
+                return etag;
+            } catch (error) {
+                lastError = error;
+                if (this.isCanceled(error, signal)) throw error;
+                const status = error.response?.status;
+                const retryable = !status || status === 408 || status === 429 || status >= 500;
+                if (!retryable || attempt === this.MAX_RETRIES || !error.isAxiosError) break;
+                onLoaded?.(0); // 실패한 요청에서 기록된 전송량을 다시 계산한다.
+                await this.delay(500 * (2 ** (attempt - 1)), signal);
+            }
+        }
+        throw lastError;
+    }
+
+    static delay(ms, signal) {
+        return new Promise((resolve, reject) => {
+            if (signal?.aborted) return reject(new DOMException("취소됨", "AbortError"));
+            const timer = setTimeout(() => { cleanup(); resolve(); }, ms);
+            const cancel = () => { clearTimeout(timer); cleanup(); reject(new DOMException("취소됨", "AbortError")); };
+            const cleanup = () => signal?.removeEventListener("abort", cancel);
+            signal?.addEventListener("abort", cancel, { once: true });
+        });
+    }
+
 }
 
 export default VideoUploadService;
