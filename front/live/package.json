@@ -10,20 +10,20 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.948.0",
-    "@aws-sdk/s3-presigned-post": "^3.948.0",
+    "@aws-sdk/client-s3": "^3.1166.0",
+    "@aws-sdk/s3-presigned-post": "^3.1166.0",
     "@stomp/stompjs": "^7.2.1",
     "@tanstack/react-query": "^5.90.20",
-    "axios": "^1.13.2",
+    "axios": "^1.21.1",
     "bootstrap": "^5.3.8",
     "hls.js": "^1.6.15",
     "idb": "^8.0.3",
-    "react": "^19.1.0",
+    "react": "19.3.1",
     "react-bootstrap": "^2.10.10",
     "react-cookie": "^8.0.1",
-    "react-dom": "^19.1.0",
+    "react-dom": "19.3.1",
     "react-icons": "^5.5.0",
-    "react-router-dom": "^7.9.5",
+    "react-router-dom": "^7.18.5",
     "router": "^2.2.0",
     "sockjs-client": "^1.6.1",
     "stompjs": "^2.3.3",
@@ -39,6 +39,6 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.3.0",
-    "vite": "^7.0.4"
+    "vite": "7.3.8"
   }
 }
