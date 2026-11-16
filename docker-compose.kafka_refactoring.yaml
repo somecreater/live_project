@@ -1,0 +1,41 @@
+services:
+  kafka:
+    image: apache/kafka:4.4.0
+    container_name: kafka
+    hostname: kafka
+    ports:
+      - "9092:9092"
+
+    environment:
+      # 단일 컨테이너가 브로커와 KRaft 컨트롤러 역할 수행
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: "broker,controller"
+
+      # 외부 접속 / Docker 내부 접속 / 컨트롤러 통신
+      KAFKA_LISTENERS: "EXTERNAL://0.0.0.0:9092,INTERNAL://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093"
+      KAFKA_ADVERTISED_LISTENERS: "EXTERNAL://localhost:9092,INTERNAL://kafka:29092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "EXTERNAL:PLAINTEXT,INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT"
+
+      KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+
+      # 최초 생성 후 동일한 데이터 볼륨에서는 유지
+      CLUSTER_ID: "4L6g3nShT-eMCtK--X86sw"
+
+      # 단일 브로커용 설정
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_SHARE_COORDINATOR_STATE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_SHARE_COORDINATOR_STATE_TOPIC_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
+      # 메시지와 KRaft 메타데이터 저장
+      KAFKA_LOG_DIRS: "/var/lib/kafka/data"
+
+    volumes:
+      - kafka_kraft_data:/var/lib/kafka/data
+
+volumes:
+  kafka_kraft_data:
