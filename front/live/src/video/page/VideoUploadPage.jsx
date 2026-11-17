@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import ApiService from "../../common/api/ApiService";
 import VideoUploadForm from "../form/VideoUploadForm";
 import { useState } from "react";
 import { Button } from "react-bootstrap";
@@ -14,30 +13,28 @@ function VideoUploadPage() {
     const [isUploading, setIsUploading] = useState(false);
     const [videoData, setVideoData] = useState(null);
 
-    const handleSuccess = (video) => {
-        setVideoData(video);
+    const handleFormComplete = (data) => {
+        setVideoData(data);
         setIsUploading(true);
-        alert("동영상 정보를 확인했습니다. 업로드 파일을 선택해주세요.");
     };
 
     const handleSuccessUpload = async (videoId) => {
-        try {
-            await ApiService.video.upload_validate(Number(videoId));
-            alert("동영상이 성공적으로 업로드되었습니다.");
-            navigate('/channel/my_channel');
-        } catch (error) {
-            console.error("동영상 업로드 검증 실패:", error);
-            alert("동영상 업로드 검증에 실패했습니다.");
-        }
+        // 이미 업로드 완료 및 검증을 VideoUploadService 메소드 내에서 진행하므로 
+        // 검증 API 호출 삭제(2026/11/18)
+        navigate("/channel/my_channel", {
+            state: { uploadSubmittedVideoId: videoId },
+        });
     };
 
     return (
-        <div>
-            <h1>Video Upload Page</h1>
-            <VideoUploadForm onSuccess={handleSuccess} />
-            <Button variant="primary" onClick={() => navigate('/channel/my_channel')}>
-                채널로 돌아가기
-            </Button>
+        <div className="video-upload-page">
+            <h1>동영상 업로드</h1>
+            <VideoUploadForm onSuccess={handleFormComplete} />
+            <div className="mt-3">
+                <Button variant="secondary" onClick={() => navigate("/channel/my_channel")}>
+                    채널로 돌아가기
+                </Button>
+            </div>
             <VideoUploadModal
                 show={isUploading}
                 onHide={() => setIsUploading(false)}
