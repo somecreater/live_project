@@ -62,8 +62,15 @@
 }
 
 @keyframes slideUp {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .video-upload-modal .file-icon {
@@ -102,8 +109,13 @@
 }
 
 @keyframes gradientMove {
-    0% { background-position: 0% 50%; }
-    100% { background-position: 200% 50%; }
+    0% {
+        background-position: 0% 50%;
+    }
+
+    100% {
+        background-position: 200% 50%;
+    }
 }
 
 .video-upload-modal .status-text {
@@ -129,8 +141,13 @@
 }
 
 @keyframes scaleIn {
-    from { transform: scale(0); }
-    to { transform: scale(1); }
+    from {
+        transform: scale(0);
+    }
+
+    to {
+        transform: scale(1);
+    }
 }
 
 .video-upload-modal .modal-footer {
@@ -165,4 +182,23 @@
 
 .video-upload-modal .btn-secondary:hover {
     background: rgba(255, 255, 255, 0.1);
+}
+
+.video-upload-modal .drop-zone:focus-visible {
+    outline: 2px solid #60a5fa;
+    outline-offset: 4px;
+}
+
+.video-upload-modal .file-details {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.video-upload-modal .progress-container .small,
+.video-upload-modal .file-selector-container .small {
+    color: #cbd5e1;
+}
+
+.video-upload-modal .error-container {
+    overflow-wrap: anywhere;
 }
