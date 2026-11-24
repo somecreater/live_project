@@ -126,6 +126,7 @@ public class ChannelController {
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
 
+    //수정 필요(2026-11-25)
     boolean video_delete= videoService.VideoDeleteOnChannel(channelDto.getName());
     boolean cover_delete= coverService.cover_delete_on_channel(channelDto.getName());
     boolean post_delete= postService.deletePostOnChannel(channelDto.getName());

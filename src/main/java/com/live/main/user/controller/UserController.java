@@ -192,6 +192,7 @@ public class UserController {
     }
     UserDto user=userService.LoginUser(loginRequest.getLoginId(), loginRequest.getPass());
     ChannelDto channelDto=channelService.getChannelInfoUser(user.getLoginId());
+    //수정 필요(2026-11-25)
     boolean video_delete = videoService.VideoDeleteOnChannel(channelDto.getName());
     boolean cover_delete= coverService.cover_delete_on_channel(channelDto.getName());
     boolean channel_delete = channelService.deleteChannelOnUser(user.getLoginId());
