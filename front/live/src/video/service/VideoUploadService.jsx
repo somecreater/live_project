@@ -22,11 +22,19 @@ class VideoUploadService {
 
         const candidates = (response) => {
             const raw = response?.data ?? response;
-            return raw;
+            return [
+                raw?.user_info,
+                raw?.my_channel,
+                raw?.channel,
+                raw?.user,
+                raw,
+                response,
+            ].filter((item) => item && typeof item === "object");
         };
 
         const firstString = (items, names) => {
-            for (const item of items) {
+            const list = Array.isArray(items) ? items : [items].filter(Boolean);
+            for (const item of list) {
                 for (const name of names) {
                     if (typeof item?.[name] === "string" && item[name].trim()) {
                         return item[name].trim();
@@ -38,10 +46,11 @@ class VideoUploadService {
 
         const userLoginId = firstString(candidates(userResponse), [
             "loginId", "login_id", "userLoginId", "user_login_id",
-        ]);
+        ]) || localStorage.getItem("loginId");
+
         const channelName = firstString(candidates(channelResponse), [
             "name", "channelName", "channel_name",
-        ]);
+        ]) || localStorage.getItem("channelName");
 
         if (!userLoginId) {
             throw new Error("회원 정보에서 loginId를 찾을 수 없습니다. /api/user/info 응답을 확인해주세요.");
@@ -207,7 +216,12 @@ class VideoUploadService {
                     { videoId, uploadId, partNumbers }, context
                 );
 
-                const urls = new Map((response.data ?? []).map(({ partNumber, uploadUrl }) => [partNumber, uploadUrl]));
+                const rawParts = Array.isArray(response.data)
+                    ? response.data
+                    : response.data?.multipart_upload_url || response.data?.parts || [];
+                const urls = new Map(
+                    rawParts.map((item) => [item.partNumber, item.url || item.uploadUrl])
+                );
                 if (urls.size !== partNumbers.length) {
                     throw new Error("요청한 모든 Part의 Presigned URL을 받지 못했습니다.");
                 }
@@ -289,7 +303,7 @@ class VideoUploadService {
                     withCredentials: false,
                     onUploadProgress: ({ loaded }) => onLoaded?.(loaded || 0),
                 });
-                const etag = response.headers?.etag;
+                const etag = response.headers?.etag || response.headers?.ETag;
                 if (!etag) {
                     throw new Error("R2 ETag 헤더가 없습니다. R2 CORS ExposeHeaders에 ETag를 추가해주세요.");
                 }

@@ -41,7 +41,7 @@ public class R2Service implements R2ServiceInterface {
     public URL createPutPresignedUrl(String objectKey, String contentType) {
 
         PutObjectRequest objectRequest = PutObjectRequest.builder()
-                .bucket(properties.videoBuketName())
+                .bucket(properties.videoBucketName())
                 .key(objectKey)
                 .contentType(contentType)
                 .build();
@@ -61,7 +61,7 @@ public class R2Service implements R2ServiceInterface {
     public String createMultipartUpload(String objectKey, String contentType) {
         CreateMultipartUploadRequest request =
                 CreateMultipartUploadRequest.builder()
-                        .bucket(properties.videoBuketName())
+                        .bucket(properties.videoBucketName())
                         .key(objectKey)
                         .contentType(contentType)
                         .build();
@@ -73,7 +73,7 @@ public class R2Service implements R2ServiceInterface {
     public URL createPartPresignedUrl(String objectKey, String uploadId, int partNumber) {
         UploadPartRequest uploadPartRequest =
                 UploadPartRequest.builder()
-                        .bucket(properties.videoBuketName())
+                        .bucket(properties.videoBucketName())
                         .key(objectKey)
                         .uploadId(uploadId)
                         .partNumber(partNumber)
@@ -105,7 +105,7 @@ public class R2Service implements R2ServiceInterface {
 
         CompleteMultipartUploadRequest request =
                 CompleteMultipartUploadRequest.builder()
-                        .bucket(properties.videoBuketName())
+                        .bucket(properties.videoBucketName())
                         .key(objectKey)
                         .uploadId(uploadId)
                         .multipartUpload(
@@ -122,7 +122,7 @@ public class R2Service implements R2ServiceInterface {
     public void abortMultipartUpload(String objectKey, String uploadId) {
         AbortMultipartUploadRequest request =
                 AbortMultipartUploadRequest.builder()
-                        .bucket(properties.videoBuketName())
+                        .bucket(properties.videoBucketName())
                         .key(objectKey)
                         .uploadId(uploadId)
                         .build();
@@ -134,7 +134,7 @@ public class R2Service implements R2ServiceInterface {
     public HeadObjectResponse headObject(String objectKey) {
         return s3Client.headObject(
                 HeadObjectRequest.builder()
-                        .bucket(properties.videoBuketName())
+                        .bucket(properties.videoBucketName())
                         .key(objectKey)
                         .build()
         );
@@ -158,7 +158,7 @@ public class R2Service implements R2ServiceInterface {
     @Override
     public byte[] readRange(String objectKey, long start, long end) {
         GetObjectRequest request = GetObjectRequest.builder()
-                .bucket(properties.videoBuketName())
+                .bucket(properties.videoBucketName())
                 .key(objectKey)
                 .range("bytes=" + start + "-" + end)
                 .build();
@@ -173,7 +173,7 @@ public class R2Service implements R2ServiceInterface {
     public void deleteObject(String objectKey) {
         s3Client.deleteObject(
                 DeleteObjectRequest.builder()
-                        .bucket(properties.videoBuketName())
+                        .bucket(properties.videoBucketName())
                         .key(objectKey)
                         .build()
         );

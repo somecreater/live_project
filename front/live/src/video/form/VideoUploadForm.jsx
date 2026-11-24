@@ -1,7 +1,40 @@
 import { Form, Button } from "react-bootstrap";
 import { useState } from "react";
 
-const CATEGORIES = JSON.parse(import.meta.env.VITE_VIDEO_CATEGORIES || "[]");
+const DEFAULT_CATEGORIES = [
+    ["GAME", "게임"],
+    ["MUSIC", "음악"],
+    ["ENTERTAINMENT", "엔터테인먼트"],
+    ["SPORTS", "스포츠"],
+    ["EDUCATION", "교육"],
+    ["TECH", "IT·기술"],
+    ["NEWS", "뉴스·시사"],
+    ["BUSINESS", "경제·비즈니스"],
+    ["LIFESTYLE", "라이프스타일"],
+    ["FOOD", "음식"],
+    ["TRAVEL", "여행"],
+    ["BEAUTY_FASHION", "뷰티·패션"],
+    ["HEALTH_FITNESS", "건강·운동"],
+    ["MOVIE_ANIMATION", "영화·애니메이션"],
+    ["PETS_ANIMALS", "반려동물·동물"],
+    ["HOBBY", "취미"],
+    ["KIDS", "키즈"],
+    ["ETC", "기타"]
+];
+
+const parseCategories = () => {
+    try {
+        const raw = import.meta.env.VITE_VIDEO_CATEGORIES;
+        if (!raw) return DEFAULT_CATEGORIES;
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_CATEGORIES;
+    } catch (e) {
+        console.warn("VITE_VIDEO_CATEGORIES 파싱 실패, 기본 카테고리를 사용합니다:", e);
+        return DEFAULT_CATEGORIES;
+    }
+};
+
+const CATEGORIES = parseCategories();
 /**
  * VideoUploadForm 컴포넌트 - 동영상 업로드 폼
  * @param {function} onSuccess - 폼 제출 성공 시 동영상 데이터를 전달할 콜백 함수

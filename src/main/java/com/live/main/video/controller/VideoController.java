@@ -26,7 +26,8 @@ public class VideoController {
 
   private final VideoServiceInterface videoService;
   private final ChannelServiceInterface channelService;
-
+  //주석처리 조만간 삭제 예정(2026/11/23)
+/*
   @GetMapping("/videoList")
   public ResponseEntity<?> getVideoList(
 
@@ -147,5 +148,5 @@ public class VideoController {
             .cacheControl(CacheControl.noCache())
             .body(playlist);
   }
-
+*/
 }

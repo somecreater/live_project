@@ -8,7 +8,7 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties(prefix = "app.r2")
 //@Validated
 public record VideoConfigProperties(
-  @NotBlank String videoBuketName,
+  @NotBlank String videoBucketName,
   @NotBlank String originalVideoBucketName,
   @NotBlank String transcodingVideoBucketName,
   @NotBlank String cdnBaseUrl,

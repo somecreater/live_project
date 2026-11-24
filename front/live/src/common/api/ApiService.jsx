@@ -102,7 +102,7 @@ const ApiService = {
     update: (dto) => RefreshApi.post(API_END_POINT.post.update, dto),
     delete: (dto) => RefreshApi.post(API_END_POINT.post.delete, dto)
   },
-  video: {
+  video_old: {// 해당 메소드는 사용 안함(내부 주석처리)
     upload_url: (dto) => RefreshApi.post(API_END_POINT.video.upload_url, dto),
     multipart_upload_url_request: (dto) => RefreshApi.post(API_END_POINT.video.multipart_upload_url_request, dto),
     multipart_upload_url: (dto) => RefreshApi.post(API_END_POINT.video.multipart_upload_url, dto),
@@ -116,7 +116,7 @@ const ApiService = {
     list: (dto) => RefreshApi.post(API_END_POINT.video.list, dto),
     delete: (dto) => RefreshApi.post(API_END_POINT.video.delete, dto)
   },
-  video_refactoring: {
+  video: {
     createSingleUpload: (dto, context) => RefreshApi.post(
       API_END_POINT.video_refactoring.singleUpload, dto,
       { params: { channelName: context.channelName, userLoginId: context.userLoginId } }
