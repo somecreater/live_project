@@ -32,9 +32,9 @@ public interface VideoServiceInterface {
   /**동영상 파일 정보, 파일 검증*/
   public boolean videoValidation(String channel_name, Long video_id);
   /**Kafka에 검증 완료 메시지 삽입*/
-  public void publishVideoValidationCompleted(VideoValidationEvent event);
+  //public void publishVideoValidationCompleted(VideoValidationEvent event);
   /**Kafka에서 인코딩 완료 메시지 수신*/
-  public void consumerEncodingComplete(VideoEncodingEvent encodeEvent, Acknowledgment ack);
+  //public void consumerEncodingComplete(VideoEncodingEvent encodeEvent, Acknowledgment ack);
   /**동영상 파일 내용 검사*/
   public boolean isValidMp4OrMov(byte[] bytes);
   /**R2 내 저장된 파일 삭제*/

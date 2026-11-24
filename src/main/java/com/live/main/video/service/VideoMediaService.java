@@ -18,12 +18,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.web.util.UriUtils;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -88,24 +92,55 @@ public class VideoMediaService implements VideoMediaServiceInterface {
                 throw new CustomException(ErrorCode.BAD_REQUEST);
             }
 
-            if (video.getProcessingStatus()
-                    == ProcessingStatus.DELETED) {
+            ProcessingStatus currentStatus = video.getProcessingStatus();
+
+            if (currentStatus == ProcessingStatus.DELETED) {
                 throw new CustomException(ErrorCode.BAD_REQUEST);
             }
 
             boolean alreadyProcessed =
-                    video.getProcessingStatus() == ProcessingStatus.TRANSCODING
-                    || video.getProcessingStatus() == ProcessingStatus.READY;
+                    currentStatus == ProcessingStatus.VALIDATING
+                            || currentStatus == ProcessingStatus.TRANSCODING
+                            || currentStatus == ProcessingStatus.READY;
 
-            if (!alreadyProcessed) {
-                video.setProcessingStatus(ProcessingStatus.VALIDATING);
+            if (alreadyProcessed) {
+                return new ValidationContext(
+                        video.getId(),
+                        video.getOriginalObjectKey(),
+                        video.getExpectedFileSize(),
+                        true
+                );
             }
+
+            // 검증 시작이 가능한 상태만 허용
+            if (currentStatus != ProcessingStatus.UPLOADING
+                    && currentStatus != ProcessingStatus.UPLOADED) {
+                throw new CustomException(ErrorCode.BAD_REQUEST);
+            }
+
+            // DB에서 원자적으로 VALIDATING 상태 선점
+            int updated = videoRepository.updateProcessingStatusIfAllowed(
+                    video.getId(),
+                    video.getOriginalObjectKey(),
+                    List.of(
+                            ProcessingStatus.UPLOADING,
+                            ProcessingStatus.UPLOADED
+                    ),
+                    ProcessingStatus.VALIDATING
+            );
+
+            log.info(
+                    "Validation claim. videoId={}, previousStatus={}, updated={}",
+                    video.getId(),
+                    currentStatus,
+                    updated
+            );
 
             return new ValidationContext(
                     video.getId(),
                     video.getOriginalObjectKey(),
                     video.getExpectedFileSize(),
-                    alreadyProcessed
+                    updated != 1
             );
         });
 
@@ -139,6 +174,12 @@ public class VideoMediaService implements VideoMediaServiceInterface {
             }
 
         } catch (CustomException exception) {
+
+            markValidationFailed(
+                    context.videoId(),
+                    context.objectKey()
+            );
+
             throw exception;
 
         } catch (S3Exception exception) {
@@ -156,9 +197,18 @@ public class VideoMediaService implements VideoMediaServiceInterface {
                 throw new CustomException(ErrorCode.BAD_REQUEST);
             }
 
+            markValidationFailed(
+                    context.videoId(),
+                    context.objectKey()
+            );
+
             throw new CustomException(ErrorCode.SERVER_ERROR);
 
         } catch (Exception exception) {
+            markValidationFailed(
+                    context.videoId(),
+                    context.objectKey()
+            );
             markVideoFailed(context.videoId());
 
             log.error(
@@ -176,28 +226,29 @@ public class VideoMediaService implements VideoMediaServiceInterface {
          * VideoKafkaAdapter가 AFTER_COMMIT 시점에 Kafka로 전송합니다.
          */
         transactionTemplate.executeWithoutResult(status -> {
-            VideoEntity video = videoRepository
-                    .findById(context.videoId())
-                    .orElseThrow(() ->
-                            new CustomException(ErrorCode.BAD_REQUEST)
-                    );
 
-            if (!Objects.equals(
-                    video.getOriginalObjectKey(),
-                    context.objectKey()
-            )) {
-                throw new CustomException(ErrorCode.BAD_REQUEST);
-            }
+            // VALIDATING 상태인 경우에만 TRANSCODING으로 전환
+            int updated = videoRepository.updateProcessingStatusIfAllowed(
+                    context.videoId(),
+                    context.objectKey(),
+                    List.of(ProcessingStatus.VALIDATING),
+                    ProcessingStatus.TRANSCODING
+            );
 
-            if (video.getProcessingStatus()
-                    == ProcessingStatus.TRANSCODING
-                    || video.getProcessingStatus()
-                    == ProcessingStatus.READY) {
+            // 상태 변경에 실패하면 이벤트 발행하지 않음
+            if (updated != 1) {
+                log.warn(
+                        "Transcoding event skipped. videoId={}, updated={}",
+                        context.videoId(),
+                        updated
+                );
                 return;
             }
 
-            video.setProcessingStatus(
-                    ProcessingStatus.TRANSCODING
+            log.info(
+                    "Transcoding event scheduled. videoId={}, objectKey={}",
+                    context.videoId(),
+                    context.objectKey()
             );
 
             /*
@@ -205,8 +256,8 @@ public class VideoMediaService implements VideoMediaServiceInterface {
             * */
             eventPublisher.publishEvent(
                     new VideoValidationEvent(
-                            video.getId(),
-                            video.getOriginalObjectKey()
+                            context.videoId(),
+                            context.objectKey()
                     )
             );
         });
@@ -247,13 +298,18 @@ public class VideoMediaService implements VideoMediaServiceInterface {
             throw new CustomException(ErrorCode.BAD_REQUEST);
         }
 
+        String channelName = extractChannelNameFromObjectKey(
+                context.originalObjectKey(),
+                event.getVideoId()
+        );
         String resultPrefix = normalizePrefix(
                 event.getResultKey()
         );
-
         String expectedPrefix =
                 configProperties.normalizedTranscodingPrefix()
-                        + "videos/"
+                        + "channels/"
+                        + channelName
+                        + "/videos/"
                         + event.getVideoId()
                         + "/";
 
@@ -270,10 +326,19 @@ public class VideoMediaService implements VideoMediaServiceInterface {
                     context.hlsObjectKey(),
                     masterObjectKey
             )) {
+                log.info(
+                        "Encoding completion already processed. videoId={}",
+                        event.getVideoId()
+                );
                 return;
             }
 
-            throw new CustomException(ErrorCode.BAD_REQUEST);
+            log.warn(
+                    "Duplicate encoding result ignored. videoId={}, existing={}, incoming={}",
+                    event.getVideoId(),
+                    context.hlsObjectKey(),
+                    masterObjectKey
+            );
         }
 
         HeadObjectResponse head = r2service.headObject(
@@ -312,9 +377,49 @@ public class VideoMediaService implements VideoMediaServiceInterface {
                     != ProcessingStatus.TRANSCODING) {
                 throw new CustomException(ErrorCode.BAD_REQUEST);
             }
+            int updated = videoRepository.completeEncodingIfTranscoding(
+                    event.getVideoId(),
+                    event.getObjectKey(),
+                    masterObjectKey,
+                    ProcessingStatus.TRANSCODING,
+                    ProcessingStatus.READY);
 
-            video.setHlsObjectKey(masterObjectKey);
-            video.setProcessingStatus(ProcessingStatus.READY);
+            if (updated == 1) {
+                log.info(
+                        "Video encoding completed. videoId={}, hlsObjectKey={}",
+                        event.getVideoId(),
+                        masterObjectKey
+                );
+                return;
+            }
+
+            // 상태 변경 실패 시 현재 DB 상태 재조회
+            VideoEntity video_validate = videoRepository.findById(event.getVideoId())
+                    .orElseThrow(() ->
+                            new CustomException(ErrorCode.BAD_REQUEST)
+                    );
+
+            // 동일한 완료 이벤트가 다시 전달된 경우
+            if (video_validate.getProcessingStatus() == ProcessingStatus.READY
+                    && Objects.equals(video_validate.getHlsObjectKey(), masterObjectKey)) {
+                log.info(
+                        "Encoding already completed. videoId={}",
+                        event.getVideoId()
+                );
+                return;
+            }
+
+            // 다른 HLS 결과가 이미 등록됐거나 상태가 유효하지 않은 경우
+            log.warn(
+                    "Encoding completion rejected. videoId={}, status={}, incomingKey={}",
+                    event.getVideoId(),
+                    video_validate.getProcessingStatus(),
+                    masterObjectKey
+            );
+
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+
+
         });
     }
 
@@ -341,8 +446,18 @@ public class VideoMediaService implements VideoMediaServiceInterface {
                     video,
                     userLoginId
             );
-
             String hlsObjectKey = video.getHlsObjectKey();
+
+            String encodedObjectKey = Arrays.stream(
+                            hlsObjectKey.split("/")
+                    )
+                    .map(segment ->
+                            UriUtils.encodePathSegment(
+                                    segment,
+                                    StandardCharsets.UTF_8
+                            )
+                    )
+                    .collect(Collectors.joining("/"));
 
             if (hlsObjectKey == null || hlsObjectKey.isBlank()) {
                 throw new CustomException(ErrorCode.BAD_REQUEST);
@@ -352,7 +467,7 @@ public class VideoMediaService implements VideoMediaServiceInterface {
                     video.getId(),
                     configProperties.normalizedCdnBaseUrl()
                             + "/"
-                            + hlsObjectKey
+                            + encodedObjectKey
             );
         });
 
@@ -471,5 +586,46 @@ public class VideoMediaService implements VideoMediaServiceInterface {
         return normalized.endsWith("/")
                 ? normalized
                 : normalized + "/";
+    }
+
+    @Override
+    public String extractChannelNameFromObjectKey(String objectKey, Long videoId){
+        String expectedPrefix =
+                configProperties.normalizedOriginalPrefix()
+                        + "channels/";
+
+        if (objectKey == null
+                || !objectKey.startsWith(expectedPrefix)) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
+
+        String relativePath =
+                objectKey.substring(expectedPrefix.length());
+
+        String[] parts = relativePath.split("/", -1);
+
+        // {channelName}/videos/{videoId}/{fileName}
+        if (parts.length != 4
+                || parts[0].isBlank()
+                || !parts[1].equals("videos")
+                || !parts[2].equals(String.valueOf(videoId))
+                || parts[3].isBlank()) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
+
+        return parts[0];
+    }
+
+    @Override
+    public void markValidationFailed(Long videoId, String objectKey) {
+
+        transactionTemplate.executeWithoutResult(status -> {
+            videoRepository.updateProcessingStatusIfAllowed(
+                    videoId,
+                    objectKey,
+                    List.of(ProcessingStatus.VALIDATING),
+                    ProcessingStatus.FAILED
+            );
+        });
     }
 }

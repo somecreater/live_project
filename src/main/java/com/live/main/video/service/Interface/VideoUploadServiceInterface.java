@@ -77,4 +77,8 @@ public interface VideoUploadServiceInterface {
 
     /**JPA 엔티티를 외부 네트워크 작업에 필요한 불변 업로드 컨텍스트로 변환*/
     public UploadContext toContext(UploadSessionEntity session);
+
+    /** R2 Object Key의 경로 구분자로 사용할 수 있는 채널 이름인지 검증한다.*/
+    public String validateChannelPathSegment(String channelName);
+
 }

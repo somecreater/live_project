@@ -52,6 +52,12 @@ public interface VideoMediaServiceInterface {
     /**R2 Object Prefix의 앞쪽 슬래시를 제거하고 끝에 슬래시가 하나 존재하도록 정규화*/
     public String normalizePrefix(String value);
 
+    /**Object Key에서 채널명 추출*/
+    public String extractChannelNameFromObjectKey(String objectKey, Long videoId);
+
+    /**검증 실패 DB 반영*/
+    public void markValidationFailed(Long videoId, String objectKey);
+
     public record ValidationContext(
             Long videoId,
             String objectKey,

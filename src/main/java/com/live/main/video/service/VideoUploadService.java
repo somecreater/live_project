@@ -432,6 +432,7 @@ public class VideoUploadService implements VideoUploadServiceInterface {
                     channelName,
                     userLoginId
             );
+            String channelPath = validateChannelPathSegment(channelName);
 
             request.setChannel_name(channelName);
 
@@ -444,7 +445,9 @@ public class VideoUploadService implements VideoUploadServiceInterface {
 
             String objectKey =
                     properties.normalizedOriginalPrefix()
-                            + "videos/"
+                            + "channels/"
+                            + channelPath
+                            + "/videos/"
                             + saved.getId()
                             + "/"
                             + UUID.randomUUID()
@@ -706,5 +709,19 @@ public class VideoUploadService implements VideoUploadServiceInterface {
                 session.getExpectedFileSize(),
                 session.getStatus()
         );
+    }
+
+    @Override
+    public String validateChannelPathSegment(String channelName) {
+        if (channelName == null
+                || channelName.isBlank()
+                || channelName.equals(".")
+                || channelName.equals("..")
+                || channelName.contains("/")
+                || channelName.contains("\\")
+                || channelName.chars().anyMatch(Character::isISOControl)) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
+        return channelName;
     }
 }

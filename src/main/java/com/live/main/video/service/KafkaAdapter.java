@@ -68,7 +68,7 @@ public class KafkaAdapter {
             VideoEncodingEvent event,
             Acknowledgment acknowledgment
     ) {
-        //videoMediaService.completeEncoding(event);
+        videoMediaService.completeEncoding(event);
         acknowledgment.acknowledge();
     }
 }

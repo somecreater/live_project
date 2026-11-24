@@ -541,6 +541,7 @@ public class VideoService implements VideoServiceInterface {
     }
   }
 
+  /*
   @Async("IOTaskExecutor")
   @EventListener
   @Override
@@ -555,7 +556,9 @@ public class VideoService implements VideoServiceInterface {
             event.getObject_key(),
             event.getVideo_id());
   }
+  */
 
+  /*
   @KafkaListener(
           topics = "video-encoding-topic",
           groupId = "video-encoding_group",
@@ -588,7 +591,7 @@ public class VideoService implements VideoServiceInterface {
       log.error("Video Encoding message consume failed", e);
       throw e;
     }
-  }
+  }*/
 
   @Override
   public boolean isValidMp4OrMov(byte[] bytes){

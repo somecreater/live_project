@@ -1,16 +1,14 @@
 package com.live.main.video.database.repository;
 
-import com.live.main.video.database.entity.Status;
+import com.live.main.video.database.entity.ProcessingStatus;
 import com.live.main.video.database.entity.VideoEntity;
-import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
-import java.util.Optional;
+import java.util.Collection;
 
 @Repository
 public interface VideoRepository extends JpaRepository<VideoEntity, Long> {
@@ -24,5 +22,42 @@ public interface VideoRepository extends JpaRepository<VideoEntity, Long> {
     int deleteOldPendingVideos(@Param("status") Status status, @Param("time") LocalDateTime time);
      */
 
-    Optional<VideoEntity> findByChannelEntity_NameAndTitle(String name, String title);
+    @Modifying(
+            flushAutomatically = true,
+            clearAutomatically = true
+    )
+    @Query("""
+    UPDATE VideoEntity v
+       SET v.processingStatus = :nextStatus
+     WHERE v.id = :videoId
+       AND v.originalObjectKey = :objectKey
+       AND v.processingStatus IN :allowedStatuses
+    """)
+    int updateProcessingStatusIfAllowed(
+            @Param("videoId") Long videoId,
+            @Param("objectKey") String objectKey,
+            @Param("allowedStatuses")
+            Collection<ProcessingStatus> allowedStatuses,
+            @Param("nextStatus") ProcessingStatus nextStatus
+    );
+
+    @Modifying(
+            flushAutomatically = true,
+            clearAutomatically = true
+    )
+    @Query("""
+    UPDATE VideoEntity v
+       SET v.hlsObjectKey = :masterKey,
+           v.processingStatus = :ready
+     WHERE v.id = :videoId
+       AND v.originalObjectKey = :originalKey
+       AND v.processingStatus = :transcoding
+    """)
+    int completeEncodingIfTranscoding(
+            @Param("videoId") Long videoId,
+            @Param("originalKey") String originalKey,
+            @Param("masterKey") String masterKey,
+            @Param("transcoding") ProcessingStatus transcoding,
+            @Param("ready") ProcessingStatus ready
+    );
 }
